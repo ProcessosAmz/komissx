@@ -1,0 +1,11 @@
+[
+    {
+        "id": 1,
+        "tenantId": "amazonet",
+        "name": "Administrador",
+        "email": "processos@amazonett.com.br",
+        "password": "Teste1234",
+        "role": "ADMIN",
+        "active": true
+    }
+]

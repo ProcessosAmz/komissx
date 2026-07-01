@@ -16,7 +16,7 @@ export function Header({
     <header className="w-full h-16 bg-[#090d16]/80 border-b border-slate-900 px-4 sm:px-6 backdrop-blur-md sticky top-0 z-50">
       {/* Grade estrutural dividida em 3 colunas de tamanhos iguais */}
       <div className="grid grid-cols-3 h-full items-center w-full">
-        
+
         {/* COLUNA 1: Logo Pequena alinhada totalmente à esquerda */}
         <div className="flex justify-start">
           <Logo className="h-3 w-auto" showText={true} />
@@ -28,7 +28,7 @@ export function Header({
             Plataforma de Comissões
           </h2>
           <span className="hidden sm:inline-block text-[10px] text-slate-500 mt-0.5">
-            Regras de Negócio para Empresas de Telecom e Finanças
+            Regras de Negócio para Empresas.
           </span>
         </div>
 
@@ -37,7 +37,7 @@ export function Header({
           <button className="p-1.5 text-slate-400 hover:text-slate-200 transition-colors rounded-lg hover:bg-slate-900/50 cursor-pointer hidden sm:block">
             <Bell className="h-4 w-4" />
           </button>
-          
+
           <div className="flex items-center gap-2">
             <div className="text-right hidden xs:block">
               <p className="text-[10px] sm:text-[11px] font-medium text-slate-300 leading-none">
