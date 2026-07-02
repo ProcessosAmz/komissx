@@ -1,0 +1,109 @@
+/* ==========================================================
+   KOMISSX - APENAS COMPONENTES INTERNOS DO MOTOR DE REGRAS
+   (Estruturas de Layout, Sidebar e Header gerenciadas via Tailwind)
+   ========================================================== */
+
+/* ==========================================================
+   TABELA DE REGRAS INTERNA
+   ========================================================== */
+
+.rules-table-header,
+.rule-list-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 80px;
+    gap: 16px;
+    padding: 14px 0;
+}
+
+.rules-table-header {
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.rule-list-item {
+    border-bottom: 1px solid rgba(255, 255, 255, .04);
+}
+
+/* ==========================================================
+   COMPONENTE: TOGGLE SWITCH CUSTOMIZADO
+   ========================================================== */
+
+.switch-toggle {
+    position: relative;
+    width: 46px;
+    height: 24px;
+}
+
+.switch-toggle input {
+    display: none;
+}
+
+.slider-round {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #334155;
+    cursor: pointer;
+}
+
+.slider-round::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    transition: .2s;
+}
+
+.switch-toggle input:checked+.slider-round {
+    background: #8b5cf6;
+    /* Cor violeta padrão ajustada para alinhar com o tema */
+}
+
+.switch-toggle input:checked+.slider-round::before {
+    transform: translateX(22px);
+}
+
+/* ==========================================================
+   CONSTRUTOR DE CONDIÇÕES (CHIPS LÓGICOS)
+   ========================================================== */
+
+.logic-builder-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.logic-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.logic-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.logic-if {
+    background: rgba(234, 179, 8, .15);
+    color: #facc15;
+}
+
+.logic-then {
+    background: rgba(34, 197, 94, .15);
+    color: #4ade80;
+}
+
+.logic-block-tag {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .05);
+}
