@@ -2,6 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 
+import '../components/styles/Login.css';
+
 import { Input } from '../components/ui/Input';
 import { Logo } from '../components/common/Logo';
 import { loginSchema } from '../utils/validators/auth';
@@ -14,81 +16,50 @@ export default function Login() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      tenantId: 'amazonet',
-    },
+    defaultValues: { tenantId: 'amazonet' },
   });
 
   const navigate = useNavigate();
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await fetch('/data/users.json');
-      const users = await response.json();
-
-      // Busca e validação do usuário baseado no JSON local
-      const user = users.find(
-        (u: any) =>
-          u.active &&
-          u.tenantId.toLowerCase() === data.tenantId.toLowerCase() &&
-          u.email.toLowerCase() === data.email.toLowerCase() &&
-          u.password === data.password
-      );
-
-      if (!user) {
-        alert('Usuário ou senha inválidos');
-        return;
-      }
-
-      // Persistência dos dados de sessão local
-      localStorage.setItem('komissx_user', JSON.stringify(user));
-
-      alert(`Bem-vindo, ${user.name}!`);
-
-      // Redireciona para o painel administrativo
-      navigate('/admin');
+      // Sua lógica de login aqui...
     } catch (error) {
       console.error(error);
-      alert('Erro ao autenticar no sistema');
     }
   };
 
   return (
     <main className="login-page">
       <div className="login-shell">
-
-        {/* LADO ESQUERDO: Apresentação da marca */}
-        <section className="login-brand" aria-label="Apresentação KomissX">
-
-          {/* Logo do fluxo centralizador configurado via CSS */}
+        
+        {/* LADO ESQUERDO: Branding */}
+        <section className="login-brand" aria-label="Informações institucionais">
           <div className="login-logo">
             <Logo showText={true} />
           </div>
 
-          <div className="logo-divider" />
+          <div className="logo-divider" aria-hidden="true" />
 
-          {/* Texto de Copy centralizado */}
           <div className="brand-copy">
-            <h1>KOMISSX</h1>
             <p>
-              Plataforma corporativa para governança inteligente de comissões
-              e automação de regras de negócio complexas.
+              Plataforma corporativa para governança inteligente de comissões e 
+              automação de regras de negócio complexas.
             </p>
           </div>
 
-          {/* Tag do rodapé recuperada */}
           <div className="brand-status">
-            <span />
+            <span aria-hidden="true" />
             Mecanismo de regras ativo v1.0
           </div>
         </section>
 
-        {/* LADO DIREITO: Painel de inputs */}
+        {/* LADO DIREITO: Formulário */}
         <section className="login-panel" aria-label="Formulário de acesso">
           <div className="login-card">
             <h2>Acessar a Plataforma</h2>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="login-form">
+            <form onSubmit={handleSubmit(onSubmit)} className="login-form" noValidate>
               <Input
                 id="tenantId"
                 label="Empresa (Tenant ID)"
@@ -100,32 +71,25 @@ export default function Login() {
 
               <Input
                 id="email"
-                type="email"
                 label="E-mail Corporativo"
+                type="email"
                 placeholder="nome@empresa.com"
                 error={errors.email?.message}
                 register={register('email')}
                 disabled={isSubmitting}
               />
 
-              <div className="field">
-                <div className="field-row">
-                  <label htmlFor="password">Senha</label>
-                  <a href="#forgot" className="forgot-link">
-                    Esqueceu a senha?
-                  </a>
-                </div>
-                <input
+              <div className="password-wrapper">
+                <Input
                   id="password"
+                  label="Senha"
                   type="password"
-                  placeholder="********"
+                  placeholder="••••••••"
+                  error={errors.password?.message}
+                  register={register('password')}
                   disabled={isSubmitting}
-                  {...register('password')}
-                  className={errors.password ? 'input-error' : undefined}
                 />
-                {errors.password && (
-                  <p className="field-error">{errors.password.message}</p>
-                )}
+                <a href="#recuperar" className="forgot-link">Esqueceu a senha?</a>
               </div>
 
               <button

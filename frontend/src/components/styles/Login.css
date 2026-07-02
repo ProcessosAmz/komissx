@@ -1,0 +1,233 @@
+/* ==========================================================
+   LOGIN PAGE - KOMISSX
+   ========================================================== */
+
+.login-page {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15), transparent 45%),
+        radial-gradient(circle at 85% 25%, rgba(59, 130, 246, 0.08), transparent 35%),
+        linear-gradient(90deg, #040814 0%, #070f22 40%, #030710 100%);
+    color: #f8fafc;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.login-shell {
+    display: grid;
+    grid-template-columns: 46% 54%;
+    min-height: 100vh;
+}
+
+/* ==========================================================
+   LADO ESQUERDO (BRANDING)
+   ========================================================== */
+
+.login-brand {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px;
+}
+
+.login-logo {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 30px;
+}
+
+.login-logo img {
+    height: auto;
+    max-height: 200px;
+    width: auto;
+    display: block;
+}
+
+.logo-divider {
+    width: 160px;
+    height: 2px;
+    margin-bottom: 45px;
+    background: linear-gradient(90deg, transparent, #2563eb, #3b82f6, #2563eb, transparent);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+}
+
+.brand-copy {
+    position: relative;
+    z-index: 2;
+    max-width: 440px;
+}
+
+.brand-copy p {
+    color: #94a3b8;
+    font-size: 16px;
+    line-height: 1.6;
+    font-weight: 400;
+    margin: 0;
+}
+
+.brand-status {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.brand-status span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+}
+
+/* ==========================================================
+   LADO DIREITO (CARD DE LOGIN)
+   ========================================================== */
+
+.login-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 480px;
+    padding: 50px 45px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(10, 15, 30, 0.7) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.login-card h2 {
+    margin-top: 0;
+    margin-bottom: 40px;
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+
+.login-form {
+    display: grid;
+    gap: 24px;
+}
+
+/* Campos de Input internos */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field label {
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.field input {
+    width: 100%;
+    height: 48px;
+    background: #090d16;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 0 16px;
+    color: #ffffff;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.field input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.field input.input-error {
+    border-color: #ef4444;
+}
+
+.field-error {
+    color: #f87171;
+    font-size: 12px;
+    margin: 4px 0 0 0;
+}
+
+/* Link Esqueci a Senha integrado */
+.password-wrapper {
+    position: relative;
+}
+
+.forgot-link {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    color: #3b82f6;
+    font-size: 11px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================
+   BOTÃO DE SUBMIT COM GLOW (IGUAL IMAGEM 2)
+   ========================================================== */
+
+.login-submit {
+    width: 100%;
+    height: 52px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    background: linear-gradient(90deg, #1d4ed8 0%, #1d63ff 50%, #1d4ed8 100%);
+    box-shadow: 0 4px 20px rgba(29, 99, 255, 0.4);
+    transition: all 0.2s ease;
+}
+
+.login-submit:hover:not(:disabled) {
+    background: linear-gradient(90deg, #1e40af 0%, #1d4ed8 100%);
+    box-shadow: 0 6px 24px rgba(29, 99, 255, 0.6);
+}
+
+.login-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .login-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .login-brand {
+        padding: 50px 20px 0;
+    }
+
+    .brand-status {
+        position: relative;
+        bottom: auto;
+        margin-top: 20px;
+    }
+}

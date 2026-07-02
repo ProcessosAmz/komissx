@@ -10,9 +10,9 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export function Input({ label, error, register, id, type = 'text', ...props }: InputProps) {
   return (
     <div className="field">
-      <label htmlFor={id}>
-        {label}
-      </label>
+      <div className="field-row">
+        <label htmlFor={id}>{label}</label>
+      </div>
       <input
         id={id}
         type={type}

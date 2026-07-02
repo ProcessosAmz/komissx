@@ -8,7 +8,6 @@ import {
     MoreHorizontal,
     ArrowUpDown,
 } from 'lucide-react';
-import './Admin.css';
 
 interface StoredUser {
     name: string;
@@ -56,29 +55,27 @@ function Sparkline({ points }: { points: number[] }) {
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-16" preserveAspectRatio="none">
             <defs>
                 <linearGradient id="volumeFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="rgb(139 92 246)" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="rgb(139 92 246)" stopOpacity="0" />
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
                 </linearGradient>
             </defs>
             <path d={areaPath} fill="url(#volumeFill)" />
-            <path d={linePath} fill="none" stroke="rgb(167 139 250)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            <path d={linePath} fill="none" stroke="#a5b4fc" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     );
 }
 
 function StatusToggle({ active }: { active: boolean }) {
     const [on, setOn] = useState(active);
+
     return (
         <button
             type="button"
             onClick={() => setOn((v) => !v)}
-            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${on ? 'bg-violet-500' : 'bg-slate-800'}`}
-            aria-pressed={on}
-            aria-label="Alternar status da regra"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all ${on ? 'bg-violet-600' : 'bg-slate-700'}`}
         >
             <span
-                className="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform"
-                style={{ transform: on ? 'translateX(18px)' : 'translateX(4px)' }}
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${on ? 'translate-x-6' : 'translate-x-1'}`}
             />
         </button>
     );
@@ -92,13 +89,13 @@ export default function Admin() {
     useEffect(() => {
         const stored = localStorage.getItem('komissx_user');
         if (!stored) {
-            navigate('/login');
+            navigate('/autenticacao');
             return;
         }
         try {
             setUser(JSON.parse(stored));
         } catch {
-            navigate('/login');
+            navigate('/autenticacao');
         }
     }, [navigate]);
 
@@ -109,192 +106,135 @@ export default function Admin() {
     );
 
     return (
-        <div className="flex-1 min-w-0 px-4 sm:px-6 py-6 space-y-5">
-            {/* Breadcrumb + tenant selector */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-[11px] text-slate-500 font-mono">
-                    {user.role === 'ADMIN' ? 'Admin' : user.role} / Configurações /{' '}
-                    <span className="text-slate-300">Motor de Regras</span>
+        <div className="flex-1 min-w-0 px-4 sm:px-6 py-6 space-y-6 bg-[#030712]">
+            {/* Header Info */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <p className="text-xs text-slate-500 font-mono">
+                    {user.role} / Configurações / <span className="text-slate-300">Motor de Regras</span>
                 </p>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 transition-colors cursor-pointer"
-                        aria-label="Atualizar"
-                    >
-                        <RefreshCw className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-3">
+                    <button className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition">
+                        <RefreshCw className="h-4 w-4" />
                     </button>
-                    <button
-                        type="button"
-                        className="flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/30 text-violet-300 text-[11px] font-medium px-3 py-1.5 rounded-full hover:bg-violet-500/15 transition-colors cursor-pointer"
-                    >
-                        Tenant: {user.tenantId}
-                        <ChevronDown className="h-3 w-3" />
-                    </button>
+                    <div className="flex items-center gap-2 bg-slate-900 border border-slate-700 px-4 py-2 rounded-2xl text-sm">
+                        Tenant: <span className="font-medium text-violet-400">{user.tenantId}</span>
+                        <ChevronDown className="h-4 w-4" />
+                    </div>
                 </div>
             </div>
 
-            <h1 className="text-xl font-semibold text-slate-100">Configurações</h1>
+            <h1 className="text-2xl font-semibold">Configurações</h1>
 
-            {/* Content grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-                {/* Selecione as regras */}
-                <section className="xl:col-span-5 bg-[#090d16] border border-slate-900 rounded-xl flex flex-col">
-                    <div className="p-4 border-b border-slate-900 space-y-3">
-                        <div className="flex items-center justify-between gap-3">
-                            <h2 className="text-sm font-medium text-slate-200">Selecione as regras</h2>
-                            <button
-                                type="button"
-                                className="text-[11px] font-medium bg-violet-500 hover:bg-violet-400 text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                            >
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* Rules Table */}
+                <div className="xl:col-span-5 bg-[#090d16] border border-slate-800 rounded-3xl flex flex-col overflow-hidden">
+                    <div className="p-5 border-b border-slate-800">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="font-medium">Selecione as regras</h2>
+                            <button className="bg-violet-600 hover:bg-violet-500 px-5 py-2 rounded-2xl text-sm font-medium transition">
                                 Configurar
                             </button>
                         </div>
+
                         <div className="relative">
-                            <Search className="h-3.5 w-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-500" />
                             <input
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Buscar regra..."
-                                className="w-full bg-[#030712] border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-[12px] text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500/60"
+                                className="w-full bg-[#0a0f1c] border border-slate-700 rounded-2xl pl-11 py-3 text-sm focus:outline-none focus:border-violet-500"
                             />
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead>
-                                <tr className="text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-900">
-                                    <th className="py-2.5 pl-4 pr-2 font-medium w-8">
-                                        <input type="checkbox" className="rounded border-slate-700 bg-transparent" />
-                                    </th>
-                                    <th className="py-2.5 px-2 font-medium">
-                                        <span className="inline-flex items-center gap-1">
-                                            Nome <ArrowUpDown className="h-3 w-3" />
-                                        </span>
-                                    </th>
-                                    <th className="py-2.5 px-2 font-medium">Versão</th>
-                                    <th className="py-2.5 pr-4 pl-2 font-medium text-right">Status</th>
+                    <div className="overflow-auto flex-1">
+                        <table className="w-full">
+                            <thead className="bg-[#05080f] sticky top-0">
+                                <tr className="text-xs uppercase tracking-widest text-slate-500 border-b border-slate-800">
+                                    <th className="pl-6 py-4 w-10"><input type="checkbox" className="rounded" /></th>
+                                    <th className="text-left py-4">Nome <ArrowUpDown className="inline h-3 w-3" /></th>
+                                    <th className="text-left py-4">Versão</th>
+                                    <th className="text-right pr-6 py-4">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredRules.map((rule) => (
-                                    <tr key={rule.id} className="border-b border-slate-900/70 last:border-0 hover:bg-slate-900/30 transition-colors">
-                                        <td className="py-3 pl-4 pr-2">
-                                            <input type="checkbox" className="rounded border-slate-700 bg-transparent" />
-                                        </td>
-                                        <td className="py-3 px-2 text-[12.5px] text-slate-200">{rule.name}</td>
-                                        <td className="py-3 px-2">
-                                            <span className={`text-[10.5px] font-mono px-1.5 py-0.5 rounded ${rule.active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
-                                                {rule.version} ({rule.active ? 'Ativa' : 'Inativa'})
+                                    <tr key={rule.id} className="border-b border-slate-800 hover:bg-slate-900/50 transition">
+                                        <td className="pl-6 py-4"><input type="checkbox" className="rounded" /></td>
+                                        <td className="py-4 text-sm">{rule.name}</td>
+                                        <td className="py-4">
+                                            <span className={`text-xs px-3 py-1 rounded-full font-mono ${rule.active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
+                                                {rule.version}
                                             </span>
                                         </td>
-                                        <td className="py-3 pr-4 pl-2 text-right">
+                                        <td className="py-4 pr-6 text-right">
                                             <StatusToggle active={rule.active} />
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredRules.length === 0 && (
-                                    <tr>
-                                        <td colSpan={4} className="py-6 text-center text-[12px] text-slate-500">
-                                            Nenhuma regra encontrada.
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
                     </div>
-                </section>
+                </div>
 
-                {/* Configuração de regra */}
-                <section className="xl:col-span-4 bg-[#090d16] border border-slate-900 rounded-xl flex flex-col">
-                    <div className="p-4 border-b border-slate-900 flex items-start justify-between">
+                {/* Rule Builder */}
+                <div className="xl:col-span-4 bg-[#090d16] border border-slate-800 rounded-3xl flex flex-col">
+                    <div className="p-5 border-b border-slate-800 flex items-start justify-between">
                         <div>
-                            <h2 className="text-sm font-medium text-slate-200">Configuração de regra</h2>
-                            <p className="text-[11px] text-slate-500 mt-0.5">Defina condições e ações da regra</p>
+                            <h2 className="font-medium">Configuração de regra</h2>
+                            <p className="text-xs text-slate-500 mt-1">Defina condições e ações</p>
                         </div>
-                        <button
-                            type="button"
-                            className="p-1 text-slate-500 hover:text-slate-300 rounded transition-colors cursor-pointer"
-                            aria-label="Mais opções"
-                        >
-                            <MoreHorizontal className="h-4 w-4" />
+                        <button className="p-2 text-slate-400 hover:text-white">
+                            <MoreHorizontal className="h-5 w-5" />
                         </button>
                     </div>
 
-                    <div className="p-4 space-y-4">
-                        <button
-                            type="button"
-                            className="w-full flex items-center justify-center gap-1.5 border border-dashed border-slate-800 hover:border-violet-500/50 text-slate-400 hover:text-violet-300 text-[11.5px] font-medium py-2 rounded-lg transition-colors cursor-pointer"
-                        >
-                            <Plus className="h-3.5 w-3.5" /> Adicionar condição inicial
+                    <div className="p-5 space-y-6 flex-1">
+                        <button className="w-full border border-dashed border-slate-700 hover:border-violet-500/50 py-4 rounded-2xl text-sm flex items-center justify-center gap-2 text-slate-400 hover:text-violet-300 transition">
+                            <Plus className="h-4 w-4" /> Adicionar condição inicial
                         </button>
 
-                        <div className="bg-[#030712] border border-slate-900 rounded-lg p-3 space-y-2 text-[12px] leading-relaxed">
-                            <p>
-                                <span className="text-violet-400 font-semibold">SE</span>{' '}
-                                <span className="text-slate-300">cliente ativo</span>{' '}
-                                <span className="text-violet-400 font-semibold">ENTÃO</span>{' '}
-                                <span className="text-slate-300">pague 5% de comissão base</span>
-                            </p>
-                            <p>
-                                <span className="text-violet-400 font-semibold">E</span>{' '}
-                                <span className="text-slate-300">plano upgrade</span>{' '}
-                                <span className="text-violet-400 font-semibold">ENTÃO</span>{' '}
-                                <span className="text-slate-300">pague 5% de comissão adicional</span>
-                            </p>
+                        <div className="bg-[#05080f] p-5 rounded-2xl space-y-4 text-sm">
+                            <p><span className="text-violet-400 font-bold">SE</span> cliente ativo <span className="text-violet-400 font-bold">ENTÃO</span> pague 5% base</p>
+                            <p><span className="text-violet-400 font-bold">E</span> plano upgrade <span className="text-violet-400 font-bold">ENTÃO</span> pague 5% adicional</p>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">
-                                Fórmula matemática
-                            </label>
+                        <div>
+                            <label className="block text-xs uppercase tracking-widest text-slate-500 mb-2">Fórmula matemática</label>
                             <textarea
-                                rows={3}
+                                rows={4}
                                 placeholder="ex: base_commission * 1.05"
-                                className="w-full resize-none bg-[#030712] border border-slate-800 rounded-lg px-3 py-2 text-[12px] font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500/60"
+                                className="w-full bg-[#05080f] border border-slate-700 rounded-2xl p-4 text-sm font-mono resize-y focus:outline-none focus:border-violet-500"
                             />
                         </div>
                     </div>
-                </section>
+                </div>
 
-                {/* Coluna direita: volume + fila */}
-                <div className="xl:col-span-3 flex flex-col gap-5">
-                    <section className="bg-[#090d16] border border-slate-900 rounded-xl p-4">
-                        <div className="flex items-center justify-between">
+                {/* Sidebar Widgets */}
+                <div className="xl:col-span-3 space-y-6">
+                    <div className="bg-[#090d16] border border-slate-800 rounded-3xl p-6">
+                        <div className="flex justify-between items-start">
                             <div>
-                                <h2 className="text-sm font-medium text-slate-200">Volume de processamento</h2>
-                                <p className="text-[11px] text-slate-500 mt-0.5">últimos 30 dias</p>
+                                <h3 className="font-medium">Volume de processamento</h3>
+                                <p className="text-xs text-slate-500">últimos 30 dias</p>
                             </div>
-                            <button
-                                type="button"
-                                className="p-1 text-slate-500 hover:text-slate-300 rounded transition-colors cursor-pointer"
-                                aria-label="Atualizar volume"
-                            >
-                                <RefreshCw className="h-3 w-3" />
-                            </button>
+                            <RefreshCw className="h-4 w-4 text-slate-500" />
                         </div>
-                        <div className="mt-3">
+                        <div className="mt-6">
                             <Sparkline points={VOLUME_POINTS} />
                         </div>
-                        <div className="flex items-center justify-between mt-1 text-[10px] text-slate-600 font-mono">
-                            <span>1 jun</span>
-                            <span>30 jun</span>
-                        </div>
-                    </section>
+                    </div>
 
-                    <section className="bg-[#090d16] border border-slate-900 rounded-xl p-4 flex-1">
-                        <div>
-                            <h2 className="text-sm font-medium text-slate-200">Fila de processamento</h2>
-                            <p className="text-[11px] text-slate-500 mt-0.5">background job queue</p>
-                        </div>
+                    <div className="bg-[#090d16] border border-slate-800 rounded-3xl p-6 flex-1 flex flex-col">
+                        <h3 className="font-medium">Fila de processamento</h3>
+                        <p className="text-xs text-slate-500">background job queue</p>
 
-                        <div className="mt-3 flex items-center gap-2 bg-[#030712] border border-slate-800/60 px-2.5 py-1.5 rounded-lg text-[10.5px] text-slate-500 font-mono">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                        <div className="mt-auto flex items-center gap-3 bg-[#05080f] border border-slate-700 rounded-2xl px-4 py-3 text-sm text-emerald-400">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                             Nenhum job pendente
                         </div>
-                    </section>
+                    </div>
                 </div>
             </div>
         </div>
