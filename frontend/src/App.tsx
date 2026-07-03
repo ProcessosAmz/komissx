@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
+
 import { DefaultLayout } from './components/layout/DefaultLayout';
 
 export default function App() {

@@ -9,23 +9,64 @@ import { Logo } from '../components/common/Logo';
 import { loginSchema } from '../utils/validators/auth';
 import type { LoginFormData } from '../utils/validators/auth';
 
+interface UserRecord {
+  id: number;
+  tenantId: string;
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  active: boolean;
+}
+
 export default function Login() {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { tenantId: 'amazonet' },
   });
 
-  const navigate = useNavigate();
-
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Sua lógica de login aqui...
+      const response = await fetch('/data/users.json');
+
+      if (!response.ok) {
+        throw new Error('Falha ao carregar usuarios');
+      }
+
+      const users = await response.json() as UserRecord[];
+      const tenantId = data.tenantId.trim().toLowerCase();
+      const email = data.email.trim().toLowerCase();
+
+      const user = users.find((item) =>
+        item.active &&
+        item.tenantId.toLowerCase() === tenantId &&
+        item.email.toLowerCase() === email &&
+        item.password === data.password
+      );
+
+      if (!user) {
+        setError('root', {
+          type: 'manual',
+          message: 'Empresa, e-mail ou senha invalidos.',
+        });
+        return;
+      }
+
+      const { password: _password, ...sessionUser } = user;
+      localStorage.setItem('komissx_user', JSON.stringify(sessionUser));
+      navigate('/admin', { replace: true });
     } catch (error) {
       console.error(error);
+      setError('root', {
+        type: 'manual',
+        message: 'Nao foi possivel autenticar agora. Tente novamente.',
+      });
     }
   };
 
@@ -60,6 +101,10 @@ export default function Login() {
             <h2>Acessar a Plataforma</h2>
 
             <form onSubmit={handleSubmit(onSubmit)} className="login-form" noValidate>
+              {errors.root?.message && (
+                <p className="auth-error">{errors.root.message}</p>
+              )}
+
               <Input
                 id="tenantId"
                 label="Empresa (Tenant ID)"
