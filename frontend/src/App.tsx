@@ -1,36 +1,45 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Admin from './pages/Admin';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import MotorRegras from "./pages/MotorRegras";
+import { DefaultLayout } from "./components/layout/DefaultLayout";
+import { useAuth } from "./stores/auth.store";
 
-import { DefaultLayout } from './components/layout/DefaultLayout';
+function Protected() {
+  const user = useAuth((s) => s.user);
+  if (!user) return <Navigate to="/autenticacao" replace />;
+  return <DefaultLayout />;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Se acessar a raiz "/", joga direto para a autenticação */}
         <Route path="/" element={<Navigate to="/autenticacao" replace />} />
-
-        {/* Caso algum link antigo aponte para /login, redireciona para a rota certa */}
         <Route path="/login" element={<Navigate to="/autenticacao" replace />} />
-
-        {/* A rota REAL da sua tela de login */}
         <Route path="/autenticacao" element={<Login />} />
 
-        {/* Layout unificado com sub-rotas estruturadas */}
-        <Route path="/admin" element={<DefaultLayout />}>
-          {/* O index define qual componente aparece ao acessar exatamente "/admin" */}
-          <Route index element={<Navigate to="motor-de-regras" replace />} />
-          <Route path="motor-de-regras" element={<Admin />} />
-
-          {/* Próximas páginas do sistema entram aqui: */}
-          {/* <Route path="equipes" element={<Equipes />} /> */}
-          {/* <Route path="metas" element={<Metas />} /> */}
+        <Route path="/admin" element={<Protected />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="motor-de-regras" element={<MotorRegras />} />
+          <Route path="equipes" element={<Placeholder name="Equipes" />} />
+          <Route path="fechamentos" element={<Placeholder name="Fechamentos" />} />
         </Route>
 
-        {/* Qualquer rota desconhecida joga o usuário para o painel admin */}
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </BrowserRouter>
+  );
+}
+
+function Placeholder({ name }: { name: string }) {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold text-white">{name}</h2>
+        <p className="text-sm text-slate-500 mt-2">Em construção.</p>
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,99 @@
+[
+    {
+        "id": "rg_001",
+        "nome": "Bônus técnico LOBATO (Manaus)",
+        "versao": 1,
+        "ativa": true,
+        "escopo": {
+            "empresa": "AMAZONET",
+            "unidade": "MANAUS",
+            "relatorio": "FECHAMENTO_TECNICO",
+            "tipoPessoa": "TECNICO"
+        },
+        "condicoes": [
+            {
+                "op": "contains",
+                "campo": "pessoa.nome",
+                "valor": "LOBATO"
+            }
+        ],
+        "acoes": [
+            {
+                "tipo": "SET_VALOR",
+                "expressao": {
+                    "tipo": "FIXO",
+                    "valor": 90
+                }
+            },
+            {
+                "tipo": "SET_STATUS_FINANCEIRO",
+                "status": "PAGO"
+            }
+        ],
+        "criadoEm": "2026-01-15T10:00:00Z",
+        "observacoes": "Regra histórica do fechamento técnico."
+    },
+    {
+        "id": "rg_002",
+        "nome": "Comissão Fibra 500MB+",
+        "versao": 2,
+        "ativa": true,
+        "escopo": {
+            "relatorio": "FECHAMENTO_VENDA"
+        },
+        "condicoes": [
+            {
+                "op": "eq",
+                "campo": "venda.plano",
+                "valor": "Fibra"
+            },
+            {
+                "op": "gte",
+                "campo": "venda.velocidadeMB",
+                "valor": 500
+            }
+        ],
+        "acoes": [
+            {
+                "tipo": "PORCENTAGEM_SOBRE",
+                "campo": "valorBase",
+                "percentual": 12
+            },
+            {
+                "tipo": "OBSERVAR",
+                "texto": "Faixa premium 500MB+"
+            }
+        ],
+        "criadoEm": "2026-02-01T09:30:00Z"
+    },
+    {
+        "id": "rg_003",
+        "nome": "Bônus cliente novo",
+        "versao": 1,
+        "ativa": true,
+        "escopo": {
+            "relatorio": "FECHAMENTO_VENDA"
+        },
+        "condicoes": [
+            {
+                "op": "eq",
+                "campo": "venda.clienteNovo",
+                "valor": true
+            }
+        ],
+        "acoes": [
+            {
+                "tipo": "BONUS_FIXO",
+                "valor": 100
+            }
+        ],
+        "criadoEm": "2026-02-10T14:00:00Z",
+        "observacoes": "Adicional por ativação."
+    },
+    {
+        "compilerOptions": {
+            "resolveJsonModule": true,
+            "allowSyntheticDefaultImports": true
+        }
+    }
+]

@@ -1,26 +1,69 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
-import '../components/styles/Login.css';
+import "../components/styles/Login.css";
 
-import { Input } from '../components/ui/Input';
-import { Logo } from '../components/common/Logo';
-import { loginSchema } from '../utils/validators/auth';
-import type { LoginFormData } from '../utils/validators/auth';
+import { Input } from "../components/ui/Input";
+import { Logo } from "../components/common/Logo";
+import { loginSchema, type LoginFormData } from "../utils/validators/auth";
+import usersData from "../data/users.json";
+import { useAuth } from "../stores/auth.store";
+import type { User } from "../engine/types";
 
-interface UserRecord {
-  id: number;
-  tenantId: string;
-  name: string;
-  email: string;
+/* ---------------- Tipos internos ---------------- */
+
+interface UserRecord extends User {
   password: string;
-  role: string;
-  active: boolean;
 }
+
+const USERS = usersData as UserRecord[];
+
+/* ---------------- Toast inline ---------------- */
+
+type Toast = { type: "error" | "success"; message: string } | null;
+
+function Toast({ toast, onClose }: { toast: Toast; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, [toast, onClose]);
+
+  if (!toast) return null;
+
+  const styles =
+    toast.type === "error"
+      ? "border-red-500/40 bg-red-500/10 text-red-300"
+      : "border-emerald-500/40 bg-emerald-500/10 text-emerald-300";
+
+  const Icon = toast.type === "error" ? AlertCircle : CheckCircle2;
+
+  return (
+    <div
+      ref={ref}
+      role="alert"
+      aria-live="polite"
+      className={`fixed top-6 right-6 z-50 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-md ${styles}`}
+    >
+      <Icon className="h-4 w-4 mt-0.5 shrink-0" />
+      <span className="font-medium">{toast.message}</span>
+    </div>
+  );
+}
+
+/* ---------------- Componente principal ---------------- */
 
 export default function Login() {
   const navigate = useNavigate();
+  const setUser = useAuth((s) => s.setUser);
+  const currentUser = useAuth((s) => s.user);
+  const [toast, setToast] = useState<Toast | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -28,63 +71,82 @@ export default function Login() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { tenantId: 'amazonet' },
+    defaultValues: { tenantId: "amazonet", email: "", password: "" },
   });
+
+  // Se já existir sessão válida, manda direto pro admin
+  useEffect(() => {
+    if (currentUser) {
+      navigate("/admin", { replace: true });
+    }
+  }, [currentUser, navigate]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await fetch('/data/users.json');
+      // Pequeno delay para UX (sensação de "autenticando")
+      await new Promise((r) => setTimeout(r, 400));
 
-      if (!response.ok) {
-        throw new Error('Falha ao carregar usuarios');
-      }
-
-      const users = await response.json() as UserRecord[];
       const tenantId = data.tenantId.trim().toLowerCase();
       const email = data.email.trim().toLowerCase();
 
-      const user = users.find((item) =>
-        item.active &&
-        item.tenantId.toLowerCase() === tenantId &&
-        item.email.toLowerCase() === email &&
-        item.password === data.password
+      const found = USERS.find(
+        (u) =>
+          u.active &&
+          u.tenantId.toLowerCase() === tenantId &&
+          u.email.toLowerCase() === email &&
+          u.password === data.password
       );
 
-      if (!user) {
-        setError('root', {
-          type: 'manual',
-          message: 'Empresa, e-mail ou senha invalidos.',
+      if (!found) {
+        setError("root", {
+          type: "manual",
+          message: "Empresa, e-mail ou senha inválidos.",
+        });
+        setToast({ type: "error", message: "Credenciais inválidas." });
+        return;
+      }
+
+      // IMPORTANTE: nunca guardar password no estado
+      const { password: _password, ...sessionUser } = found;
+
+      // Validação extra de role (proteção contra JSON malicioso)
+      if (sessionUser.role !== "ADMIN" && sessionUser.role !== "OPERADOR") {
+        setError("root", {
+          type: "manual",
+          message: "Perfil de usuário sem permissão.",
         });
         return;
       }
 
-      const { password: _password, ...sessionUser } = user;
-      localStorage.setItem('komissx_user', JSON.stringify(sessionUser));
-      navigate('/admin', { replace: true });
-    } catch (error) {
-      console.error(error);
-      setError('root', {
-        type: 'manual',
-        message: 'Nao foi possivel autenticar agora. Tente novamente.',
+      setUser(sessionUser as User);
+      setToast({ type: "success", message: `Bem-vindo, ${sessionUser.name}!` });
+      navigate("/admin", { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError("root", {
+        type: "manual",
+        message: "Não foi possível autenticar agora. Tente novamente.",
       });
+      setToast({ type: "error", message: "Falha de autenticação." });
     }
   };
 
   return (
     <main className="login-page">
+      <Toast toast={toast} onClose={() => setToast(null)} />
+
       <div className="login-shell">
-        
         {/* LADO ESQUERDO: Branding */}
         <section className="login-brand" aria-label="Informações institucionais">
           <div className="login-logo">
-            <Logo showText={true} />
+            <Logo />
           </div>
 
           <div className="logo-divider" aria-hidden="true" />
 
           <div className="brand-copy">
             <p>
-              Plataforma corporativa para governança inteligente de comissões e 
+              Plataforma corporativa para comissões e
               automação de regras de negócio complexas.
             </p>
           </div>
@@ -110,8 +172,9 @@ export default function Login() {
                 label="Empresa (Tenant ID)"
                 placeholder="amazonet"
                 error={errors.tenantId?.message}
-                register={register('tenantId')}
+                register={register("tenantId")}
                 disabled={isSubmitting}
+                autoComplete="organization"
               />
 
               <Input
@@ -120,8 +183,9 @@ export default function Login() {
                 type="email"
                 placeholder="nome@empresa.com"
                 error={errors.email?.message}
-                register={register('email')}
+                register={register("email")}
                 disabled={isSubmitting}
+                autoComplete="email"
               />
 
               <div className="password-wrapper">
@@ -131,8 +195,9 @@ export default function Login() {
                   type="password"
                   placeholder="••••••••"
                   error={errors.password?.message}
-                  register={register('password')}
+                  register={register("password")}
                   disabled={isSubmitting}
+                  autoComplete="current-password"
                 />
                 <a href="#recuperar" className="forgot-link">Esqueceu a senha?</a>
               </div>
@@ -142,12 +207,11 @@ export default function Login() {
                 disabled={isSubmitting}
                 className="login-submit"
               >
-                {isSubmitting ? 'Autenticando...' : 'Entrar no Sistema'}
+                {isSubmitting ? "Autenticando..." : "Entrar no Sistema"}
               </button>
             </form>
           </div>
         </section>
-
       </div>
     </main>
   );

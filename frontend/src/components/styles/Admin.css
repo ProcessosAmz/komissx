@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../components/styles/Admin.css';
 import {
     RefreshCw,
     ChevronDown,
