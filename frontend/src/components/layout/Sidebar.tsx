@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Cpu, Users, CalendarCheck, LogOut } from "lucide-react";
 import { SidebarItem } from "./SidebarItem";
+import { Logo } from "../common/Logo";
 import { useAuth } from "@/stores/auth.store";
 
 export function Sidebar() {
@@ -9,7 +10,7 @@ export function Sidebar() {
 
   const items = [
     { label: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
-    { label: "Motor de Regras", path: "/admin/motor-de-regras", icon: Cpu },
+    { label: "Configurações", path: "/admin/motor-de-regras", icon: Cpu },
     { label: "Equipes", path: "/admin/equipes", icon: Users },
     { label: "Fechamentos", path: "/admin/fechamentos", icon: CalendarCheck },
   ];
@@ -20,14 +21,9 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="w-64 shrink-0 bg-[#060a13]/80 border-r border-slate-900 flex flex-col">
-      <div className="h-14 px-5 flex items-center gap-2 border-b border-slate-900">
-        <div className="h-7 w-7 rounded bg-indigo-600 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-indigo-600/20">
-          K
-        </div>
-        <span className="text-sm font-semibold tracking-wide text-white font-mono">
-          KOMISSX <span className="text-[10px] text-indigo-400 font-sans">SaaS</span>
-        </span>
+    <aside className="app-sidebar w-50 shrink-0 bg-[#060a13]/70 border-r border-slate-900 flex flex-col">
+      <div className="h-16 px-10 flex items-center gap-1 border-b border-slate-800">
+        <Logo className="h-full" />
       </div>
 
       <nav className="flex-1 p-3 space-y-1">

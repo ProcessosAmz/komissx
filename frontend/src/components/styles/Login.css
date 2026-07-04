@@ -64,8 +64,13 @@
 
 .login-shell {
     display: grid;
-    grid-template-columns: 44% 56%;
+    /* Coluna esquerda flexível (marca) e coluna direita que cresce até o espaço disponível
+       Usa minmax para garantir que a coluna da marca nunca fique menor que 280px
+       e permita que o cartão de login tenha espaço suficiente. */
+    grid-template-columns: minmax(280px, 44%) 1fr;
+    align-items: stretch;
     min-height: 100vh;
+    gap: 0;
 }
 
 /* ==========================================================
@@ -107,7 +112,7 @@
     position: relative;
     z-index: 2;
     margin-bottom: -35px;
-    margin-left: 250px;
+    margin-left: clamp(0px, 10vw, 250px);
 
 }
 
@@ -122,7 +127,7 @@
     width: clamp(300px, 20vw, 250px);
     height: 2.5px;
     margin: 0 0 clamp(5px, 3vw, 60px) 0;
-    margin-left: 250px;
+    margin-left: clamp(0px, 10vw, 250px);
     background: linear-gradient(90deg,
             transparent 0%,
             rgba(59, 130, 246, 0.4) 20%,
@@ -171,7 +176,7 @@
 .brand-copy {
     position: relative;
     z-index: 2;
-    margin-left: 250px;
+    margin-left: clamp(0px, 10vw, 250px);
 
     max-width: 600px;
 }
@@ -210,7 +215,7 @@
 
     bottom: 40px;
     left: 50%;
-    margin-left: 130px;
+    margin-left: clamp(12px, 12vw, 130px);
 
     transform: translateX(-50%);
 
@@ -252,7 +257,7 @@
     border-radius: var(--radius-lg);
     background: rgba(10, 15, 30, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(28px);
+    transform: translateY(clamp(-60px, -8vw, -100px));
     box-shadow: 0 28px 100px rgba(0, 0, 0, 0.45);
 }
 
@@ -283,7 +288,7 @@
 
 .field label {
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -293,7 +298,7 @@
     display: flex;
     align-items: center;
     width: 100%;
-    min-height: 64px;
+    min-height: 72px;
     padding: 0 24px;
     border-radius: var(--radius-md);
     background: var(--input-bg);
@@ -319,7 +324,8 @@
     border: none;
     outline: none;
     color: var(--text);
-    font-size: 15px;
+    /* Aumenta apenas o tamanho da fonte dentro dos inputs (valor responsivo) */
+    font-size: clamp(16px, 1.6vw, 18px);
     line-height: 1.4;
 }
 
@@ -353,7 +359,7 @@
 .forgot-link {
     align-self: flex-start;
     margin: 0;
-    font-size: 13px;
+    font-size: 16px;
     color: var(--primary-light);
     text-decoration: none;
     white-space: nowrap;
@@ -372,7 +378,7 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     color: var(--text);
-    font-size: 15px;
+    font-size: 20px;
     font-weight: 600;
     background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--primary));
     background-size: 200% auto;
@@ -389,6 +395,14 @@
 /* ==========================================================
    ADAPTAÇÃO RESPONSIVA DINÂMICA
    ========================================================== */
+/* Breakpoint intermediário para telas médias: reduz a coluna da esquerda
+   de forma fluida antes de empilhar (stack) no <=1024px. */
+@media (max-width: 1400px) {
+    .login-shell {
+        grid-template-columns: minmax(220px, 40%) 1fr;
+    }
+}
+
 @media (max-width: 1024px) {
     .login-shell {
         grid-template-columns: 1fr;

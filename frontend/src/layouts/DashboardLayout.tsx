@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Header } from '../components/layout/Header';
-import { Footer } from '../components/layout/Footer';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,8 +18,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {children}
       </main>
 
-      {/* Rodapé fixado na base */}
-      <Footer />
       
     </div>
   );
