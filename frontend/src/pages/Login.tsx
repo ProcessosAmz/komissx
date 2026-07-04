@@ -151,10 +151,6 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="brand-status">
-            <span aria-hidden="true" />
-            Mecanismo de regras ativo v1.0
-          </div>
         </section>
 
         {/* LADO DIREITO: Formulário */}

@@ -415,18 +415,7 @@
         margin-top: 12px;
     }
 
-    .brand-status {
-        position: static;
-        margin: 16px auto 0;
-        transform: none;
-        display: inline-flex;
-        justify-content: center;
-        width: auto;
-    }
 
-    .brand-status span {
-        margin-right: 8px;
-    }
 
     .login-panel {
         padding: 48px 24px;
