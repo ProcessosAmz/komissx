@@ -22,7 +22,7 @@ const MOCK_METRICAS = [
   {
     id: '3',
     titulo: 'Beneficiários Ativos',
-    valor: '32 Colaboradores',
+    valor: '4 Colaboradores',
     subtexto: 'Vendedores e canais ativos',
     icone: Users,
     corIcone: 'text-blue-400',
@@ -30,10 +30,10 @@ const MOCK_METRICAS = [
 ];
 
 const MOCK_TRANSACOES = [
-  { id: 'TX-9021', colaborador: 'Ketlyn Athan', valorBruto: 'R$ 15.000,00', comissao: 'R$ 750,00', status: 'Processado' },
-  { id: 'TX-9022', colaborador: 'Bruno Silva', valorBruto: 'R$ 8.500,00', comissao: 'R$ 425,00', status: 'Processado' },
-  { id: 'TX-9023', colaborador: 'Amanda Costa', valorBruto: 'R$ 22.100,00', comissao: 'R$ 1.105,00', status: 'Pendente' },
-  { id: 'TX-9024', colaborador: 'Diego Souza', valorBruto: 'R$ 4.200,00', comissao: 'R$ 84,00', status: 'Processado' },
+  { id: 'Instalação Técnica', colaborador: 'Ketlyn Athan', valorBruto: 'R$ 15.000,00', comissao: 'R$ 750,00', status: 'Processado' },
+  { id: 'Vendas Autônomos', colaborador: 'Matheus Raposo', valorBruto: 'R$ 8.500,00', comissao: 'R$ 425,00', status: 'Processado' },
+  { id: 'Retirada', colaborador: 'Paulo Victor', valorBruto: 'R$ 22.100,00', comissao: 'R$ 1.105,00', status: 'Pendente' },
+  { id: 'Indeque e Ganhe', colaborador: 'Junior César', valorBruto: 'R$ 4.200,00', comissao: 'R$ 84,00', status: 'Processado' },
 ];
 
 export default function Dashboard() {
@@ -44,10 +44,10 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
-            Painel de Governança
+            Painel de Comissão
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-            Visão geral de regras e apurações para <span className="text-indigo-400 font-mono font-medium">amazonet</span>
+            Visão geral de apurações para <span className="text-indigo-400 font-mono font-medium">Empresas</span>
           </p>
         </div>
 

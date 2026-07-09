@@ -22,7 +22,7 @@ export default function App() {
         <Route path="/admin" element={<Protected />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="motor-de-regras" element={<MotorRegras />} />
+          <Route path="configuracoes" element={<ConfiguracoesPage />} />
           <Route path="equipes" element={<Placeholder name="Equipes" />} />
           <Route path="fechamentos" element={<Placeholder name="Fechamentos" />} />
         </Route>

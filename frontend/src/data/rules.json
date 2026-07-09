@@ -1,0 +1,48 @@
+{
+  "hierarquia": {
+    "AMAZONET": {
+      "PARA": { "supervisores": ["Larissa Praia"], "lideres": ["Vinicius"] },
+      "MANAUS": { "supervisores": ["Jessica Martins"], "lideres": ["Raiza"] },
+      "AMAZONAS": { "supervisores": ["Jessica Martins"], "lideres": ["Jessica"] }
+    },
+    "MANIA": {
+      "MANAUS": { "supervisores": ["Ariedna"], "lideres": ["Ariedna"] }
+    }
+  },
+  "fechamento_semanal": {
+    "tecnicos_terceirizados": {
+      "LOBATO": 90, "LOBATOS": 90, "EDINELSON": 50, "NADINEI": 60, "GABRIEL": 60
+    },
+    "retirada_estado": { "AM": 35, "PA": 30 },
+    "autonomos": {
+      "valor_padrao": 50,
+      "excecoes": { "JOSIVAN CARDOSO OLIVEIRA": 60 }
+    }
+  },
+  "fechamento_mensal": {
+    "AMAZONET": {
+      "MANAUS": {
+        "ordem_categorias": ["COMERCIAL_INTERNO", "COMERCIAL_EXTERNO", "BACKOFFICE", "RECEPCAO", "REGIONAIS INTERNO"],
+        "rotulos_categorias": {
+          "COMERCIAL_INTERNO": "INTERNO",
+          "COMERCIAL_EXTERNO": "EXTERNO",
+          "BACKOFFICE": "BACKOFFICE",
+          "RECEPCAO": "RECEPCAO UNIDADES",
+          "REGIONAIS INTERNO": "REGIONAIS INTERNO"
+          
+        },
+        "metas": {
+          "COMERCIAL_INTERNO": [[100, 129, 5.0], [130, 159, 6.0], [160, 189, 7.5], [190, null, 8.0]],
+          "COMERCIAL_EXTERNO": [[25, 35, 7.5], [36, 50, 12.0], [51, null, 15.0]],
+          "RECEPCAO": [[60, 99, 5.0], [100, 130, 6.0], [131, null, 7.5]]
+        },
+        "faixas_lideranca": [
+          {"percentual_meta": 106.50, "inicio": 0, "fim": 600, "valor": 1000.0}
+        ],
+        "faixas_supervisao": [
+          {"percentual_meta": 106.50, "inicio": 0, "fim": 600, "valor": 1000.0}
+        ]
+      }
+    }
+  }
+}
