@@ -6,6 +6,9 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import PainelConfiguracoes from "./pages/PainelConfiguracoes"; 
 import { DefaultLayout } from "./layouts/DefaultLayout";
+import FechamentosHub from "./pages/Fechamentos/";
+// 🔥 IMPORT REAL DO SEU FECHAMENTO TÉCNICO
+import FechamentoTecnico from "./pages/Fechamentos"; 
 
 // 2. IMPORTS DOS COMPONENTES MODULARES
 import { ModuloHierarquia } from "./features/configuracoes/components/ModuloHierarquia";
@@ -48,8 +51,6 @@ function ModuloSemanalWrapper() {
   );
 }
 
-// Se o seu ModuloMensal não aceitar "empresa" ou "unidade" no componente atual, 
-// você pode remover essas duas propriedades abaixo deixando apenas dadosGlobais={globalRules} e onSalvar={onSalvar}
 function ModuloMensalWrapper() {
   const { globalRules, onSalvar } = useOutletContext<ContextType>();
   return (
@@ -112,7 +113,23 @@ export default function App() {
           </Route>
 
           <Route path="equipes" element={<Placeholder name="Equipes" />} />
-          <Route path="fechamentos" element={<Placeholder name="Fechamentos" />} />
+          
+          {/* GESTÃO FLUIDA DE FECHAMENTOS */}
+          <Route path="fechamentos">
+            {/* Renderiza o HUB principal (/admin/fechamentos) */}
+            <Route index element={<FechamentosHub />} />
+            
+            {/* Sub-rotas independentes prontas para as telas internas */}
+            {/* 🔥 CORRIGIDO: Removido o 'admin/' e injetado o componente real */}
+            <Route path="tecnico" element={<FechamentoTecnico />} />
+            
+            <Route path="retirada" element={<Placeholder name="Fechamento Retirada" />} />
+            <Route path="vendas" element={<Placeholder name="Vendas Autônomos" />} />
+            <Route path="comercial" element={<Placeholder name="Fechamento Comercial" />} />
+            <Route path="producao" element={<Placeholder name="Produção Técnicos" />} />
+            <Route path="comercial-pj" element={<Placeholder name="Comercial PJ" />} />
+            <Route path="cobranca" element={<Placeholder name="Cobrança" />} />
+          </Route>
         </Route>
 
         {/* Fallback Global */}
