@@ -1,139 +1,114 @@
-import { BrowserRouter, Routes, Route, Navigate, useOutletContext } from "react-router-dom";
-import { useAuth } from "@/stores/auth.store";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth, PERMISSOES } from "@/stores/auth.store";
 
-// 1. IMPORTS DAS PÁGINAS E LAYOUTS
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import PainelConfiguracoes from "./pages/PainelConfiguracoes"; 
+import PainelConfiguracoes from "./pages/PainelConfiguracoes";
+import AcademyPage from "./pages/Academy";
 import { DefaultLayout } from "./layouts/DefaultLayout";
-import FechamentosHub from "./pages/Fechamentos/";
-// 🔥 IMPORT REAL DO SEU FECHAMENTO TÉCNICO
-import FechamentoTecnico from "./pages/Fechamentos"; 
 
-// 2. IMPORTS DOS COMPONENTES MODULARES
+// IMPORTAÇÕES DOS FECHAMENTOS
+import FechamentosHub from "./pages/Fechamentos";
+import FechamentoTecnico from "./pages/Fechamentos/tecnico";
+
+// IMPORTAÇÕES CORRIGIDAS (Utilizando chaves {} para exports nomeados)
 import { ModuloHierarquia } from "./features/configuracoes/components/ModuloHierarquia";
 import { ModuloSemanal } from "./features/configuracoes/components/ModuloSemanal";
 import { ModuloMensal } from "./features/configuracoes/components/ModuloMensal";
+import ModuloAcesso from "./features/configuracoes/components/ModuloAcesso"; // Mantido padrão (export default)
 
-// ==========================================
-// 3. DEFINIÇÃO DE TIPOS GLOBAL (NO TOPO)
-// ==========================================
-export type ContextType = { 
-  globalRules: any; 
-  onSalvar: (dados: any) => void; 
-};
-
-const EMPRESA_PADRAO = "AMAZONET";
-const UNIDADE_PADRAO = "MANAUS";
-
-// ==========================================
-// 4. WRAPPERS PARA CONECTAR OS MÓDULOS AO OUTLET CONTEXT
-// ==========================================
-function ModuloHierarquiaWrapper() {
-  const { globalRules, onSalvar } = useOutletContext<ContextType>();
-  return (
-    <ModuloHierarquia 
-      empresa={EMPRESA_PADRAO} 
-      unidade={UNIDADE_PADRAO} 
-      dadosGlobais={globalRules} 
-      onSalvar={onSalvar} 
-    />
-  );
-}
-
-function ModuloSemanalWrapper() {
-  const { globalRules, onSalvar } = useOutletContext<ContextType>();
-  return (
-    <ModuloSemanal 
-      dados={globalRules} 
-      onSalvar={onSalvar} 
-    />
-  );
-}
-
-function ModuloMensalWrapper() {
-  const { globalRules, onSalvar } = useOutletContext<ContextType>();
-  return (
-    <ModuloMensal 
-      empresa={EMPRESA_PADRAO} 
-      unidade={UNIDADE_PADRAO} 
-      dadosGlobais={globalRules} 
-      onSalvar={onSalvar} 
-    />
-  );
-}
-
-// ==========================================
-// 5. COMPONENTES DE SUPORTE (GUARD E PLACEHOLDER)
-// ==========================================
-function Protected() {
+// Guard de Autenticação Global e Rota Base Admin
+function PrivateLayout() {
   const user = useAuth((s) => s.user);
+
   if (!user) return <Navigate to="/autenticacao" replace />;
+
   return <DefaultLayout />;
 }
 
-function Placeholder({ name }: { name: string }) {
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold text-white">{name}</h2>
-        <p className="text-sm text-slate-500 mt-2">Em construção.</p>
-      </div>
-    </div>
-  );
+// Guard Específico para Módulos Filhos
+function PermissionGuard({ modulo, children }: { modulo: keyof typeof PERMISSOES; children: React.ReactNode }) {
+  const user = useAuth((s) => s.user);
+
+  if (!user) return <Navigate to="/autenticacao" replace />;
+
+  const temAcesso = PERMISSOES[modulo](user.role);
+
+  if (!temAcesso) {
+    return <Navigate to="/admin/academy" replace />;
+  }
+
+  return <>{children}</>;
 }
 
-// ==========================================
-// 6. COMPONENTE PRINCIPAL DO APP
-// ==========================================
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         {/* Rotas Públicas */}
         <Route path="/" element={<Navigate to="/autenticacao" replace />} />
-        <Route path="/login" element={<Navigate to="/autenticacao" replace />} />
         <Route path="/autenticacao" element={<Login />} />
 
-        {/* Rotas Privadas (Admin) */}
-        <Route path="/admin" element={<Protected />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          
-          {/* PAINEL DE CONFIGURAÇÕES (MOTOR DE REGRAS) */}
-          <Route path="motor-de-regras" element={<PainelConfiguracoes />}>
-            <Route index element={<Navigate to="empresas" replace />} /> 
-            
-            {/* Sub-rotas modulares */}
-            <Route path="empresas" element={<div className="text-slate-400 text-xs italic">Módulo de Empresas em construção.</div>} />
-            <Route path="equipes" element={<ModuloHierarquiaWrapper />} />
-            <Route path="semanal" element={<ModuloSemanalWrapper />} />
-            <Route path="mensal" element={<ModuloMensalWrapper />} />
-            <Route path="backup" element={<div className="text-slate-400 text-xs italic">Módulo de Backup em construção.</div>} />
+        {/* Único Bloco Pai Protegido para a rota /admin */}
+        <Route path="/admin" element={<PrivateLayout />}>
+          <Route index element={<Navigate to="academy" replace />} />
+
+          {/* 1. MÓDULO ACADEMY */}
+          <Route path="academy" element={
+            <PermissionGuard modulo="academy">
+              <AcademyPage />
+            </PermissionGuard>
+          } />
+
+          {/* 2. MÓDULO DASHBOARD/PRODUÇÃO */}
+          <Route path="dashboard" element={
+            <PermissionGuard modulo="producao">
+              <Dashboard />
+            </PermissionGuard>
+          } />
+          <Route path="equipes" element={
+            <PermissionGuard modulo="producao">
+              <div className="text-white p-6">Visualização de Equipes.</div>
+            </PermissionGuard>
+          } />
+
+          {/* 3. MÓDULO FECHAMENTOS */}
+          <Route path="fechamentos">
+            <Route index element={
+              <PermissionGuard modulo="fechamento">
+                <FechamentosHub />
+              </PermissionGuard>
+            } />
+            <Route path="tecnico" element={
+              <PermissionGuard modulo="fechamento">
+                <FechamentoTecnico />
+              </PermissionGuard>
+            } />
           </Route>
 
-          <Route path="equipes" element={<Placeholder name="Equipes" />} />
-          
-          {/* GESTÃO FLUIDA DE FECHAMENTOS */}
-          <Route path="fechamentos">
-            {/* Renderiza o HUB principal (/admin/fechamentos) */}
-            <Route index element={<FechamentosHub />} />
-            
-            {/* Sub-rotas independentes prontas para as telas internas */}
-            {/* 🔥 CORRIGIDO: Removido o 'admin/' e injetado o componente real */}
-            <Route path="tecnico" element={<FechamentoTecnico />} />
-            
-            <Route path="retirada" element={<Placeholder name="Fechamento Retirada" />} />
-            <Route path="vendas" element={<Placeholder name="Vendas Autônomos" />} />
-            <Route path="comercial" element={<Placeholder name="Fechamento Comercial" />} />
-            <Route path="producao" element={<Placeholder name="Produção Técnicos" />} />
-            <Route path="comercial-pj" element={<Placeholder name="Comercial PJ" />} />
-            <Route path="cobranca" element={<Placeholder name="Cobrança" />} />
+          {/* 4. PAINEL DE CONFIGURAÇÕES */}
+          <Route path="configuracoes" element={
+            <PermissionGuard modulo="configuracoes">
+              <PainelConfiguracoes />
+            </PermissionGuard>
+          }>
+            <Route index element={<Navigate to="empresas" replace />} />
+
+            {/* Sub-rotas ligadas aos componentes da pasta features */}
+            <Route path="empresas" element={<div className="text-slate-400 text-xs italic">Módulo de Empresas.</div>} />
+            <Route path="equipes" element={<ModuloHierarquia />} />
+            <Route path="semanal" element={<ModuloSemanal />} />
+
+            {/* Corrigido para repassar propriedades vazias iniciais de fallback, evitando quebras */}
+            <Route path="mensal" element={<ModuloMensal jsonOriginal={{}} onSalvar={() => { }} />} />
+
+            <Route path="acessos" element={<ModuloAcesso users={[]} onUpdateUsers={() => { }} />} />
+            <Route path="backup" element={<div className="text-slate-400 text-xs italic">Módulo de Exportação e Backup.</div>} />
           </Route>
         </Route>
 
-        {/* Fallback Global */}
-        <Route path="*" element={<Navigate to="/admin" replace />} />
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/autenticacao" replace />} />
       </Routes>
     </BrowserRouter>
   );

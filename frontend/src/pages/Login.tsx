@@ -10,7 +10,7 @@ import { Input } from "../components/ui/Input";
 import { Logo } from "../components/common/Logo";
 import { loginSchema, type LoginFormData } from "../utils/validators/auth";
 import usersData from "../data/users.json";
-import { useAuth } from "../stores/auth.store";
+import { useAuth, type Role } from "../stores/auth.store"; // 👈 Atualizado para refletir a nova store
 import type { User } from "../engine/types";
 
 /* ---------------- Tipos internos ---------------- */
@@ -60,7 +60,9 @@ function Toast({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 
 export default function Login() {
   const navigate = useNavigate();
-  const setUser = useAuth((s) => s.setUser);
+
+  // 🎯 SOLUÇÃO DO BUG: Mapeando 'login' da store para a chamada antiga 'setUser' usada no formulário
+  const setUser = useAuth((s) => s.login);
   const currentUser = useAuth((s) => s.user);
   const [toast, setToast] = useState<Toast | null>(null);
 
@@ -74,7 +76,7 @@ export default function Login() {
     defaultValues: { tenantId: "amazonet", email: "", password: "" },
   });
 
-  // Se já existir sessão válida, manda direto pro admin
+  // Se já existir sessão válida, manda direto pro fluxo correto do admin
   useEffect(() => {
     if (currentUser) {
       navigate("/admin", { replace: true });
@@ -109,18 +111,28 @@ export default function Login() {
       // IMPORTANTE: nunca guardar password no estado
       const { password: _password, ...sessionUser } = found;
 
-      // Validação extra de role (proteção contra JSON malicioso)
-      if (sessionUser.role !== "ADMIN" && sessionUser.role !== "OPERADOR") {
+      // 🎯 ATUALIZAÇÃO DA MATRIZ: Permitir todas as Roles criadas para o cenário de testes
+      const rolesPermitidas: Role[] = ["ADMIN", "GERENTE", "SUPERVISORA", "LIDER", "TECNICO", "ESTUDANTE"];
+
+      if (!rolesPermitidas.includes(sessionUser.role as Role)) {
         setError("root", {
           type: "manual",
-          message: "Perfil de usuário sem permissão.",
+          message: "Perfil de usuário não parametrizado no sistema.",
         });
         return;
       }
 
+      // Dispara o login com o método corrigido
       setUser(sessionUser as User);
       setToast({ type: "success", message: `Bem-vindo, ${sessionUser.name}!` });
-      navigate("/admin", { replace: true });
+
+      // Se for estudante, pode forçar o redirecionamento direto para a aba dele
+      if (sessionUser.role === "ESTUDANTE" || sessionUser.role === "TECNICO") {
+        navigate("/admin/academy", { replace: true });
+      } else {
+        navigate("/admin", { replace: true });
+      }
+
     } catch (err) {
       console.error(err);
       setError("root", {
@@ -150,7 +162,6 @@ export default function Login() {
               automação de regras de negócio complexas.
             </p>
           </div>
-
         </section>
 
         {/* LADO DIREITO: Formulário */}

@@ -6,6 +6,48 @@
         "email": "processos@amazonett.com.br",
         "password": "Teste1234",
         "role": "ADMIN",
-        "active": true
+        "active": true,
+        "telas_fechamento": [
+            "mensal_comercial",
+            "semanal_autonomo",
+            "semanal_tecnico",
+            "mensal_pj"
+        ]
+    },
+    {
+        "id": 2,
+        "tenantId": "amazonet",
+        "name": "Estudante",
+        "email": "estudante@amazonett.com.br",
+        "password": "Teste1234",
+        "role": "ESTUDANTE",
+        "active": true,
+        "telas_fechamento": []
+    },
+    {
+        "id": 3,
+        "tenantId": "amazonet",
+        "name": "Usuário A",
+        "email": "usuarioa@amazonett.com.br",
+        "password": "Teste1234",
+        "role": "OPERADOR",
+        "active": true,
+        "telas_fechamento": [
+            "mensal_comercial",
+            "semanal_autonomo"
+        ]
+    },
+    {
+        "id": 4,
+        "tenantId": "amazonet",
+        "name": "Usuário B",
+        "email": "usuariob@amazonett.com.br",
+        "password": "Teste1234",
+        "role": "OPERADOR",
+        "active": true,
+        "telas_fechamento": [
+            "semanal_tecnico",
+            "mensal_pj"
+        ]
     }
 ]
