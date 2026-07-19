@@ -14,7 +14,7 @@ export function Header() {
   return (
     <header className="h-16 bg-[#090d16]/60 border-b border-slate-900 px-6 flex items-center justify-between shrink-0 backdrop-blur">
       <span className="text-sm font-semibold tracking-wide text-white font-mono">
-          Komiss<span className="text-[24px] text-indigo-400 font-sans">X</span>
+          Amazonet<span className="text-[24px] text-indigo-400 font-sans">Hub</span>
         </span>
       <div className="flex items-center gap-4">
         <button className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-900/50">
@@ -26,7 +26,7 @@ export function Header() {
               {user?.name ?? "Admin Geral"}
             </p>
             <p className="text-[13px] text-slate-500 font-mono mt-1">
-              {user?.email ?? "admin@komissx.com"}
+              {user?.email ?? "admin@amazonet.com"}
             </p>
           </div>
           <div className="h-8 w-8 rounded-full bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-semibold text-xs">

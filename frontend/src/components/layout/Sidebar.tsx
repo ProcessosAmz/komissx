@@ -13,10 +13,11 @@ export function Sidebar() {
 
   const allItems = [
     { label: "Dashboard", path: "/admin/dashboard", modulo: "producao" as const, icon: LayoutDashboard },
+    { label: "Fechamentos", path: "/admin/fechamentos", modulo: "fechamento" as const, icon: CalendarCheck },
     { label: "Academy", path: "/admin/academy", modulo: "academy" as const, icon: GraduationCap },
-    { label: "Configurações", path: "/admin/configuracoes", modulo: "configuracoes" as const, icon: Cpu },
-    { label: "Equipes", path: "/admin/equipes", modulo: "producao" as const, icon: Users },
-    { label: "Fechamentos", path: "/admin/fechamentos", modulo: "fechamento" as const, icon: CalendarCheck }
+    { label: "Configurações", path: "/admin/configuracoes", modulo: "configuracoes" as const, icon: Cpu }
+    
+    
   ];
 
   // Filtra os itens do menu com base nas permissões reais do perfil logado
@@ -31,7 +32,7 @@ export function Sidebar() {
     <aside className="app-sidebar w-64 shrink-0 bg-[#060a13]/70 border-r border-slate-900 flex flex-col justify-between">
       <div>
         <div className="h-16 px-6 flex items-center gap-1 border-b border-slate-800">
-          <Logo className="h-full" />
+          <Logo className="h-18 w-auto" />
         </div>
 
         {/* Identificador Visual do Perfil Atual (Ótimo para debug/testes) */}

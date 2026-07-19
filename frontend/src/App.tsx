@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth, PERMISSOES } from "@/stores/auth.store";
 
 import Login from "./pages/Login";
@@ -6,37 +6,62 @@ import Dashboard from "./pages/Dashboard";
 import PainelConfiguracoes from "./pages/PainelConfiguracoes";
 import AcademyPage from "./pages/Academy";
 import { DefaultLayout } from "./layouts/DefaultLayout";
+import AdminLayout from "./layouts/AdminLayout"; 
 
-// IMPORTAÇÕES DOS FECHAMENTOS
-import FechamentosHub from "./pages/Fechamentos";
-import FechamentoTecnico from "./pages/Fechamentos/tecnico";
+import HubFechamentos from './pages/Fechamentos';
+import Tecnicos from './pages/Fechamentos/semanal/tecnicos';
+import Retirada from './pages/Fechamentos/semanal/retirada';
+import Autonomos from './pages/Fechamentos/semanal/autonomos';
 
-// IMPORTAÇÕES CORRIGIDAS (Utilizando chaves {} para exports nomeados)
+import Comercial from './pages/Fechamentos/mensal/comercial';
+import Producao from './pages/Fechamentos/mensal/producao';
+import ComercialPJ from './pages/Fechamentos/mensal/comercial-pj';
+import Cobranca from './pages/Fechamentos/mensal/cobranca';
+
 import { ModuloHierarquia } from "./features/configuracoes/components/ModuloHierarquia";
 import { ModuloSemanal } from "./features/configuracoes/components/ModuloSemanal";
 import { ModuloMensal } from "./features/configuracoes/components/ModuloMensal";
-import ModuloAcesso from "./features/configuracoes/components/ModuloAcesso"; // Mantido padrão (export default)
+import ModuloAcesso from "./features/configuracoes/components/ModuloAcesso";
 
-// Guard de Autenticação Global e Rota Base Admin
-function PrivateLayout() {
+// Componente inteligente de Redirecionamento Inicial Pós-Login
+function RootRedirect() {
   const user = useAuth((s) => s.user);
-
   if (!user) return <Navigate to="/autenticacao" replace />;
 
+  // Descobre dinamicamente qual a primeira tela que este usuário tem direito de ver
+  if (PERMISSOES.producao(user.role)) return <Navigate to="dashboard" replace />;
+  if (PERMISSOES.academy(user.role)) return <Navigate to="academy" replace />;
+  if (PERMISSOES.fechamento(user.role)) return <Navigate to="fechamentos" replace />;
+  
+  return <Navigate to="/autenticacao" replace />;
+}
+
+function PrivateLayout() {
+  const user = useAuth((s) => s.user);
+  if (!user) return <Navigate to="/autenticacao" replace />;
   return <DefaultLayout />;
 }
 
-// Guard Específico para Módulos Filhos
 function PermissionGuard({ modulo, children }: { modulo: keyof typeof PERMISSOES; children: React.ReactNode }) {
   const user = useAuth((s) => s.user);
-
   if (!user) return <Navigate to="/autenticacao" replace />;
 
   const temAcesso = PERMISSOES[modulo](user.role);
-
   if (!temAcesso) {
-    return <Navigate to="/admin/academy" replace />;
+    // Se não tem acesso, joga para a raiz inteligente decidir para onde ele vai
+    return <Navigate to="/admin" replace />;
   }
+
+  return <>{children}</>;
+}
+
+function TelaFechamentoGuard({ tela, children }: { tela: string; children: React.ReactNode }) {
+  const user = useAuth((s) => s.user);
+  if (!user) return <Navigate to="/autenticacao" replace />;
+  if (user.role === 'ADMIN') return <>{children}</>;
+
+  const temPermissao = user.telas_fechamento?.includes(tela);
+  if (!temPermissao) return <Navigate to="/admin/fechamentos" replace />;
 
   return <>{children}</>;
 }
@@ -45,22 +70,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rotas Públicas */}
         <Route path="/" element={<Navigate to="/autenticacao" replace />} />
         <Route path="/autenticacao" element={<Login />} />
 
-        {/* Único Bloco Pai Protegido para a rota /admin */}
         <Route path="/admin" element={<PrivateLayout />}>
-          <Route index element={<Navigate to="academy" replace />} />
+          {/* O index agora calcula dinamicamente para onde o usuário deve ir */}
+          <Route index element={<RootRedirect />} />
 
-          {/* 1. MÓDULO ACADEMY */}
-          <Route path="academy" element={
-            <PermissionGuard modulo="academy">
-              <AcademyPage />
-            </PermissionGuard>
-          } />
-
-          {/* 2. MÓDULO DASHBOARD/PRODUÇÃO */}
+          {/* 1. MÓDULO DASHBOARD/PRODUÇÃO */}
           <Route path="dashboard" element={
             <PermissionGuard modulo="producao">
               <Dashboard />
@@ -72,18 +89,33 @@ export default function App() {
             </PermissionGuard>
           } />
 
+          {/* 2. MÓDULO ACADEMY */}
+          <Route path="academy" element={
+            <PermissionGuard modulo="academy">
+              <AcademyPage />
+            </PermissionGuard>
+          } />
+
           {/* 3. MÓDULO FECHAMENTOS */}
-          <Route path="fechamentos">
-            <Route index element={
-              <PermissionGuard modulo="fechamento">
-                <FechamentosHub />
-              </PermissionGuard>
-            } />
-            <Route path="tecnico" element={
-              <PermissionGuard modulo="fechamento">
-                <FechamentoTecnico />
-              </PermissionGuard>
-            } />
+          <Route path="fechamentos" element={
+            <PermissionGuard modulo="fechamento">
+              <Outlet />
+            </PermissionGuard>
+          }>
+            <Route index element={<HubFechamentos />} />
+            <Route element={<AdminLayout />}>
+              <Route path="semanal">
+                <Route path="tecnicos" element={<TelaFechamentoGuard tela="semanal_tecnico"><Tecnicos /></TelaFechamentoGuard>} />
+                <Route path="retirada" element={<TelaFechamentoGuard tela="semanal_retirada"><Retirada /></TelaFechamentoGuard>} />
+                <Route path="autonomos" element={<TelaFechamentoGuard tela="semanal_autonomo"><Autonomos /></TelaFechamentoGuard>} />
+              </Route>
+              <Route path="mensal">
+                <Route path="comercial" element={<TelaFechamentoGuard tela="mensal_comercial"><Comercial /></TelaFechamentoGuard>} />
+                <Route path="producao" element={<TelaFechamentoGuard tela="mensal_producao"><Producao /></TelaFechamentoGuard>} />
+                <Route path="comercial-pj" element={<TelaFechamentoGuard tela="mensal_pj"><ComercialPJ /></TelaFechamentoGuard>} />
+                <Route path="cobranca" element={<TelaFechamentoGuard tela="mensal_cobranca"><Cobranca /></TelaFechamentoGuard>} />
+              </Route>
+            </Route>
           </Route>
 
           {/* 4. PAINEL DE CONFIGURAÇÕES */}
@@ -93,21 +125,15 @@ export default function App() {
             </PermissionGuard>
           }>
             <Route index element={<Navigate to="empresas" replace />} />
-
-            {/* Sub-rotas ligadas aos componentes da pasta features */}
             <Route path="empresas" element={<div className="text-slate-400 text-xs italic">Módulo de Empresas.</div>} />
             <Route path="equipes" element={<ModuloHierarquia />} />
             <Route path="semanal" element={<ModuloSemanal />} />
-
-            {/* Corrigido para repassar propriedades vazias iniciais de fallback, evitando quebras */}
             <Route path="mensal" element={<ModuloMensal jsonOriginal={{}} onSalvar={() => { }} />} />
-
             <Route path="acessos" element={<ModuloAcesso users={[]} onUpdateUsers={() => { }} />} />
             <Route path="backup" element={<div className="text-slate-400 text-xs italic">Módulo de Exportação e Backup.</div>} />
           </Route>
         </Route>
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/autenticacao" replace />} />
       </Routes>
     </BrowserRouter>

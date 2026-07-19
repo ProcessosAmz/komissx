@@ -9,17 +9,17 @@ import "../components/styles/Login.css";
 import { Input } from "../components/ui/Input";
 import { Logo } from "../components/common/Logo";
 import { loginSchema, type LoginFormData } from "../utils/validators/auth";
-import usersData from "../data/users.json";
-import { useAuth, type Role } from "../stores/auth.store"; // 👈 Atualizado para refletir a nova store
+import { useAuth, type Role, mockUsuariosTestes } from "../stores/auth.store"; // 🚀 CORREÇÃO: Importando a massa de dados atualizada da store
 import type { User } from "../engine/types";
 
 /* ---------------- Tipos internos ---------------- */
 
 interface UserRecord extends User {
-  password: string;
+  password?: string;
 }
 
-const USERS = usersData as UserRecord[];
+// 🚀 CORREÇÃO: Agora o Login lê os mocks corretos que possuem os operadores A e B
+const USERS = mockUsuariosTestes as UserRecord[];
 
 /* ---------------- Toast inline ---------------- */
 
@@ -61,7 +61,6 @@ function Toast({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 export default function Login() {
   const navigate = useNavigate();
 
-  // 🎯 SOLUÇÃO DO BUG: Mapeando 'login' da store para a chamada antiga 'setUser' usada no formulário
   const setUser = useAuth((s) => s.login);
   const currentUser = useAuth((s) => s.user);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -76,7 +75,6 @@ export default function Login() {
     defaultValues: { tenantId: "amazonet", email: "", password: "" },
   });
 
-  // Se já existir sessão válida, manda direto pro fluxo correto do admin
   useEffect(() => {
     if (currentUser) {
       navigate("/admin", { replace: true });
@@ -85,7 +83,6 @@ export default function Login() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Pequeno delay para UX (sensação de "autenticando")
       await new Promise((r) => setTimeout(r, 400));
 
       const tenantId = data.tenantId.trim().toLowerCase();
@@ -108,11 +105,10 @@ export default function Login() {
         return;
       }
 
-      // IMPORTANTE: nunca guardar password no estado
       const { password: _password, ...sessionUser } = found;
 
-      // 🎯 ATUALIZAÇÃO DA MATRIZ: Permitir todas as Roles criadas para o cenário de testes
-      const rolesPermitidas: Role[] = ["ADMIN", "GERENTE", "SUPERVISORA", "LIDER", "TECNICO", "ESTUDANTE"];
+      // 🚀 CORREÇÃO CRÍTICA: Adicionado 'OPERADOR' na lista permitida pelo formulário
+      const rolesPermitidas: Role[] = ["ADMIN", "GERENTE", "SUPERVISORA", "LIDER", "TECNICO", "ESTUDANTE", "OPERADOR"];
 
       if (!rolesPermitidas.includes(sessionUser.role as Role)) {
         setError("root", {
@@ -122,16 +118,11 @@ export default function Login() {
         return;
       }
 
-      // Dispara o login com o método corrigido
       setUser(sessionUser as User);
       setToast({ type: "success", message: `Bem-vindo, ${sessionUser.name}!` });
 
-      // Se for estudante, pode forçar o redirecionamento direto para a aba dele
-      if (sessionUser.role === "ESTUDANTE" || sessionUser.role === "TECNICO") {
-        navigate("/admin/academy", { replace: true });
-      } else {
-        navigate("/admin", { replace: true });
-      }
+      // O redirecionamento genérico '/admin' vai bater no RootRedirect inteligente que criamos no App.tsx
+      navigate("/admin", { replace: true });
 
     } catch (err) {
       console.error(err);
@@ -148,14 +139,11 @@ export default function Login() {
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       <div className="login-shell">
-        {/* LADO ESQUERDO: Branding */}
         <section className="login-brand" aria-label="Informações institucionais">
           <div className="login-logo">
             <Logo />
           </div>
-
           <div className="logo-divider" aria-hidden="true" />
-
           <div className="brand-copy">
             <p>
               Plataforma corporativa para comissões e
@@ -164,7 +152,6 @@ export default function Login() {
           </div>
         </section>
 
-        {/* LADO DIREITO: Formulário */}
         <section className="login-panel" aria-label="Formulário de acesso">
           <div className="login-card">
             <h2>Acessar a Plataforma</h2>

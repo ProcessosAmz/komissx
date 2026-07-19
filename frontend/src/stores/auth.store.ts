@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 // Definição estrita dos papéis com base na sua matriz de negócio
-export type Role = 'ADMIN' | 'GERENTE' | 'SUPERVISORA' | 'LIDER' | 'TECNICO' | 'ESTUDANTE';
+export type Role = 'ADMIN' | 'GERENTE' | 'SUPERVISORA' | 'LIDER' | 'TECNICO' | 'ESTUDANTE' | 'OPERADOR';
 
 export interface User {
     id: number;
@@ -10,6 +10,7 @@ export interface User {
     email: string;
     role: Role;
     active: boolean;
+    telas_fechamento?: string[]; // 🧠 CORREÇÃO: Adicionado campo opcional para evitar o erro 500 no TypeScript/Vite
 }
 
 interface AuthState {
@@ -30,9 +31,11 @@ export const useAuth = create<AuthState>((set) => ({
  */
 export const PERMISSOES = {
     academy: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'LIDER', 'TECNICO', 'ESTUDANTE'].includes(role),
-    producao: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'LIDER', 'TECNICO'].includes(role),
-    fechamento: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA'].includes(role),
-    configuracoes: (role: Role) => ['ADMIN', 'GERENTE'].includes(role), // Gerente com acesso Parcial/Visualização
+    // 🚀 CORREÇÃO: Adicionado 'OPERADOR' para que o Usuário A e B consigam acessar o Dashboard imediatamente após logar!
+    producao: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'LIDER', 'TECNICO', 'OPERADOR'].includes(role), 
+    // 🚀 CORREÇÃO: Adicionado 'OPERADOR' aqui também para que consigam ler a rota raiz do módulo de fechamentos
+    fechamento: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'OPERADOR'].includes(role),
+    configuracoes: (role: Role) => ['ADMIN', 'GERENTE'].includes(role), 
     administracao: (role: Role) => ['ADMIN'].includes(role),
 };
 
@@ -47,7 +50,13 @@ export const mockUsuariosTestes: (User & { password?: string })[] = [
         email: "processos@amazonett.com.br",
         password: "Teste1234",
         role: "ADMIN",
-        active: true
+        active: true,
+        telas_fechamento: [
+            "mensal_comercial",
+            "semanal_autonomo",
+            "semanal_tecnico",
+            "mensal_pj"
+        ]
     },
     {
         id: 2,
@@ -56,7 +65,8 @@ export const mockUsuariosTestes: (User & { password?: string })[] = [
         email: "gerente@amazonett.com.br",
         password: "Teste1234",
         role: "GERENTE",
-        active: true
+        active: true,
+        telas_fechamento: []
     },
     {
         id: 3,
@@ -65,7 +75,8 @@ export const mockUsuariosTestes: (User & { password?: string })[] = [
         email: "supervisora@mania.com.br",
         password: "Teste1234",
         role: "SUPERVISORA",
-        active: true
+        active: true,
+        telas_fechamento: []
     },
     {
         id: 4,
@@ -74,7 +85,8 @@ export const mockUsuariosTestes: (User & { password?: string })[] = [
         email: "lider@amazonett.com.br",
         password: "Teste1234",
         role: "LIDER",
-        active: true
+        active: true,
+        telas_fechamento: []
     },
     {
         id: 5,
@@ -83,7 +95,8 @@ export const mockUsuariosTestes: (User & { password?: string })[] = [
         email: "tecnico@amazonett.com.br",
         password: "Teste1234",
         role: "TECNICO",
-        active: true
+        active: true,
+        telas_fechamento: []
     },
     {
         id: 6,
@@ -92,6 +105,34 @@ export const mockUsuariosTestes: (User & { password?: string })[] = [
         email: "estudante@mania.com.br",
         password: "Teste1234",
         role: "ESTUDANTE",
-        active: true
+        active: true,
+        telas_fechamento: []
+    },
+    // 👥 Incluídos Usuários A e B no Mock oficial da Store para testes consistentes
+    {
+        id: 7,
+        tenantId: "amazonet",
+        name: "Usuário A",
+        email: "usuarioa@amazonett.com.br",
+        password: "Teste1234",
+        role: "OPERADOR",
+        active: true,
+        telas_fechamento: [
+            "mensal_comercial",
+            "semanal_autonomo"
+        ]
+    },
+    {
+        id: 8,
+        tenantId: "amazonet",
+        name: "Usuário B",
+        email: "usuariob@amazonett.com.br",
+        password: "Teste1234",
+        role: "OPERADOR",
+        active: true,
+        telas_fechamento: [
+            "semanal_tecnico",
+            "mensal_pj"
+        ]
     }
 ];
