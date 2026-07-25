@@ -1,5 +1,6 @@
-import React from 'react';
-import { Curso, Aula } from '../types';
+import React, { useState } from 'react';
+import { Curso, Aula, Modulo } from '../types';
+import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 
 interface AulaSidebarProps {
     curso: Curso;
@@ -8,41 +9,103 @@ interface AulaSidebarProps {
 }
 
 export const AulaSidebar: React.FC<AulaSidebarProps> = ({ curso, aulaAtiva, onSelecionarAula }) => {
-    return (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 h-[calc(100vh-250px)] md:h-auto overflow-y-auto">
-            <h3 className="font-bold text-white text-lg border-b border-slate-800 pb-3 mb-4">
-                Aulas do Curso
-            </h3>
-            <div className="space-y-2">
-                {curso.aulas.map((aula) => {
-                    const isAtiva = aula.id === aulaAtiva.id;
-                    return (
-                        <button
-                            key={aula.id}
-                            onClick={() => onSelecionarAula(aula)}
-                            className={`w-full text-left p-3 rounded-lg transition-all flex items-center justify-between gap-3 text-sm ${isAtiva
-                                    ? 'bg-violet-600/20 border border-violet-500/40 text-violet-200'
-                                    : 'bg-slate-950/40 border border-transparent hover:bg-slate-800/40 text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            <div className="flex flex-col gap-1 min-w-0">
-                                <span className={`font-semibold line-clamp-1 ${isAtiva ? 'text-white' : ''}`}>
-                                    {aula.ordem}. {aula.titulo}
-                                </span>
-                                <span className="text-xs text-slate-500">{aula.duracao}</span>
-                            </div>
+    // 🛡️ Garante que modulos sempre seja um array, mesmo se curso ou curso.modulos vierem indefinidos
+    const modulos = curso?.modulos || [];
 
-                            {aula.concluida && (
-                                <span className="bg-emerald-500/20 text-emerald-400 p-1 rounded-full shrink-0">
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
-                            )}
-                        </button>
-                    );
-                })}
+    const [modulosAbertos, setModulosAbertos] = useState<Record<string, boolean>>(() => {
+        // Uso seguro do Optional Chaining (?.)
+        const moduloInicial = modulos.find(m => m?.aulas?.some(a => a?.id === aulaAtiva?.id));
+        return moduloInicial
+            ? { [moduloInicial.id]: true }
+            : modulos[0] ? { [modulos[0].id]: true } : {};
+    });
+
+    const toggleModulo = (id: string) => {
+        setModulosAbertos(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const calcularProgressoModulo = (modulo: Modulo) => {
+        if (!modulo?.aulas?.length) return 0;
+        const concluidas = modulo.aulas.filter(a => a.concluida).length;
+        return Math.round((concluidas / modulo.aulas.length) * 100);
+    };
+
+    // Mensagem amigável caso não existam módulos carregados
+    if (!modulos.length) {
+        return (
+            <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 text-sm text-center">
+                Nenhum módulo encontrado para este curso.
             </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3 custom-scrollbar overflow-y-auto max-h-[calc(100vh-120px)] pr-1">
+            {modulos.map((modulo) => {
+                const isOpen = !!modulosAbertos[modulo.id];
+                const progresso = calcularProgressoModulo(modulo);
+
+                return (
+                    <div key={modulo.id} className="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden transition-all">
+                        {/* Cabeçalho do Módulo */}
+                        <button
+                            onClick={() => toggleModulo(modulo.id)}
+                            className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-850 text-left transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-violet-400 border border-slate-700 shrink-0">
+                                    {progresso}%
+                                </div>
+                                <span className="font-bold text-white text-sm tracking-tight">{modulo.titulo}</span>
+                            </div>
+                            {isOpen ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                        </button>
+
+                        {/* Lista de Aulas do Módulo */}
+                        {isOpen && (
+                            <div className="p-4 pt-1 border-t border-slate-800/60 bg-slate-950/40 space-y-1 relative">
+                                {(modulo.aulas || []).map((aula, idx) => {
+                                    const isAtiva = aula.id === aulaAtiva?.id;
+                                    const isLast = idx === modulo.aulas.length - 1;
+
+                                    return (
+                                        <div key={aula.id} className="relative flex items-start gap-3 pl-2 py-2">
+                                            {!isLast && (
+                                                <div className="absolute left-[17px] top-[28px] bottom-[-8px] w-[2px] bg-slate-800 border-l border-dashed border-slate-700" />
+                                            )}
+
+                                            <div className="z-10 mt-0.5 shrink-0">
+                                                {aula.concluida ? (
+                                                    <div className="w-5 h-5 rounded-full bg-slate-900 border-2 border-indigo-500 flex items-center justify-center text-indigo-400">
+                                                        <Check size={12} strokeWidth={3} />
+                                                    </div>
+                                                ) : isAtiva ? (
+                                                    <div className="w-5 h-5 rounded-full bg-violet-600 border-2 border-violet-400 animate-pulse" />
+                                                ) : (
+                                                    <div className="w-5 h-5 rounded-full bg-slate-950 border-2 border-slate-700" />
+                                                )}
+                                            </div>
+
+                                            <button
+                                                onClick={() => onSelecionarAula(aula)}
+                                                className={`flex-1 text-left rounded-lg p-2 transition-all ${isAtiva
+                                                        ? 'text-indigo-400 font-bold bg-violet-600/10'
+                                                        : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
+                                                    }`}
+                                            >
+                                                <p className="text-sm font-medium leading-snug">{aula.titulo}</p>
+                                                {aula.duracao && (
+                                                    <span className="text-[11px] text-slate-500">{aula.duracao}</span>
+                                                )}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 };

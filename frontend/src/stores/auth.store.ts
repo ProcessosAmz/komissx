@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // Definição estrita dos papéis com base na sua matriz de negócio
 export type Role = 'ADMIN' | 'GERENTE' | 'SUPERVISORA' | 'LIDER' | 'TECNICO' | 'ESTUDANTE' | 'OPERADOR';
@@ -10,7 +11,7 @@ export interface User {
     email: string;
     role: Role;
     active: boolean;
-    telas_fechamento?: string[]; // 🧠 CORREÇÃO: Adicionado campo opcional para evitar o erro 500 no TypeScript/Vite
+    telas_fechamento?: string[]; // 🧠 Adicionado campo opcional para evitar o erro 500 no TypeScript/Vite
 }
 
 interface AuthState {
@@ -19,11 +20,19 @@ interface AuthState {
     logout: () => void;
 }
 
-export const useAuth = create<AuthState>((set) => ({
-    user: null, // Mude para um dos usuários da lista abaixo para testar perfis diferentes direto no F5
-    login: (user) => set({ user }),
-    logout: () => set({ user: null }),
-}));
+export const useAuth = create<AuthState>()(
+    persist(
+        (set) => ({
+            user: null,
+            login: (user) => set({ user }),
+            logout: () => set({ user: null }),
+        }),
+        {
+            name: "@komissx:auth", // Chave no localStorage onde o usuário será mantido
+            storage: createJSONStorage(() => localStorage),
+        }
+    )
+);
 
 /**
  * Sistema de Controle de Acesso Baseado em Papéis (RBAC)
@@ -31,11 +40,9 @@ export const useAuth = create<AuthState>((set) => ({
  */
 export const PERMISSOES = {
     academy: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'LIDER', 'TECNICO', 'ESTUDANTE'].includes(role),
-    // 🚀 CORREÇÃO: Adicionado 'OPERADOR' para que o Usuário A e B consigam acessar o Dashboard imediatamente após logar!
-    producao: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'LIDER', 'TECNICO', 'OPERADOR'].includes(role), 
-    // 🚀 CORREÇÃO: Adicionado 'OPERADOR' aqui também para que consigam ler a rota raiz do módulo de fechamentos
+    producao: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'LIDER', 'TECNICO', 'OPERADOR'].includes(role),
     fechamento: (role: Role) => ['ADMIN', 'GERENTE', 'SUPERVISORA', 'OPERADOR'].includes(role),
-    configuracoes: (role: Role) => ['ADMIN', 'GERENTE'].includes(role), 
+    configuracoes: (role: Role) => ['ADMIN', 'GERENTE'].includes(role),
     administracao: (role: Role) => ['ADMIN'].includes(role),
 };
 
@@ -108,7 +115,6 @@ export const mockUsuariosTestes: (User & { password?: string })[] = [
         active: true,
         telas_fechamento: []
     },
-    // 👥 Incluídos Usuários A e B no Mock oficial da Store para testes consistentes
     {
         id: 7,
         tenantId: "amazonet",

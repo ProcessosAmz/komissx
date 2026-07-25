@@ -6,11 +6,39 @@ export function useAcademy(tenant: 'AMAZONET' | 'MANIA') {
     const [aulaAtiva, setAulaAtiva] = useState<Aula | null>(null);
     const [loadingProgresso, setLoadingProgresso] = useState(false);
 
-    const selecionarCurso = (curso: Curso) => {
-        setCursoAtivo(curso);
-        if (curso.aulas.length > 0) {
-            setAulaAtiva(curso.aulas[0]);
+    // Chave única por Tenant no localStorage para salvar o progresso
+    const STORAGE_KEY = `@academy:progresso:${tenant}`;
+
+    // Helper para buscar as aulas concluídas salvas no JSON do localStorage
+    const getAulasConcluidas = (): string[] => {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        } catch {
+            return [];
         }
+    };
+
+    const selecionarCurso = (curso: Curso) => {
+        const concluidas = getAulasConcluidas();
+
+        // Aplica o status de concluído salvo localmente nas aulas do curso
+        const cursoComProgresso: Curso = {
+            ...curso,
+            modulos: (curso.modulos || []).map((modulo) => ({
+                ...modulo,
+                aulas: (modulo.aulas || []).map((aula) => ({
+                    ...aula,
+                    concluida: concluidas.includes(aula.id),
+                })),
+            })),
+        };
+
+        setCursoAtivo(cursoComProgresso);
+
+        // Define a primeira aula com o estado atualizado
+        const primeiraAula = cursoComProgresso?.modulos?.[0]?.aulas?.[0] || null;
+        setAulaAtiva(primeiraAula);
     };
 
     const selecionarAula = (aula: Aula) => {
@@ -22,30 +50,41 @@ export function useAcademy(tenant: 'AMAZONET' | 'MANIA') {
         setLoadingProgresso(true);
 
         try {
-            // Simulação da chamada de API para o NestJS enviando o Tenant dinâmico
-            const payload: ProgressoPayload = { aulaId, cursoId, tenant };
+            // 1. Identifica o módulo correspondente para montar o payload
+            const moduloAtual = cursoAtivo?.modulos?.find((m) =>
+                m.aulas?.some((a) => a.id === aulaId)
+            );
 
-            const response = await fetch('/api/academy/progresso', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-tenant-id': tenant, // Header para controle do multi-tenant no NestJS
-                },
-                body: JSON.stringify(payload),
-            });
+            const payload: ProgressoPayload = {
+                aulaId,
+                cursoId,
+                moduloId: moduloAtual?.id,
+                tenant,
+            };
 
-            if (!response.ok) throw new Error('Falha ao salvar progresso');
+            // 2. Salva localmente em formato JSON no localStorage (simula o DB)
+            const concluidas = getAulasConcluidas();
+            if (!concluidas.includes(aulaId)) {
+                concluidas.push(aulaId);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(concluidas));
+            }
 
-            // Atualiza o estado visual da aula concluída localmente de forma otimista
+            console.log('[LMS Storage] Progresso armazenado com sucesso:', payload);
+
+            // 3. Atualiza os estados do React
             if (cursoAtivo) {
-                const aulasAtualizadas = cursoAtivo.aulas.map((aula) =>
-                    aula.id === aulaId ? { ...aula, concluida: true } : aula
-                );
-                setCursoAtivo({ ...cursoAtivo, aulas: aulasAtualizadas });
-                setAulaAtiva({ ...aulaAtiva, concluida: true });
+                const modulosAtualizados = (cursoAtivo.modulos || []).map((modulo) => ({
+                    ...modulo,
+                    aulas: (modulo.aulas || []).map((aula) =>
+                        aula.id === aulaId ? { ...aula, concluida: true } : aula
+                    ),
+                }));
+
+                setCursoAtivo({ ...cursoAtivo, modulos: modulosAtualizados });
+                setAulaAtiva((prev) => (prev ? { ...prev, concluida: true } : null));
             }
         } catch (error) {
-            console.error('Erro ao salvar progresso do LMS:', error);
+            console.error('Erro ao armazenar progresso no JSON local:', error);
         } finally {
             setLoadingProgresso(false);
         }
@@ -58,6 +97,9 @@ export function useAcademy(tenant: 'AMAZONET' | 'MANIA') {
         selecionarCurso,
         selecionarAula,
         marcarComoConcluida,
-        fecharCurso: () => { setCursoAtivo(null); setAulaAtiva(null); }
+        fecharCurso: () => {
+            setCursoAtivo(null);
+            setAulaAtiva(null);
+        },
     };
 }
