@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { CreateCommissionRoleDto } from './create-commission_rule.dto';
+import { CreateCommissionRuleDto } from './create-commission_rule.dto';
 
-export class UpdateCommissionRoleDto extends PartialType(CreateCommissionRoleDto) {}
+export class UpdateCommissionRuleDto extends PartialType(CreateCommissionRuleDto) {}

@@ -1,26 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
+import { Injectable } from "@nestjs/common";
+import { MetaService } from "src/integrations/metabase.service";
+import { RelatorioTecnicoDto } from "./dto/relatorio-tecnico-instalacao.dto";
 
 @Injectable()
-export class ReportsService {
-  create(createReportDto: CreateReportDto) {
-    return 'This action adds a new report';
-  }
+export class ReportService {
+  constructor(private readonly metaService: MetaService) {}
 
-  findAll() {
-    return `This action returns all reports`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} report`;
-  }
-
-  update(id: number, updateReportDto: UpdateReportDto) {
-    return `This action updates a #${id} report`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} report`;
+  buscarInstalacaoTecnica(dto: RelatorioTecnicoDto) {
+    return this.metaService.vendasTecnico(dto);
   }
 }

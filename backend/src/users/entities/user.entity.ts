@@ -6,8 +6,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserRole } from '../../user_roles/entities/user_role.entity';
+import { UserPermission } from "../../user_permissions/entities/user_permission.entity";
 
-@Entity('users_db')
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -15,29 +17,24 @@ export class User {
   @Column()
   nome: string;
 
-  @Column({unique: true})
+  @Column({ unique: true })
   email: string;
 
   @Column()
   senha: string;
 
-  @Column({type: 'enum', enum: 
-    ['externo', 
-    'supervisor', 
-    'recepcionista', 
-    'interno', 
-    'backoffice', 
-    'admin', 
-    'autonomo',
-    'tecnico'
-  ], default: 'externo' })
-  role: string;
+  @OneToMany(() => UserRole, userRole => userRole.user)
+  roles: UserRole[];
+
+  @OneToMany(() => UserPermission, permission => permission.user)
+  permissions: UserPermission[];
+
+  @Column({ name: 'hubsoft_id', unique: true, nullable: true })
+  hubsoftId: number; // Armazena o ID vindo da API externa
 
   @CreateDateColumn()
-  data_criado?: Date;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  data_atualizado?: Date;
-
-  
+  updatedAt: Date;
 }
