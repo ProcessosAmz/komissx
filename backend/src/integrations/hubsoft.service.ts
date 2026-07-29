@@ -97,7 +97,11 @@ export class HubsoftService {
     //     ),
     //   );
   
-      // return response.data;
+      return {
+        message: 'Ticket created successfully',
+        data: body,
+      }
+
     } catch (error) {
       this.logger.error(
         "Erro ao criar atendimento no Hubsoft",
