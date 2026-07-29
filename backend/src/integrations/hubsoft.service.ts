@@ -77,4 +77,33 @@ export class HubsoftService {
       throw error;
     }
   }
+
+  async createTicket(body: any): Promise<any> {
+    const token = await this.garantirTokenValido();
+  
+    console.log(body);
+
+    try {
+    //   const response = await firstValueFrom(
+    //     this.httpService.post(
+    //       `/api/v1/integracao/atendimento`,
+    //       body,
+    //       {
+    //         headers: {
+    //           Authorization: `Bearer ${token}`,
+    //           "Content-Type": "application/json",
+    //         },
+    //       },
+    //     ),
+    //   );
+  
+      // return response.data;
+    } catch (error) {
+      this.logger.error(
+        "Erro ao criar atendimento no Hubsoft",
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  }
 }

@@ -13,12 +13,10 @@ export class UsersController {
     try{
       this.logger.log('Received request to create a new user',);
       const user = await this.usersService.create(createUserDto);
-      this.logger.log(`User created successfully: ${user.id}`);
       return user;
     } catch (error) {
       this.logger.error(error);
       // TODO: Handle error properly
-      throw new BadRequestException(error.message);
     }
   }
 

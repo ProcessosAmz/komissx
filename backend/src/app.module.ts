@@ -11,6 +11,7 @@ import { CommissionEngineModule } from './commission_engine/commission_engine.mo
 import { UserPermissionsModule } from './user_permissions/user_permissions.module';
 import { RolePermissionsModule } from './role_permissions/role_permissions.module';
 import { PermissionsModule } from './permissions/permissions.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 import { ConfigModule } from '@nestjs/config';
 //import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -43,6 +44,7 @@ import { ConfigModule } from '@nestjs/config';
     RolePermissionsModule,
     UserPermissionsModule,
     CommissionEngineModule,
+    IntegrationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
