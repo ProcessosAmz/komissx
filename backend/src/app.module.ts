@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { CommissionRuleModule } from './commission_rule/commission_rule.module';
@@ -46,7 +44,5 @@ import { ConfigModule } from '@nestjs/config';
     CommissionEngineModule,
     IntegrationsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
