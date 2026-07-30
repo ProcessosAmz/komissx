@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException, Logger } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, Logger, HttpCode } from '@nestjs/common';
 import { HubsoftService } from './hubsoft.service';
 
 @Controller('integrations')
@@ -7,6 +7,7 @@ export class IntegrationsController {
     constructor(private readonly hubsoftService: HubsoftService) {}
 
     @Post('ticket')
+    @HttpCode(204)
     async createTicket(@Body() body: any) {
         try{
             this.logger.log('Received request to create a ticket', body);
