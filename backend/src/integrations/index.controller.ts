@@ -7,7 +7,7 @@ export class IntegrationsController {
     constructor(private readonly hubsoftService: HubsoftService) {}
 
     @Post('ticket')
-    @HttpCode(204)
+    @HttpCode(200)
     async createTicket(@Body() body: any) {
         try{
             this.logger.log('Received request to create a ticket', body);
