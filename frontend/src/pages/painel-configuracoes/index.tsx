@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ModulosNegocioSidebar } from "@/components/painel-configuracoes/modulos-negocio-sidebar";
 import { ConfiguracoesContent } from "@/components/painel-configuracoes/configuracoes-content";
+import { ModulosNegocioSidebar } from "@/components/painel-configuracoes/modulos/negocio-sidebar";
 import mockRulesJson from "@/data/rules.json";
 
 // TODO : REMOVE MOCK DATA AFTER IMPLEMENTATION

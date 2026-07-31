@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { ModuloHierarquia } from '../features/configuracoes/components/ModuloHierarquia';
+import { ModuloHierarquia } from '../components/painel-configuracoes/modulos/negocio-view/hierarquia';
 
 // Tipagem do contexto que veio lá do PainelConfiguracoes
 interface OutletContextProps {

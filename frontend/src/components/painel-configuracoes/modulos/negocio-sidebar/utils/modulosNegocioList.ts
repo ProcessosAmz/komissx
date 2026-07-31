@@ -7,7 +7,7 @@ interface ModuloItem {
     icon: LucideIcon;
   }
   
-export const MODULOS_NEGOCIO: ModuloItem[] = [
+export const MODULOS_NEGOCIO_LIST: ModuloItem[] = [
     { path: "empresas", label: "Empresas (Amazonet/Mania)", icon: Building2 },
     { path: "equipes", label: "Equipes e Hierarquias", icon: Users },
     { path: "semanal", label: "Relatório Semanal", icon: CalendarDays },

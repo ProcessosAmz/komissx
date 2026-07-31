@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { MODULOS_NEGOCIO } from "./navigation-list/modulosNegocio";
-
+import { MODULOS_NEGOCIO_LIST } from "./utils/modulosNegocioList";
 
 export function ModulosNegocioSidebar() {
   return (
@@ -9,7 +8,7 @@ export function ModulosNegocioSidebar() {
         Módulos do Negócio
       </div>
 
-      {MODULOS_NEGOCIO.map(({ path, label, icon: Icon }) => (
+      {MODULOS_NEGOCIO_LIST.map(({ path, label, icon: Icon }) => (
         <NavLink
           key={path}
           to={path}
