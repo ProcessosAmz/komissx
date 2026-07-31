@@ -3,7 +3,7 @@ import { useAuth, PERMISSOES } from "@/stores/auth.store";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import PainelConfiguracoes from "./pages/PainelConfiguracoes";
+import PainelConfiguracoes from "@/pages/painel-configuracoes";
 import AcademyPage from "./pages/Academy";
 import { DefaultLayout } from "./layouts/DefaultLayout";
 import AdminLayout from "./layouts/AdminLayout"; 
@@ -18,7 +18,7 @@ import Producao from './pages/Fechamentos/mensal/producao';
 import ComercialPJ from './pages/Fechamentos/mensal/comercial-pj';
 import Cobranca from './pages/Fechamentos/mensal/cobranca';
 
-import { ModuloHierarquia } from "./features/configuracoes/components/ModuloHierarquia";
+import { ModuloHierarquia } from "./components/painel-configuracoes/modulos/negocio-view/hierarquia";
 import { ModuloSemanal } from "./features/configuracoes/components/ModuloSemanal";
 import { ModuloMensal } from "./features/configuracoes/components/ModuloMensal";
 import ModuloAcesso from "./features/configuracoes/components/ModuloAcesso";
