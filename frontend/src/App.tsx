@@ -3,7 +3,7 @@ import { useAuth, PERMISSOES } from "@/stores/auth.store";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import PainelConfiguracoes from "./pages/PainelConfiguracoes";
+import PainelConfiguracoes from "@/pages/painel-configuracoes";
 import AcademyPage from "./pages/Academy";
 import { DefaultLayout } from "./layouts/DefaultLayout";
 import AdminLayout from "./layouts/AdminLayout"; 
