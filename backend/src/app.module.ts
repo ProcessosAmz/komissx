@@ -11,6 +11,7 @@ import { RolePermissionsModule } from './role_permissions/role_permissions.modul
 import { PermissionsModule } from './permissions/permissions.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { ConfigModule } from '@nestjs/config';
+import { ConfiguracoesModule } from './module/configuracoes/index.module';
 //import { TypeOrmModule } from '@nestjs/typeorm';
 
 
@@ -43,6 +44,7 @@ import { ConfigModule } from '@nestjs/config';
     UserPermissionsModule,
     CommissionEngineModule,
     IntegrationsModule,
+    ConfiguracoesModule
   ],
 })
 export class AppModule {}
