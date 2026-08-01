@@ -1,16 +1,12 @@
 import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
-import { CommissionsModule } from './module/commissions/index.module';
-import { CommissionRuleModule } from './commission_rule/commission_rule.module';
 import { ReportsModule } from './reports/reports.module';
 import { RolesModule } from "./roles/roles.module";
-import { CommissionEngineModule } from './commission_engine/commission_engine.module';
 import { RolePermissionsModule } from './role_permissions/role_permissions.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { ConfigModule } from '@nestjs/config';
 import { ConfiguracoesModule } from './module/configuracoes/index.module';
-//import { TypeOrmModule } from '@nestjs/typeorm';
 
 
 @Module({
@@ -32,13 +28,10 @@ import { ConfiguracoesModule } from './module/configuracoes/index.module';
     // }),
 
     UsersModule,
-    CommissionsModule,
-    CommissionRuleModule,
     ReportsModule,
     RolesModule,
     PermissionsModule,
     RolePermissionsModule,
-    CommissionEngineModule,
     IntegrationsModule,
     ConfiguracoesModule
   ],
