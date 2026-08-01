@@ -3,7 +3,7 @@ import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
 import { RolesModule } from "./roles/roles.module";
 import { PermissionsModule } from './permissions/permissions.module';
-import { IntegrationsModule } from './integrations/integrations.module';
+import { IntegrationsModule } from './integrations/index.module';
 import { ConfigModule } from '@nestjs/config';
 import { ConfiguracoesModule } from './module/configuracoes/index.module';
 

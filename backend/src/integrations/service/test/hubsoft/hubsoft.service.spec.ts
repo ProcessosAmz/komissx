@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
-import { HubsoftService } from './hubsoft.service';
+import { HubsoftService } from '../../../hubsoft.service';
 import { of, throwError } from 'rxjs';
 import { AxiosResponse } from 'axios';
 
