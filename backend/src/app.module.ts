@@ -3,10 +3,8 @@ import { UsersModule } from './users/users.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { CommissionRuleModule } from './commission_rule/commission_rule.module';
 import { ReportsModule } from './reports/reports.module';
-import { UserRolesModule } from './user_roles/user_roles.module';
 import { RolesModule } from "./roles/roles.module";
 import { CommissionEngineModule } from './commission_engine/commission_engine.module';
-import { UserPermissionsModule } from './user_permissions/user_permissions.module';
 import { RolePermissionsModule } from './role_permissions/role_permissions.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { IntegrationsModule } from './integrations/integrations.module';
@@ -37,11 +35,9 @@ import { ConfiguracoesModule } from './module/configuracoes/index.module';
     CommissionsModule,
     CommissionRuleModule,
     ReportsModule,
-    UserRolesModule,
     RolesModule,
     PermissionsModule,
     RolePermissionsModule,
-    UserPermissionsModule,
     CommissionEngineModule,
     IntegrationsModule,
     ConfiguracoesModule
