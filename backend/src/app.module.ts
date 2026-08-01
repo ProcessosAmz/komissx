@@ -25,7 +25,6 @@ import { ConfiguracoesModule } from './module/configuracoes/index.module';
   // migrationsRun: true,
   // synchronize: true,
     // }),
-
     UsersModule,
     ReportsModule,
     RolesModule,
