@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { CommissionsService } from './commissions.service';
-import { CreateCommissionDto } from './dto/create-commission.dto';
-import { UpdateCommissionDto } from './dto/update-commission.dto';
+import { CommissionsService } from '../commissions.service';
+import { CreateCommissionDto } from '../dto/create-commission.dto';
+import { UpdateCommissionDto } from '../dto/update-commission.dto';
 
 @Controller('commissions')
 export class CommissionsController {

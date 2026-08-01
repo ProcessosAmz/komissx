@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
-import { CommissionsModule } from './commissions/commissions.module';
+import { CommissionsModule } from './module/commissions/index.module';
 import { CommissionRuleModule } from './commission_rule/commission_rule.module';
 import { ReportsModule } from './reports/reports.module';
 import { RolesModule } from "./roles/roles.module";
