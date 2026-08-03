@@ -2,7 +2,8 @@ import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 import { firstValueFrom } from "rxjs";
-import { OrdemServicoType } from "src/common/enums/OrdermServico.enum";
+import { OrdemServicoStatus } from "src/common/enums/OrdemServicoStatus.enum";
+import { OrdemServicoExclusaoType } from "src/common/enums/OrdemServicoStatusExclusao.enum";
 import { normalizeText } from "src/helper/normalizeText.helper";
 
 @Injectable()
@@ -84,12 +85,12 @@ export class HubsoftService {
     const token = await this.garantirTokenValido();
   
     console.log(body);
-    
-    if (!this.isOrdemDeInstalacao(body.descricao)) {
-      this.logger.log("Ordem de serviço ignorada (não é instalação)", body.descricao);
+
+    if (!this.isOrdemDeInstalacao(body.descricao) || this.isOrdemServicoExcluida(body.descricao)) {
+      this.logger.log("Ordem de serviço ignorada", body.descricao);
       return null;
     }
-  
+
     try {
       const response = await firstValueFrom(
         this.httpService.post(
@@ -116,8 +117,15 @@ export class HubsoftService {
       throw error;
     }
   }
-  
   private isOrdemDeInstalacao(descricao: string): boolean {
-    return normalizeText(descricao).includes(OrdemServicoType.INSTALACAO);
+    return normalizeText(descricao).includes(OrdemServicoStatus.INSTALACAO);
+  }
+  
+  private isOrdemServicoExcluida(descricao: string): boolean {
+    const descricaoNormalizada = normalizeText(descricao);
+  
+    return Object.values(OrdemServicoExclusaoType).some((excecao) =>
+      descricaoNormalizada.includes(excecao),
+    );
   }
 }
