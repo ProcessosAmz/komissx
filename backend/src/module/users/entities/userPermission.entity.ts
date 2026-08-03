@@ -4,7 +4,7 @@ import {
     ManyToOne,
     PrimaryGeneratedColumn,
   } from 'typeorm';
-  import { User } from '../../users/entities/user.entity';
+  import { User } from './user.entity';
   import { Permission } from '../../permissions/entities/permission.entity';
   
   @Entity('user_permissions')
