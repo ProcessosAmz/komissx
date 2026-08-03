@@ -1,5 +1,5 @@
 import { Controller, Post, Body, BadRequestException, Logger, HttpCode } from '@nestjs/common';
-import { HubsoftService } from './hubsoft.service';
+import { HubsoftService } from '../service/hubsoft.service';
 
 @Controller('integrations')
 export class IntegrationsController {

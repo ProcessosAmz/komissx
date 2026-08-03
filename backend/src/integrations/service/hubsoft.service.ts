@@ -5,6 +5,7 @@ import { firstValueFrom } from "rxjs";
 import { OrdemServicoStatus } from "src/common/enums/OrdemServicoStatus.enum";
 import { OrdemServicoExclusaoType } from "src/common/enums/OrdemServicoStatusExclusao.enum";
 import { normalizeText } from "src/helper/normalizeText.helper";
+import { OrdemServicoWebhook } from "../type/OrdemServicoWebhook.type";
 
 @Injectable()
 export class HubsoftService {
@@ -14,7 +15,7 @@ export class HubsoftService {
   private accessToken: string | null = null;
   private expiresAt: number | null = null;
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   // 2. Método privado para garantir que temos um token válido
   private async garantirTokenValido(): Promise<string> {
@@ -81,33 +82,59 @@ export class HubsoftService {
     }
   }
 
-  async createTicket(body: any): Promise<any | null> {
+  async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
     const token = await this.garantirTokenValido();
-  
-    console.log(body);
 
-    if (!this.isOrdemDeInstalacao(body.descricao) || this.isOrdemServicoExcluida(body.descricao)) {
-      this.logger.log("Ordem de serviço ignorada", body.descricao);
-      return null;
+    this.logger.log("========== BODY ==========");
+    this.logger.log(payload.body)
+
+    const descricao = payload.body.descricao_abertura;
+
+    this.logger.log("========== VALIDAÇÃO DA ORDEM ==========");
+    this.logger.log("Descrição:", descricao);
+
+    const isInstalacao = this.isOrdemDeInstalacao(host, payload.body.id_tipo_ordem_servico);
+    // const isExcluida = this.isOrdemServicoExcluida(descricao);
+
+    this.logger.log("É instalação?", isInstalacao);
+    // this.logger.log("É uma ordem excluída?", isExcluida);
+
+    if (!isInstalacao) {
+      this.logger.error(
+        `❌ A descrição NÃO contém "${OrdemServicoStatus.INSTALACAO}".`
+      );
     }
 
+    // if (isExcluida) {
+    //   this.logger.error("❌ A descrição contém uma palavra de exclusão.")
+    // }
+
+    // if (!isInstalacao || isExcluida) {
+    //   this.logger.log("🚫 Ordem de serviço ignorada.");
+    //   return null;
+    // }
+
+    this.logger.log("✅ Ordem de instalação válida. Criando atendimento...");
+
     try {
-      const response = await firstValueFrom(
-        this.httpService.post(
-          `/api/v1/integracao/atendimento`,
-          body,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        ),
-      );
-  
+      //   const response = await firstValueFrom(
+      //     this.httpService.post(
+      //       `/api/v1/integracao/atendimento`,
+      //       body,
+      //       {
+      //         headers: {
+      //           Authorization: `Bearer ${token}`,
+      //           "Content-Type": "application/json",
+      //         },
+      //       },
+      //     ),
+      //   );
+
       return {
         message: "Ticket created successfully",
-        data: response,
+        data: {
+          name_description: descricao,
+        }
       };
     } catch (error: any) {
       this.logger.error(
@@ -117,15 +144,26 @@ export class HubsoftService {
       throw error;
     }
   }
-  private isOrdemDeInstalacao(descricao: string): boolean {
-    return normalizeText(descricao).includes(OrdemServicoStatus.INSTALACAO);
+
+  private isOrdemDeInstalacao(descricao?: string): boolean {
+    if (!descricao) {
+      return false;
+    }
+
+    const primeiraLinha = normalizeText(descricao)
+      .split("\n")[0]
+      .trim();
+
+    console.log("Primeira linha:", primeiraLinha);
+
+    return primeiraLinha.startsWith(OrdemServicoStatus.INSTALACAO);
   }
-  
-  private isOrdemServicoExcluida(descricao: string): boolean {
-    const descricaoNormalizada = normalizeText(descricao);
-  
-    return Object.values(OrdemServicoExclusaoType).some((excecao) =>
-      descricaoNormalizada.includes(excecao),
-    );
+
+  private isOrdemServicoExcluida(host: Host, idTIpo: number): boolean {
+    const OrdemServicoTipoId[host].INSTALACAO.includes(idTipo);
+
+    // return Object.values(OrdemServicoExclusaoType).some((excecao) =>
+    //   descricaoNormalizada.includes(excecao),
+    // );
   }
 }
