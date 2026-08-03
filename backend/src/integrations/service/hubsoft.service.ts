@@ -80,8 +80,6 @@ export class HubsoftService {
 
   async createTicket(body: any): Promise<any> {
     const token = await this.garantirTokenValido();
-    console.log(new Date().toISOString(), 'today');
-    console.log(body);
 
     try {
     //   const response = await firstValueFrom(
