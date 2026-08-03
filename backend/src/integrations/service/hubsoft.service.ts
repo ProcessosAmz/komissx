@@ -8,62 +8,75 @@ import {
   OrdemServicoHostPrefixo,
   OrdemServicoHostPrefixoKey,
 } from "src/common/enums/OrdemServicoHostPrefix.type";
+import {
+  getHubsoftConfig,
+  HubsoftConfig,
+} from "../constants/hubsoft/hubsoftConfig.constants";
 import { OrdemServicoWebhook } from "../type/OrdemServicoWebhook.type";
+
+type HostTokenState = {
+  accessToken: string;
+  expiresAt: number;
+};
 
 @Injectable()
 export class HubsoftService {
   private readonly logger = new Logger(HubsoftService.name);
-
-  private accessToken: string | null = null;
-  private expiresAt: number | null = null;
+  private readonly tokens: Partial<Record<Host, HostTokenState>> = {};
 
   constructor(private readonly httpService: HttpService) {}
 
-  private async garantirTokenValido(): Promise<string> {
+  private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
+    const tokenAtual = this.tokens[host];
 
-    if (this.accessToken && this.expiresAt && agora < this.expiresAt) {
-      return this.accessToken;
+    if (tokenAtual && agora < tokenAtual.expiresAt) {
+      return tokenAtual.accessToken;
     }
 
-    return this.logarHubsoft();
+    return this.logarHubsoft(host);
   }
 
-  private async logarHubsoft(): Promise<string> {
-    this.logger.log("Logando no Hubsoft...");
+  private async logarHubsoft(host: Host): Promise<string> {
+    const config = getHubsoftConfig(host);
+    this.logger.log(`Logando no Hubsoft (${host})...`);
+
     try {
       const params = new URLSearchParams();
-      params.append("client_id", process.env.HUB_CLIENT_ID || "");
-      params.append("client_secret", process.env.HUB_CLIENT_SECRET || "");
-      params.append("grant_type", process.env.HUB_GRANT_TYPE || "");
-      params.append("username", process.env.HUB_USERNAME || "");
-      params.append("password", process.env.HUB_PASSWORD || "");
+      params.append("client_id", config.clientId);
+      params.append("client_secret", config.clientSecret);
+      params.append("grant_type", config.grantType);
+      params.append("username", config.username);
+      params.append("password", config.password);
 
       const response = await firstValueFrom(
-        this.httpService.post(`${process.env.HUB_URL}/oauth/token`, params, {
+        this.httpService.post(`${config.url}/oauth/token`, params, {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
         }),
       );
 
-      this.logger.log("Logado com sucesso no Hubsoft");
+      this.logger.log(`Logado com sucesso no Hubsoft (${host})`);
 
-      const token = response.data.access_token;
-      this.accessToken = token;
-      this.expiresAt = Date.now() + (response.data.expires_in - 60) * 1000;
+      const accessToken = response.data.access_token;
+      this.tokens[host] = {
+        accessToken,
+        expiresAt: Date.now() + (response.data.expires_in - 60) * 1000,
+      };
 
-      return token;
+      return accessToken;
     } catch (error) {
-      this.logger.error("Erro ao logar no Hubsoft", error);
+      this.logger.error(`Erro ao logar no Hubsoft (${host})`, error);
       throw error;
     }
   }
 
-  async buscarVendedores(): Promise<AxiosResponse<any>> {
-    const token = await this.garantirTokenValido();
+  async buscarVendedores(host: Host): Promise<AxiosResponse<any>> {
+    const config = getHubsoftConfig(host);
+    const token = await this.garantirTokenValido(host);
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get("rota/para/buscar/vendedores", {
+        this.httpService.get(`${config.url}/rota/para/buscar/vendedores`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -77,8 +90,6 @@ export class HubsoftService {
   }
 
   async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
-    const token = await this.garantirTokenValido();
-
     this.logger.log("========== BODY ==========");
     this.logger.log(payload.body);
 
@@ -92,7 +103,7 @@ export class HubsoftService {
     this.logger.log("Descrição:", descricao);
 
     if (!host) {
-      this.logger.error(
+      this.logger.warn(
         `Prefixo desconhecido em numero_ordem_servico: ${numeroOrdem.slice(0, 4)}`,
       );
       return null;
@@ -106,11 +117,14 @@ export class HubsoftService {
     this.logger.log("É instalação?", isInstalacao);
 
     if (!isInstalacao) {
-      this.logger.error(
+      this.logger.warn(
         `Tipo de ordem ${payload.body.id_tipo_ordem_servico} não é instalação para o host ${host}.`,
       );
       return null;
     }
+
+    const config = getHubsoftConfig(host);
+    const token = await this.garantirTokenValido(host);
 
     this.logger.log("✅ Ordem de instalação válida. Criando atendimento...");
 
@@ -120,6 +134,7 @@ export class HubsoftService {
         data: {
           host,
           name_description: descricao,
+          hubUrl: config.url,
         },
       };
     } catch (error: any) {
@@ -132,9 +147,17 @@ export class HubsoftService {
   }
 
   private resolverHost(numeroOrdemServico: string): Host | null {
+    if (!numeroOrdemServico || numeroOrdemServico.length < 4) {
+      return null;
+    }
+
     const prefixo = numeroOrdemServico.slice(0, 4);
 
-    return OrdemServicoHostPrefixo[prefixo as OrdemServicoHostPrefixoKey] ?? null;
+    if (!(prefixo in OrdemServicoHostPrefixo)) {
+      return null;
+    }
+
+    return OrdemServicoHostPrefixo[prefixo as OrdemServicoHostPrefixoKey];
   }
 
   private isOrdemDeInstalacao(host: Host, idTipo: number): boolean {

@@ -9,14 +9,18 @@ export class IntegrationsController {
     @Post('ticket')
     @HttpCode(200)
     async createTicket(@Body() body: any) {
-        try{
-            this.logger.log('Received request to create a ticket', body);
+        try {
+            this.logger.log("Received request to create a ticket", body);
             const response = await this.hubsoftService.createTicket(body);
-            this.logger.log('Ticket created successfully', response);
+            if (!response) {
+              this.logger.log("Ordem ignorada (host inválido ou não é instalação)");
+              return { message: "Ordem ignorada" };
+            }
+            this.logger.log("Ticket created successfully", response);
             return response;
-        } catch (error : unknown) {
-            this.logger.error('Error creating ticket', error);
+          } catch (error: unknown) {
+            this.logger.error("Error creating ticket", error);
             throw new BadRequestException(error as unknown as string);
-        }
+          }
     }
 }
