@@ -10,7 +10,7 @@ export interface OpcaoFiltro {
   
   export const UNIDADES: OpcaoFiltro[] = [
     { value: "MANAUS", label: "MANAUS" },
-    { value: "BELEM", label: "BELÉM" },
+    { value: "SANTAREM", label: "SANTARÉM" },
   ];
   
   export const ESTADOS: OpcaoFiltro[] = [

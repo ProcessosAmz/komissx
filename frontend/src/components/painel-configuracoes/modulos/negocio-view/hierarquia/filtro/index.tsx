@@ -23,6 +23,21 @@ export function Filtro() {
             ))}
           </select>
         </div>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            Região / Estado
+          </label>
+          <select className={selectClassName} defaultValue="">
+            <option value="" disabled>
+              Selecione a região
+            </option>
+            {ESTADOS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -33,22 +48,6 @@ export function Filtro() {
               Selecione a unidade
             </option>
             {UNIDADES.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Região / Estado
-          </label>
-          <select className={selectClassName} defaultValue="">
-            <option value="" disabled>
-              Selecione a região
-            </option>
-            {ESTADOS.map(({ value, label }) => (
               <option key={value} value={value}>
                 {label}
               </option>

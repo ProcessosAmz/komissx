@@ -1,98 +1,192 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# KomissX — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API do KomissX, construída com [NestJS](https://nestjs.com/) e TypeScript. Responsável por autenticação de contexto, regras de comissão, relatórios, permissões e integrações externas (Hubsoft e Metabase).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Requisitos
 
-## Description
+- Node.js 18+
+- npm
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Setup
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+Crie um arquivo `.env` na raiz do `backend` com as variáveis necessárias. O `ConfigModule` carrega nessa ordem:
+
+1. `.env`
+
+### Variáveis principais
+
+
+| Variável                      | Uso                                                 |
+| ----------------------------- | --------------------------------------------------- |
+| `PORT`                        | Porta da API (padrão: `3000`)                       |
+| `HUB_URL`                     | URL base da API Hubsoft                             |
+| `HUB_CLIENT_ID`               | OAuth Hubsoft                                       |
+| `HUB_CLIENT_SECRET`           | OAuth Hubsoft                                       |
+| `HUB_GRANT_TYPE`              | Tipo de grant OAuth                                 |
+| `HUB_USERNAME`                | Usuário Hubsoft                                     |
+| `HUB_PASSWORD`                | Senha Hubsoft                                       |
+| `METABASE_INSTALACAO_TECNICO` | Endpoint público Metabase (relatório de instalação) |
+
+
+> O TypeORM / Postgres está preparado no `AppModule`, mas ainda comentado. Quando for habilitar, configure também `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` e `DB_DATABASE`.
+
+
+
+## Rodar o projeto
 
 ```bash
-# development
-$ npm run start
+# desenvolvimento (watch)
+npm run start:dev
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# produção
+npm run build
+npm run start:prod
 ```
 
-## Run tests
+A API sobe em `http://localhost:3000` (ou na porta definida em `PORT`).
+
+## Testes
 
 ```bash
-# unit tests
-$ npm run test
+# unitários
+npm run test
 
-# e2e tests
-$ npm run test:e2e
+# watch
+npm run test:watch
 
-# test coverage
-$ npm run test:cov
+# cobertura
+npm run test:cov
+
+# e2e
+npm run test:e2e
 ```
 
-## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Estrutura do projeto
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```text
+backend/src
+├── main.ts                 # Bootstrap da aplicação
+├── app.module.ts           # Módulo raiz (registra todos os módulos)
+├── common/                 # Enums, interfaces e utilitários compartilhados
+├── integrations/           # Integrações externas (Hubsoft, Metabase)
+├── module/
+│   └── configuracoes/      # Módulo de configurações (equipe, hierarquia, etc.)
+├── users/
+├── roles/
+├── permissions/
+├── reports/
+├── commissions/
+├── commission_rule/
+└── commission_engine/
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-## Resources
 
-Check out a few resources that may come in handy when working with NestJS:
+## Padrão de arquitetura
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Cada funcionalidade segue o fluxo:
 
-## Support
+```text
+Controller → Service → Repository
+         ↘ DTO ↗
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
-## Stay in touch
+| Camada         | Responsabilidade                                                           |
+| -------------- | -------------------------------------------------------------------------- |
+| **Controller** | Recebe a requisição HTTP, valida entrada e devolve a resposta              |
+| **Service**    | Contém a regra de negócio e o mapeamento para DTOs de resposta             |
+| **Repository** | Isola o acesso a dados (banco ou API externa, como Hubsoft)                |
+| **DTO**        | Define o contrato de entrada (`Create` / `Update`) e de saída (`Response`) |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
-## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+### Exemplo de pasta de um módulo
+
+user/
+├── controller/
+│   └── index.controller.ts
+├── service/
+│   └── index.service.ts
+├── dto/
+│   ├── create.user.dto.ts
+│   ├── update.user.dto
+│   ├── repository/
+│   └── index.user
+└── index.module.ts
+
+## (!) ATENÇÃO (!)
+
+- Caso tenho mais de um arquivo na pasta; Uso o exemplo seguinte.
+
+user/
+├── service/
+    └── user.service.ts
+    └── user.gateway.service.ts
+
+- Só vamos usar INDEX quando tiver somente UM arquivo na pasta.
+
+
+
+### Regras importantes
+
+- O **Controller** não fala com Hubsoft/banco diretamente — só chama o Service.
+- O **Service** não monta chamada HTTP crua — usa o Repository.
+- O **Repository** não aplica regra de negócio — só busca, cria, atualiza ou remove.
+- Módulos novos devem ser registrados no `AppModule`.
+- Integrações compartilhadas (ex.: `HubsoftService`) ficam em `integrations/` e são exportadas pelo `IntegrationsModule` para outros módulos importarem.
+
+
+
+### Barrel `index.ts`
+
+Quando uma pasta tiver muitos arquivos (ex.: `dto/`, `service/`, `controller/`), crie um `index.ts` nela para centralizar os exports.
+
+Assim, em vez de importar arquivo por arquivo, você importa tudo pela pasta:
+
+```ts
+──dto/
+  ├── create.user.dto.ts
+  ├── update.user.dto.ts
+
+// dto/index.ts
+export * from './index.create.user.dto.ts
+export * from './index.update.user.dto.ts
+```
+
+
+
+### Integrações
+
+- **Hubsoft**: autenticação OAuth + chamadas à API (vendedores, tickets, supervisores, etc.).
+- **Metabase**: consulta de cards públicos para relatórios (ex.: instalação técnica).
+
+
+
+## Scripts úteis
+
+
+| Script              | Descrição                |
+| ------------------- | ------------------------ |
+| `npm run start:dev` | Sobe a API em modo watch |
+| `npm run build`     | Compila para `dist/`     |
+| `npm run lint`      | Roda o ESLint            |
+| `npm run test`      | Testes unitários         |
+| `npm run test:e2e`  | Testes end-to-end        |
+
+
+
+
+## Contato / dúvidas
+
+Para dúvidas sobre o backend, falar com:
+
+- **Matheus Raposo**
+- **Yan Oliveira**
