@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from "@nestjs/common";
-import { RelatorioTecnicoDto } from "../dto/relatorio.tecnico.instalacao.dto";
+import { RelatorioTecnicoDto } from "../dto/relatorioTecnicoInstalacao.dto";
 import { ReportService } from "../service/reports.service";
 
 @Controller("reports")
