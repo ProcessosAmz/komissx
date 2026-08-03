@@ -24,7 +24,7 @@ export class HubsoftService {
   private readonly logger = new Logger(HubsoftService.name);
   private readonly tokens: Partial<Record<Host, HostTokenState>> = {};
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
@@ -41,10 +41,14 @@ export class HubsoftService {
     const config = getHubsoftConfig(host);
     this.logger.log(`Logando no Hubsoft (${host})...`);
 
+    if (!config.url) {
+      throw new Error(`HUB_URL não configurada para o host ${host}`);
+    }
+
     try {
       const params = new URLSearchParams();
       params.append("client_id", config.clientId);
-      params.append("client_secret", config.clientSecret);
+      params.append("client_secret", config.clientSecret); 
       params.append("grant_type", config.grantType);
       params.append("username", config.username);
       params.append("password", config.password);
