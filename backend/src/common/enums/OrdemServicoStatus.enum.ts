@@ -23,7 +23,14 @@ export const OrdemServicoTipoId = {
 
   [Host.AMAZONET]: {
     INSTALACAO: [
-      // adicionar os id's do tipo de ordem da amazonet (os ids mudam devido ser outro banco de dados.)
+      832,
+      834,
+      2,
+      835,
+      836,
+      833,
+      819,
+      804,
     ],
   },
 } as const;
