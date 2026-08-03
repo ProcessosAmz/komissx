@@ -2,6 +2,8 @@ import { HttpService } from "@nestjs/axios";
 import { Injectable, Logger } from "@nestjs/common";
 import { AxiosResponse } from "axios";
 import { firstValueFrom } from "rxjs";
+import { OrdemServicoType } from "src/common/enums/OrdermServico.enum";
+import { normalizeText } from "src/helper/normalizeText.helper";
 
 @Injectable()
 export class HubsoftService {
@@ -78,34 +80,44 @@ export class HubsoftService {
     }
   }
 
-  async createTicket(body: any): Promise<any> {
+  async createTicket(body: any): Promise<any | null> {
     const token = await this.garantirTokenValido();
-
+  
+    console.log(body);
+    
+    if (!this.isOrdemDeInstalacao(body.descricao)) {
+      this.logger.log("Ordem de serviço ignorada (não é instalação)", body.descricao);
+      return null;
+    }
+  
     try {
-    //   const response = await firstValueFrom(
-    //     this.httpService.post(
-    //       `/api/v1/integracao/atendimento`,
-    //       body,
-    //       {
-    //         headers: {
-    //           Authorization: `Bearer ${token}`,
-    //           "Content-Type": "application/json",
-    //         },
-    //       },
-    //     ),
-    //   );
+      const response = await firstValueFrom(
+        this.httpService.post(
+          `/api/v1/integracao/atendimento`,
+          body,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        ),
+      );
   
       return {
-        message: 'Ticket created successfully',
-        data: body,
-      }
-
-    } catch (error) {
+        message: "Ticket created successfully",
+        data: response,
+      };
+    } catch (error: any) {
       this.logger.error(
         "Erro ao criar atendimento no Hubsoft",
         error.response?.data || error.message,
       );
       throw error;
     }
+  }
+  
+  private isOrdemDeInstalacao(descricao: string): boolean {
+    return normalizeText(descricao).includes(OrdemServicoType.INSTALACAO);
   }
 }
