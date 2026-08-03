@@ -7,7 +7,7 @@ import { OrdemServicoTipoId } from "src/common/enums/OrdemServicoStatus.enum";
 import {
   OrdemServicoHostPrefixo,
   OrdemServicoHostPrefixoKey,
-} from "../type/OrdemServicoHostPrefixo.type";
+} from "src/common/enums/OrdemServicoHostPrefix.type";
 import { OrdemServicoWebhook } from "../type/OrdemServicoWebhook.type";
 
 @Injectable()

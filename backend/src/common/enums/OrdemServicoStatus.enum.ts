@@ -1,12 +1,9 @@
+import { Host } from "./host.enum";
+
 export enum OrdemServicoStatus {
     INSTALACAO = "instalacao",
     REMOCAO = "remocao",
     MANUTENCAO = "manutencao",
-  }
-
-export enum Host {
-  MANIA = "mania",
-  AMAZONET = "amazonet",
 }
 
 export const OrdemServicoTipoId = {
