@@ -6,8 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserRole } from '../../user_roles/entities/user_role.entity';
-import { UserPermission } from "../../user_permissions/entities/user_permission.entity";
+
 
 @Entity('users')
 export class User {
@@ -21,7 +20,7 @@ export class User {
   email: string;
 
   @Column()
-  senha: string;
+  password: string;
 
   @OneToMany(() => UserRole, userRole => userRole.user)
   roles: UserRole[];
