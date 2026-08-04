@@ -2,12 +2,9 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserRole } from '../../user_roles/entities/user_role.entity';
-import { RolePermission } from '../../role_permissions/entities/role_permission.entity';
 
 @Entity('roles')
 export class Role {
@@ -17,15 +14,9 @@ export class Role {
   @Column({ unique: true })
   name: string;
 
-  @OneToMany(() => UserRole, userRole => userRole.role)
-  users: UserRole[];
-
-  @OneToMany(() => RolePermission, permission => permission.role)
-  permissions: RolePermission[];
-
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

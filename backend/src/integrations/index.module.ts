@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { HubsoftService } from './hubsoft.service';
 import { HttpModule } from '@nestjs/axios';
-import { IntegrationsController } from './index.controller';
+import { HubsoftService } from './service/hubsoft.service';
+import { IntegrationsController } from './controller/index.controller';
 
 @Module({
   imports: [HttpModule],

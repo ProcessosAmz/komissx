@@ -1,9 +1,9 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable } from "@nestjs/common";
-import { firstValueFrom } from "rxjs";
-import { RelatorioTecnicoDto } from "src/reports/dto/relatorio-tecnico-instalacao.dto";
-import { MetabaseParameter } from "../common/interfaces/metabase-parameter.interface";
-import { METABASE_INSTALLATION_FILTERS } from "./metabase.constants";
+import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
+import { RelatorioTecnicoDto } from '../../module/reports/dto/relatorioTecnicoInstalacao.dto';
+import { MetabaseParameter } from '../../common/interfaces/metabaseParameter.interface';
+import { METABASE_INSTALLATION_FILTERS } from '../constants/metabase/metabase.constants';
 
 @Injectable()
 export class MetaService {
