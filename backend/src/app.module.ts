@@ -5,8 +5,8 @@ import { UsersModule } from './module/users/index.module';
 
 @Module({
   imports: [
-        ConfigModule.forRoot({
-      envFilePath: [".env.development.local", ".env.development", ".env"],
+    ConfigModule.forRoot({
+      envFilePath: ['.env.development.local', '.env.development', '.env'],
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
@@ -17,7 +17,7 @@ import { UsersModule } from './module/users/index.module';
       database: process.env.DB_DATABASE,
       autoLoadEntities: true,
       synchronize: false,
-      migrations: [`${__dirname}/../migrations/*{.ts,.js}`],
+      migrations: [`${__dirname}/migrations/*{.js}`],
       migrationsRun: false,
     }),
     UsersModule,
