@@ -2,11 +2,9 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
 
 @Entity('users')
 export class User {
@@ -14,7 +12,7 @@ export class User {
   id: number;
 
   @Column()
-  nome: string;
+  name: string;
 
   @Column({ unique: true })
   email: string;
@@ -22,18 +20,30 @@ export class User {
   @Column()
   password: string;
 
-  @OneToMany(() => UserRole, userRole => userRole.user)
-  roles: UserRole[];
+  @Column({ name: 'hubsoft_id', type: 'int', unique: true, nullable: true })
+  hubsoftId: number | null;
 
-  @OneToMany(() => UserPermission, permission => permission.user)
-  permissions: UserPermission[];
+  @Column({ name: 'role_id' })
+  roleId: number;
 
-  @Column({ name: 'hubsoft_id', unique: true, nullable: true })
-  hubsoftId: number; // Armazena o ID vindo da API externa
+  @Column({ name: 'operadora_id' })
+  operadoraId: number;
 
-  @CreateDateColumn()
+  @Column({ name: 'regional_id' })
+  regionalId: number;
+
+  @Column({ name: 'supervisor_id', type: 'int', nullable: true })
+  supervisorId: number | null;
+
+  @Column({ name: 'participa_fechamento', default: false })
+  participaFechamento: boolean;
+
+  @Column({ default: true })
+  active: boolean;
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
