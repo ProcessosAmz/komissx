@@ -24,6 +24,6 @@ async function bootstrap() {
   await app.listen(port);
 
   logger.log(`Aplicação rodando em: http://localhost:${port}`);
-  logger.log(`Swagger em: http://localhost:${port}/docs`);
+  logger.log(`Swagger em: http://localhost:${port}/api`);
 }
 bootstrap();
