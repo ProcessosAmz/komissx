@@ -34,11 +34,17 @@ Crie um arquivo `.env` na raiz do `backend` com as variáveis necessárias. O `C
 
 > O TypeORM / Postgres está preparado no `AppModule`, mas ainda comentado. Quando for habilitar, configure também `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` e `DB_DATABASE`.
 
+## Banco de dados (TypeORM + PostgreSQL)
 
+O TypeORM está configurado no `AppModule` com `synchronize: false`.
+O schema é gerenciado por migrations.
 
-## Rodar o projeto
+### Subir o Postgres (Docker)
 
 ```bash
+docker compose up -d
+```
+
 # desenvolvimento (watch)
 npm run start:dev
 
