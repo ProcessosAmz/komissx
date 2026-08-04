@@ -8,6 +8,8 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  app.setGlobalPrefix('api');
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,6 +24,6 @@ async function bootstrap() {
   await app.listen(port);
 
   logger.log(`Aplicação rodando em: http://localhost:${port}`);
-  logger.log(`Swagger em: http://localhost:${port}/api`);
+  logger.log(`Swagger em: http://localhost:${port}/docs`);
 }
 bootstrap();

@@ -10,15 +10,28 @@ export class UsersController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
-  @ApiBody({ type: CreateUserDto })
+  @ApiBody({
+    type: CreateUserDto, description: 'User data', examples: {
+      default: {
+        value: {
+          name: 'Jessica Martins',
+          email: 'jessica@amazonet.com',
+          password: 'senha123',
+          roleId: 1,
+          operadoraId: 1,
+          regionalId: 1,
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async create(@Body() createUserDto: CreateUserDto) {
     try {
       this.logger.log('Received request to create a new user',);
-      const user = await this.usersService.create(createUserDto);
-      return user;
+      const result = await this.usersService.create(createUserDto);
+      return result;
     } catch (error: unknown) {
       if (error instanceof Error) {
         this.logger.error(error);
