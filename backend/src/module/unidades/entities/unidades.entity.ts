@@ -4,16 +4,18 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
-import { Empresa } from '../../operadoras/entities/operadora.entity';
+import { Empresas } from '@/module/empresas/entities/empresas.entity';
 import { Estado, Cidade } from '@/module/localidade/entities';
+import { Users } from '@/module/users/entities/users.entity';
 
-@Entity('regionais')
+@Entity('unidades')
 @Unique(['empresaId', 'name'])
-export class Regional {
+export class Unidades {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -29,9 +31,9 @@ export class Regional {
   @Column({ name: 'cidade_id', type: 'uuid', nullable: true })
   cidadeId: string | null;
 
-  @ManyToOne(() => Empresa, (empresa) => empresa.regionais)
+  @ManyToOne(() => Empresas, (empresa) => empresa.unidades)
   @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresa;
+  empresa: Empresas;
 
   @ManyToOne(() => Estado, { nullable: true })
   @JoinColumn({ name: 'estado_id' })
@@ -40,6 +42,9 @@ export class Regional {
   @ManyToOne(() => Cidade, { nullable: true })
   @JoinColumn({ name: 'cidade_id' })
   cidade: Cidade | null;
+
+  @OneToMany(() => Users, (user) => user.unidade)
+  users: Users[];
 
   @Column({ default: true })
   active: boolean;

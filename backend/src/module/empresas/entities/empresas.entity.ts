@@ -6,10 +6,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Regional } from '@/module/regionais/entities/regional.entity';
+import { Unidades } from '@/module/unidades/entities/unidades.entity';
+import { Users } from '@/module/users/entities/users.entity';
+
 
 @Entity('empresas')
-export class Empresa {
+export class Empresas {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -19,8 +21,11 @@ export class Empresa {
   @Column({ default: true })
   active: boolean;
 
-  @OneToMany(() => Regional, (regional) => regional.empresa)
-  regionais: Regional[];
+  @OneToMany(() => Unidades, (unidade) => unidade.empresa)
+  unidades: Unidades[];
+
+  @OneToMany(() => Users, (user) => user.empresa)
+  users: Users[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
