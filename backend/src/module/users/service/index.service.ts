@@ -7,15 +7,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from '../entities/users.entity';
+import { Users } from '../entities/users.entity';
 import { CreateUserDto } from '../dto';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
   constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    @InjectRepository(Users)
+    private readonly usersRepository: Repository<Users>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<{ data: { name: string, email: string }; message: string }> {
