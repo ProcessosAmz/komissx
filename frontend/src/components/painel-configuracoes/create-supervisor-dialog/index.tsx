@@ -15,7 +15,7 @@ import { useCreateUser } from "@/hook/useCreateUser";
 
 const SUPERVISOR_ROLE_ID = 1;
 
-const OPERADORAS = [
+const EMPRESAS = [
   { id: 1, label: "AMAZONET" },
   { id: 2, label: "MANIA" },
 ];
@@ -158,9 +158,9 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
                 className="w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold"
                 {...register("operadoraId")}
               >
-                {OPERADORAS.map((operadora) => (
-                  <option key={operadora.id} value={operadora.id}>
-                    {operadora.label}
+                {EMPRESAS.map((empresa) => (
+                  <option key={empresa.id} value={empresa.id}>
+                    {empresa.label}
                   </option>
                 ))}
               </select>

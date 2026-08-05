@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   MinLength,
 } from 'class-validator';
 
@@ -29,22 +30,21 @@ export class CreateUserDto {
   @IsNotEmpty()
   hubsoftId: number;
 
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  roleId: number;
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @IsUUID()
+  roleId: string;
 
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  operadoraId: number;
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @IsUUID()
+  operadoraId: string;
 
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  regionalId: number;
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @IsUUID()
+  regionalId: string;
 
-  @ApiPropertyOptional({ example: 10, nullable: true })
-  @IsOptional()
-  @IsInt()
-  supervisorId?: number | null;
+  @ApiPropertyOptional({ example: '123e4567-e89b-12d3-a456-426614174000'})
+  @IsUUID()
+  supervisorId: string;
 
   @ApiPropertyOptional({ example: false, default: false })
   @IsOptional()

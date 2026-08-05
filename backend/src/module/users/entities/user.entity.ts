@@ -8,8 +8,8 @@ import {
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   name: string;
@@ -23,17 +23,17 @@ export class User {
   @Column({ name: 'hubsoft_id', type: 'int', unique: true, nullable: true })
   hubsoftId: number | null;
 
-  @Column({ name: 'role_id' })
-  roleId: number;
+  @Column({ name: 'role_id', type: 'uuid' })
+  roleId: string;
 
-  @Column({ name: 'operadora_id' })
-  operadoraId: number;
+  @Column({ name: 'operadora_id', type: 'uuid' })
+  operadoraId: string;
 
-  @Column({ name: 'regional_id' })
-  regionalId: number;
+  @Column({ name: 'regional_id', type: 'uuid' })
+  regionalId: string;
 
-  @Column({ name: 'supervisor_id', type: 'int', nullable: true })
-  supervisorId: number | null;
+  @Column({ name: 'supervisor_id', type: 'uuid', nullable: true })
+  supervisorId: string | null;
 
   @Column({ name: 'participa_fechamento', default: false })
   participaFechamento: boolean;
