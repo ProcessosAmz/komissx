@@ -1,4 +1,5 @@
 import type { Cargo, HierarquiaNode } from "@/types/cargo";
+import type { UserApiNode } from "@/types/filtro";
 
 export function getIniciais(nome: string) {
   return nome
@@ -36,4 +37,26 @@ export function encontrarNo(
     if (filho) return filho;
   }
   return null;
+}
+
+function mapCargo(roleName: string): Cargo {
+  const normalized = roleName.toUpperCase();
+  if (normalized.includes("SUPERVISOR")) return "SUPERVISOR";
+  if (normalized.includes("LIDER") || normalized.includes("LÍDER")) return "LIDER";
+  if (normalized.includes("AUTONOMO") || normalized.includes("AUTÔNOMO")) return "AUTONOMO";
+  return "TECNICO";
+}
+
+export function mapUserApiToHierarquia(nodes: UserApiNode[]): HierarquiaNode[] {
+  return nodes.map((node) => ({
+    id: node.id,
+    nome: node.name,
+    email: node.email,
+    cargo: mapCargo(node.roleName),
+    operadora: node.empresaName,
+    regional: node.unidadeName,
+    idHubsoft: node.hubsoftId ? String(node.hubsoftId) : "",
+    participaFechamento: node.participaFechamento,
+    children: node.children ? mapUserApiToHierarquia(node.children) : undefined,
+  }));
 }
