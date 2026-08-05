@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { LocalidadeModule } from './module/localidade/index.module';
+import { EmpresasModule } from './module/empresas/index.module';
+import { UnidadesModule } from './module/unidades/index.module';
+import { RolesModule } from './module/roles/index.module';
+import { PermissionsModule } from './module/permissions/index.module';
 import { UsersModule } from './module/users/index.module';
 
 @Module({
@@ -20,6 +25,11 @@ import { UsersModule } from './module/users/index.module';
       migrations: [`${__dirname}/migrations/*{.js}`],
       migrationsRun: false,
     }),
+    LocalidadeModule,
+    EmpresasModule,
+    UnidadesModule,
+    RolesModule,
+    PermissionsModule,
     UsersModule,
   ],
 })

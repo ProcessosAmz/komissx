@@ -1,0 +1,120 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class UpdateIdsToUuid1785876203026 implements MigrationInterface {
+    name = 'UpdateIdsToUuid1785876203026'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433"`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "id" uuid NOT NULL DEFAULT uuid_generate_v4()`);
+        await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "role_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "role_id" uuid NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "operadora_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "operadora_id" uuid NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "regional_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "regional_id" uuid NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "supervisor_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "supervisor_id" uuid`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "FK_7c0ae698fd5ea517da5932b3b77"`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP CONSTRAINT "FK_2e7d637be70af707d91216a1933"`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP CONSTRAINT "PK_cc606d4fea4335e32bd19f3a9fa"`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD "id" uuid NOT NULL DEFAULT uuid_generate_v4()`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD CONSTRAINT "PK_cc606d4fea4335e32bd19f3a9fa" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP COLUMN "estado_id"`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD "estado_id" uuid NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "FK_9a071afc392573cb3d73c684263"`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP CONSTRAINT "FK_bbce197daa94b2daad206f66206"`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP CONSTRAINT "PK_3d9a9f2658d5086012f27924d30"`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD "id" uuid NOT NULL DEFAULT uuid_generate_v4()`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD CONSTRAINT "PK_3d9a9f2658d5086012f27924d30" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP COLUMN "pais_id"`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD "pais_id" uuid NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "paises" DROP CONSTRAINT "PK_6b10c7997f3076c02e73c63b043"`);
+        await queryRunner.query(`ALTER TABLE "paises" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "paises" ADD "id" uuid NOT NULL DEFAULT uuid_generate_v4()`);
+        await queryRunner.query(`ALTER TABLE "paises" ADD CONSTRAINT "PK_6b10c7997f3076c02e73c63b043" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "FK_45f91d0ad50590cd66388f6763c"`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "UQ_d149b5b9436bc4f298a56359920"`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "PK_9e028808b8126dcc9e116007f92"`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "id" uuid NOT NULL DEFAULT uuid_generate_v4()`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "PK_9e028808b8126dcc9e116007f92" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "operadora_id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "operadora_id" uuid NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "estado_id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "estado_id" uuid`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "cidade_id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "cidade_id" uuid`);
+        await queryRunner.query(`ALTER TABLE "operadoras" DROP CONSTRAINT "PK_449ba6af3fcae530db51165f542"`);
+        await queryRunner.query(`ALTER TABLE "operadoras" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "operadoras" ADD "id" uuid NOT NULL DEFAULT uuid_generate_v4()`);
+        await queryRunner.query(`ALTER TABLE "operadoras" ADD CONSTRAINT "PK_449ba6af3fcae530db51165f542" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "UQ_d149b5b9436bc4f298a56359920" UNIQUE ("operadora_id", "name")`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD CONSTRAINT "FK_2e7d637be70af707d91216a1933" FOREIGN KEY ("estado_id") REFERENCES "estados"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD CONSTRAINT "FK_bbce197daa94b2daad206f66206" FOREIGN KEY ("pais_id") REFERENCES "paises"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "FK_45f91d0ad50590cd66388f6763c" FOREIGN KEY ("operadora_id") REFERENCES "operadoras"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "FK_9a071afc392573cb3d73c684263" FOREIGN KEY ("estado_id") REFERENCES "estados"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "FK_7c0ae698fd5ea517da5932b3b77" FOREIGN KEY ("cidade_id") REFERENCES "cidades"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "FK_7c0ae698fd5ea517da5932b3b77"`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "FK_9a071afc392573cb3d73c684263"`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "FK_45f91d0ad50590cd66388f6763c"`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP CONSTRAINT "FK_bbce197daa94b2daad206f66206"`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP CONSTRAINT "FK_2e7d637be70af707d91216a1933"`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "UQ_d149b5b9436bc4f298a56359920"`);
+        await queryRunner.query(`ALTER TABLE "operadoras" DROP CONSTRAINT "PK_449ba6af3fcae530db51165f542"`);
+        await queryRunner.query(`ALTER TABLE "operadoras" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "operadoras" ADD "id" SERIAL NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "operadoras" ADD CONSTRAINT "PK_449ba6af3fcae530db51165f542" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "cidade_id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "cidade_id" integer`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "estado_id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "estado_id" integer`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "operadora_id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "operadora_id" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP CONSTRAINT "PK_9e028808b8126dcc9e116007f92"`);
+        await queryRunner.query(`ALTER TABLE "regionais" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD "id" SERIAL NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "PK_9e028808b8126dcc9e116007f92" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "UQ_d149b5b9436bc4f298a56359920" UNIQUE ("name", "operadora_id")`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "FK_45f91d0ad50590cd66388f6763c" FOREIGN KEY ("operadora_id") REFERENCES "operadoras"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "paises" DROP CONSTRAINT "PK_6b10c7997f3076c02e73c63b043"`);
+        await queryRunner.query(`ALTER TABLE "paises" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "paises" ADD "id" SERIAL NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "paises" ADD CONSTRAINT "PK_6b10c7997f3076c02e73c63b043" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP COLUMN "pais_id"`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD "pais_id" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP CONSTRAINT "PK_3d9a9f2658d5086012f27924d30"`);
+        await queryRunner.query(`ALTER TABLE "estados" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD "id" SERIAL NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD CONSTRAINT "PK_3d9a9f2658d5086012f27924d30" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "estados" ADD CONSTRAINT "FK_bbce197daa94b2daad206f66206" FOREIGN KEY ("pais_id") REFERENCES "paises"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "FK_9a071afc392573cb3d73c684263" FOREIGN KEY ("estado_id") REFERENCES "estados"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP COLUMN "estado_id"`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD "estado_id" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP CONSTRAINT "PK_cc606d4fea4335e32bd19f3a9fa"`);
+        await queryRunner.query(`ALTER TABLE "cidades" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD "id" SERIAL NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD CONSTRAINT "PK_cc606d4fea4335e32bd19f3a9fa" PRIMARY KEY ("id")`);
+        await queryRunner.query(`ALTER TABLE "cidades" ADD CONSTRAINT "FK_2e7d637be70af707d91216a1933" FOREIGN KEY ("estado_id") REFERENCES "estados"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "regionais" ADD CONSTRAINT "FK_7c0ae698fd5ea517da5932b3b77" FOREIGN KEY ("cidade_id") REFERENCES "cidades"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "supervisor_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "supervisor_id" integer`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "regional_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "regional_id" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "operadora_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "operadora_id" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "role_id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "role_id" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "users" DROP CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433"`);
+        await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "id"`);
+        await queryRunner.query(`ALTER TABLE "users" ADD "id" SERIAL NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "users" ADD CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id")`);
+    }
+
+}

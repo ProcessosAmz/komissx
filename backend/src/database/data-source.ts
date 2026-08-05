@@ -1,6 +1,10 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { User } from '../module/users/entities/user.entity';
+import { Pais, Estado, Cidade } from '@/module/localidade/entities';
+import { Empresas } from '@/module/empresas/entities/empresas.entity';
+import { Unidades } from '@/module/unidades/entities/unidades.entity';
+import { Users } from '@/module/users/entities/users.entity';
+import { Role } from '@/module/roles/entities/role.entity';
 
 config({ path: '.env' });
 
@@ -11,7 +15,6 @@ export default new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  // entities: ['src/module/**/*.entity.ts'],
-  entities: [User],
+  entities: [Users, Pais, Estado, Cidade, Empresas, Unidades, Role],
   migrations: ['src/migrations/*.ts'],
 });

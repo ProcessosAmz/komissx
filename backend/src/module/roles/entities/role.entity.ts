@@ -2,14 +2,16 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Users } from '@/module/users/entities/users.entity';
 
 @Entity('roles')
 export class Role {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ unique: true })
   name: string;
@@ -19,4 +21,7 @@ export class Role {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+  
+  @OneToMany(() => Users, (user) => user.role)
+  users: Users[];
 }

@@ -7,15 +7,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from '../entities/user.entity';
+import { Users } from '../entities/users.entity';
 import { CreateUserDto } from '../dto';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
   constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    @InjectRepository(Users)
+    private readonly usersRepository: Repository<Users>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<{ data: { name: string, email: string }; message: string }> {
@@ -37,8 +37,8 @@ export class UsersService {
         password: hashedPassword,
         hubsoftId: createUserDto.hubsoftId ?? null,
         roleId: createUserDto.roleId,
-        operadoraId: createUserDto.operadoraId,
-        regionalId: createUserDto.regionalId,
+        empresaId: createUserDto.empresaId,
+        unidadeId: createUserDto.unidadeId,
         supervisorId: createUserDto.supervisorId ?? null,
         participaFechamento: createUserDto.participaFechamento ?? false,
         active: createUserDto.active ?? true,

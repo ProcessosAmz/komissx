@@ -4,7 +4,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from './user.entity';
+import { Users } from './users.entity';
 import { Permission } from '../../permissions/entities/permission.entity';
 
 @Entity('user_permissions')
@@ -12,9 +12,9 @@ export class UserPermission {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Users, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user: Users;
 
   @ManyToOne(() => Permission, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'permission_id' })
