@@ -1,68 +1,81 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { EMPRESAS, UNIDADES, ESTADOS } from "./utils/opcoesFiltro";
 import { Input } from "@/components/ui/Input";
+import { useEmpresas } from "@/hook/useEmpresa";
+import { useEstados } from "@/hook/useEstados";
+import { useUnidades } from "@/hook/useUnidade";
+import { FilterSelect } from "@/components/painel-configuracoes/modulos/negocio-view/hierarquia/filtro/select";
+import type { FiltroUsuarios } from "@/types/filtro";
 
-const selectClassName =
-  "w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 cursor-pointer hover:border-slate-700";
+type FiltroProps = {
+  value: FiltroUsuarios;
+  onChange: (value: FiltroUsuarios) => void;
+};
 
-export function Filtro() {
+export function Filtro({ value, onChange }: FiltroProps) {
+  const [searchInput, setSearchInput] = useState(value.search ?? "");
+  const { data: empresasResponse } = useEmpresas();
+  const { data: estadosResponse } = useEstados();
+  const { data: unidadesResponse } = useUnidades({
+    empresaId: value.empresaId,
+    estadoId: value.estadoId,
+  });
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const nextSearch = searchInput.trim();
+      onChange({
+        ...value,
+        search: nextSearch || undefined,
+      });
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
+
+  const empresas = empresasResponse?.data ?? [];
+  const estados = estadosResponse?.data ?? [];
+  const unidades = unidadesResponse?.data ?? [];
+  const canSelectUnidade = Boolean(value.empresaId) && Boolean(value.estadoId);
+
   return (
     <Card className="bg-[#090d16] border-slate-800 rounded-2xl">
-      <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 w-full block">
-        <div className="flex gap-4 w-full grid grid-cols-1 sm:grid-cols-3">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Empresa
-            </label>
-            <select className={selectClassName} defaultValue="">
-              <option value="" disabled>
-                Selecione a empresa
-              </option>
-              {EMPRESAS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Unidade
-            </label>
-            <select className={selectClassName} defaultValue="">
-              <option value="" disabled>
-                Selecione a unidade
-              </option>
-              {UNIDADES.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Região / Estado
-            </label>
-            <select className={selectClassName} defaultValue="">
-              <option value="" disabled>
-                Selecione a região
-              </option>
-              {ESTADOS.map(({ value, label }) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        {/* TODO: DEBAUNCE SEARCH INPUT */}
-        <div className="mt-4">
-          <Input
-            className="h-12 w-full rounded-xl border border-slate-900 bg-[#03050a] px-3 text-xs text-slate-300 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 cursor-pointer hover:border-slate-800"
-            placeholder="Buscar supervisor, líder ou colaborador..."
+      <CardContent className="flex flex-col gap-4 p-4">
+        <div className="flex gap-4 w-full">
+          <FilterSelect
+            label="Empresa"
+            value={value.empresaId}
+            options={empresas}
+            onChange={(empresaId) =>
+              onChange({ ...value, empresaId, unidadeId: undefined })
+            }
+          />
+
+          <FilterSelect
+            label="Região / Estado"
+            value={value.estadoId}
+            options={estados}
+            onChange={(estadoId) =>
+              onChange({ ...value, estadoId, unidadeId: undefined })
+            }
+          />
+
+          <FilterSelect
+            label="Unidade"
+            value={value.unidadeId}
+            options={unidades}
+            disabled={!canSelectUnidade}
+            onChange={(unidadeId) => onChange({ ...value, unidadeId })}
           />
         </div>
+
+        <Input
+          type="text"
+          placeholder="Buscar por nome..."
+          className="w-full h-11 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 hover:border-slate-700"
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+        />
       </CardContent>
     </Card>
   );

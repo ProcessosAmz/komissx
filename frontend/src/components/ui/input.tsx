@@ -35,7 +35,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         <div className={`input-wrapper ${error ? "has-error" : ""}`}>
 
-          <input
+      <input
             id={id}
             ref={ref}
             type={
