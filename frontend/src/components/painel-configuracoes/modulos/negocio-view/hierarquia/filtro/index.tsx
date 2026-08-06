@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/Input";
 import { useEmpresas } from "@/hook/useEmpresa";
 import { useEstados } from "@/hook/useEstados";
 import { useUnidades } from "@/hook/useUnidade";
 import { FilterSelect } from "@/components/painel-configuracoes/modulos/negocio-view/hierarquia/filtro/select";
 import type { FiltroUsuarios } from "@/types/filtro";
-import { Input } from "@/components/ui/Input";
 
 type FiltroProps = {
   value: FiltroUsuarios;
@@ -12,12 +13,25 @@ type FiltroProps = {
 };
 
 export function Filtro({ value, onChange }: FiltroProps) {
+  const [searchInput, setSearchInput] = useState(value.search ?? "");
   const { data: empresasResponse } = useEmpresas();
   const { data: estadosResponse } = useEstados();
   const { data: unidadesResponse } = useUnidades({
     empresaId: value.empresaId,
     estadoId: value.estadoId,
   });
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const nextSearch = searchInput.trim();
+      onChange({
+        ...value,
+        search: nextSearch || undefined,
+      });
+    }, 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchInput]);
 
   const empresas = empresasResponse?.data ?? [];
   const estados = estadosResponse?.data ?? [];
@@ -54,15 +68,14 @@ export function Filtro({ value, onChange }: FiltroProps) {
             onChange={(unidadeId) => onChange({ ...value, unidadeId })}
           />
         </div>
-        <div>
-          <Input
-            type="text"
-            placeholder="Buscar supervisor, líder ou colaborador..."
-            className="w-full h-11 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 cursor-pointer hover:border-slate-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-slate-800"
-            value={value.search}
-            onChange={(e) => onChange({ ...value, search: e.target.value })}
-          />
-        </div>
+
+        <Input
+          type="text"
+          placeholder="Buscar por nome..."
+          className="w-full h-11 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500/50 hover:border-slate-700"
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+        />
       </CardContent>
     </Card>
   );
