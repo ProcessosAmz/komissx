@@ -1,3 +1,4 @@
+//TODO: REMOVER ISSO 
 export type OpcaoFiltroApi = {
     id: string;
     name: string;
@@ -19,6 +20,8 @@ export type OpcaoFiltroApi = {
     search?: string;
   };
   
+
+  // TODO: REMOVER ISSO 
   export type UserApiNode = {
     id: string;
     name: string;
