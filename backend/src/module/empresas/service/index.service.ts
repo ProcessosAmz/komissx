@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Empresas } from '@/module/empresas/entities/empresas.entity';
+import { getErrorMessage } from '@/utils/error.utilts';
 
 @Injectable()
 export class EmpresasService {
@@ -37,8 +38,7 @@ export class EmpresasService {
         message: 'Empresas listadas com sucesso',
       };
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Erro desconhecido';
+      const message = getErrorMessage(error);
 
       this.logger.error(`Failed to list companies: ${message}`, (error as Error)?.stack);
 
