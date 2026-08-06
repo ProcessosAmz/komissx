@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  Logger,
-  BadRequestException,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Query } from '@nestjs/common';
 import { UsersService } from '../service/index.service';
 import { CreateUserDto, FilterUsersDto } from '../dto';
 import { ApiOperation, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -15,13 +6,12 @@ import { ApiOperation, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  private readonly logger = new Logger(UsersController.name);
-
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar usuários com filtros' })
   @ApiResponse({ status: 200, description: 'Usuários listados com sucesso' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   findAll(@Query() filters: FilterUsersDto) {
     return this.usersService.findAll(filters);
   }
@@ -46,21 +36,9 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 201, description: 'User created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 409, description: 'Email already registered' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async create(@Body() createUserDto: CreateUserDto) {
-    try {
-      this.logger.log('Received request to create a new user');
-      return await this.usersService.create(createUserDto);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        this.logger.error(error);
-        throw new BadRequestException(error.message);
-      }
-      this.logger.error(error);
-      throw new InternalServerErrorException(
-        'Erro ao criar usuário, tente novamente mais tarde',
-      );
-    }
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
   }
 }
