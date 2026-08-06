@@ -1,3 +1,3 @@
-export * from './createUser.dto';
-export * from './updateUser.dto';  
-export * from './filterUsers.dto';
+export * from '@/module/users/dto/createUser.dto';
+export * from '@/module/users/dto/updateUser.dto';  
+export * from '@/module/users/dto/filterUsers.dto';
