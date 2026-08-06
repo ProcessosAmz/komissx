@@ -11,6 +11,7 @@ export class UnidadesController {
   @Get()
   @ApiOperation({ summary: 'Listar unidades ativas para filtros' })
   @ApiResponse({ status: 200, description: 'Unidades listadas com sucesso' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
   findAll(@Query() filters: FilterUnidadesDto) {
     return this.unidadesService.findAll(filters);
   }
