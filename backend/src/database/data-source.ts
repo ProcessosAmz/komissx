@@ -1,21 +1,32 @@
-import { DataSource } from 'typeorm';
-import { config } from 'dotenv';
-import { Pais, Estado, Cidade } from '@/module/localidade/entities';
-import { Empresas } from '@/module/empresas/entities/empresas.entity';
-import { Unidades } from '@/module/unidades/entities/unidades.entity';
-import { Users } from '@/module/users/entities/users.entity';
-import { Role } from '@/module/roles/entities/role.entity';
+import { Commission } from "@/module/commissions/entities/commission.entity";
+import { Empresas } from "@/module/empresas/entities/empresas.entity";
+import { Cidade, Estado, Pais } from "@/module/localidade/entities";
+import { Role } from "@/module/roles/entities/role.entity";
+import { Unidades } from "@/module/unidades/entities/unidades.entity";
+import { Users } from "@/module/users/entities/users.entity";
+import { config } from "dotenv";
+import { DataSource } from "typeorm";
 
-config({ path: '.env' });
+config({ path: ".env" });
 
 export default new DataSource({
-  type: 'postgres',
+  type: "postgres",
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [Users, Pais, Estado, Cidade, Empresas, Unidades, Role],
-  migrations: ['src/migrations/*.ts'],
+  entities: [
+    Users,
+    Pais,
+    Estado,
+    Cidade,
+    Empresas,
+    Unidades,
+    Role,
+    Permissions,
+    Commission,
+  ],
+  migrations: ["src/migrations/*.ts"],
 });
-// add teste 
+// add teste
