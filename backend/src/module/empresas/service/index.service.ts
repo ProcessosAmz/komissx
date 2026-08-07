@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Empresas } from '@/module/empresas/entities/empresas.entity';
-import { getErrorMessage } from '@/utils/error.utilts';
+import { getErrorMessage } from '@/utils/error.utils';
 
 @Injectable()
 export class EmpresasService {

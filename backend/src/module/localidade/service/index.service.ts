@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Estado } from '@/module/localidade/entities/estado.entity';
-import { getErrorMessage } from '@/utils/error.utilts';
+import { getErrorMessage } from '@/utils/error.utils';
 
 @Injectable()
 export class LocalidadeService {

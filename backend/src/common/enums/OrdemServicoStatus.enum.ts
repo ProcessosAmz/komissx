@@ -1,4 +1,4 @@
-import { Host } from "@/common/enums/host.enum";
+import { Host } from "./host.enum";
 
 export enum OrdemServicoStatus {
     INSTALACAO = "instalacao",
