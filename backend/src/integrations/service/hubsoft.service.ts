@@ -11,6 +11,7 @@ import {
 import { getHubsoftConfig } from '../constants/hubsoft/hubsoftConfig.constants';
 import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
 import { getErrorMessage } from '@/utils/error.utils';
+import { HubsoftClienteRepository } from '../repository/hubsoft/hubsoftClienteRepository';
 
 type HostTokenState = {
   accessToken: string;
@@ -22,7 +23,10 @@ export class HubsoftService {
   private readonly logger = new Logger(HubsoftService.name);
   private readonly tokens: Partial<Record<Host, HostTokenState>> = {};
 
-  constructor(private readonly httpService: HttpService) { }
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly hubsoftClienteRepository: HubsoftClienteRepository,
+  ) { }
 
   private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
@@ -90,91 +94,85 @@ export class HubsoftService {
   }
 
   async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
-    this.logger.log('paylaod', payload)
     const descricao = payload.body.descricao_abertura;
     const numeroOrdem = payload.body.numero_ordem_servico;
     const host = this.resolverHost(numeroOrdem);
-
     if (!host) {
       this.logger.warn(
         `Prefixo desconhecido em numero_ordem_servico: ${numeroOrdem.slice(0, 4)}`,
       );
       return null;
     }
-
-    // TODO: Remover este if quando for para testar em amazonet
     if (host !== Host.MANIA) {
-      this.logger.warn(`Host ${host} ignorado — validando apenas Mania por enquanto`);
+      this.logger.warn(
+        `Host ${host} ignorado — validando apenas Mania por enquanto`,
+      );
       return null;
     }
-
-    const token = await this.garantirTokenValido(host);
-
-    this.logger.log(
-      `Validando ordem ${numeroOrdem} - host: ${host ?? 'desconhecido'}`,
-    );
-
     const isInstalacao = this.isOrdemDeInstalacao(
       host,
       payload.body.id_tipo_ordem_servico,
     );
-
     if (!isInstalacao) {
       this.logger.warn(
         `Tipo de ordem ${payload.body.id_tipo_ordem_servico} não é instalação para o host ${host}.`,
       );
       return null;
     }
-
     const config = getHubsoftConfig(host);
-    await this.garantirTokenValido(host);
-
-    this.logger.log('Ordem de instalação válida. Criando atendimento...');
-
-
+    const token = await this.garantirTokenValido(host);
+    this.logger.log('Ordem de instalação válida. Buscando cliente...');
+    const contato = await this.hubsoftClienteRepository.getByIdClienteServico(
+      host,
+      payload.body.id_cliente_servico,
+      token,
+    );
+    if (!contato) {
+      this.logger.warn(
+        `Contato não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
+      );
+      return null;
+    }
+    this.logger.log(
+      `cliente encontrado: ${contato.nome} | ${contato.telefone} | ${contato.email}`,
+    );
+    this.logger.log('Criando atendimento...');
     const requestBody = {
       id_cliente_servico: payload.body.id_cliente_servico,
       id_usuario_abertura: payload.body.id_usuario_abertura,
       ...atendimentoPadraoPorHost[host],
+      nome: contato.nome,
+      telefone: contato.telefone,
+      email: contato.email,
     };
-
-    const response = await firstValueFrom(
-      this.httpService.post(
-        `${config.url}/api/v1/integracao/atendimento`, // confirme o path na doc Hubsoft
-        requestBody,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(
+          `${config.url}/api/v1/integracao/atendimento`,
+          requestBody,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
           },
+        ),
+      );
+      this.logger.log(
+        `Atendimento criado com sucesso: ${JSON.stringify(response.data)}`,
+      );
+      return {
+        message: 'Ticket created successfully',
+        data: {
+          host,
+          name_description: descricao,
+          hubUrl: config.url,
+          atendimento: response.data?.atendimento,
         },
-      ),
-    );
-
-    this.logger.log('Atendimento criado com sucesso', response.data);
-
-    return {
-      message: 'Ticket created successfully',
-      data: {
-        host,
-        name_description: descricao,
-        hubUrl: config.url,
-      },
-    };
-  }
-
-  private resolverHost(numeroOrdemServico: string): Host | null {
-    if (!numeroOrdemServico || numeroOrdemServico.length < 4) {
-      return null;
+      };
+    } catch (error) {
+      this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
     }
-
-    const prefixo = numeroOrdemServico.slice(0, 4);
-
-    if (!(prefixo in OrdemServicoHostPrefixo)) {
-      return null;
-    }
-
-    return OrdemServicoHostPrefixo[prefixo as OrdemServicoHostPrefixoKey];
   }
 
   private isOrdemDeInstalacao(host: Host, idTipo: number): boolean {
@@ -185,7 +183,10 @@ export class HubsoftService {
 
   private logAndRethrow(context: string, error: unknown): never {
     const message = getErrorMessage(error);
-    this.logger.error(`${context}: ${message}`, error instanceof Error ? error.stack : undefined);
+    this.logger.error(
+      `${context}: ${message}`,
+      error instanceof Error ? error.stack : undefined,
+    );
     throw error;
   }
 }
