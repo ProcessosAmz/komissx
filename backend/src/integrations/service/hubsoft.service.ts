@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { Host } from 'src/common/enums/host.enum';
 import { OrdemServicoTipoId } from 'src/common/enums/OrdemServicoStatus.enum';
+import { atendimentoPadraoPorHost } from '@/integrations/constants/hubsoft/atendimetnoPadrao.constants';
 import {
   OrdemServicoHostPrefixo,
   OrdemServicoHostPrefixoKey,
@@ -92,12 +93,7 @@ export class HubsoftService {
     this.logger.log('paylaod', payload)
     const descricao = payload.body.descricao_abertura;
     const numeroOrdem = payload.body.numero_ordem_servico;
-    const ordem = payload.body;
     const host = this.resolverHost(numeroOrdem);
-
-    this.logger.log(
-      `Validando ordem ${numeroOrdem} - host: ${host ?? 'desconhecido'}`,
-    );
 
     if (!host) {
       this.logger.warn(
@@ -105,6 +101,18 @@ export class HubsoftService {
       );
       return null;
     }
+
+    // TODO: Remover este if quando for para testar em amazonet
+    if (host !== Host.MANIA) {
+      this.logger.warn(`Host ${host} ignorado — validando apenas Mania por enquanto`);
+      return null;
+    }
+
+    const token = await this.garantirTokenValido(host);
+
+    this.logger.log(
+      `Validando ordem ${numeroOrdem} - host: ${host ?? 'desconhecido'}`,
+    );
 
     const isInstalacao = this.isOrdemDeInstalacao(
       host,
@@ -127,26 +135,23 @@ export class HubsoftService {
     const requestBody = {
       id_cliente_servico: payload.body.id_cliente_servico,
       id_usuario_abertura: payload.body.id_usuario_abertura,
-      id_tipo_atendimento: 314,
-      id_atendimento_status: 2,
-      descricao: 'Atendimento aberto automaticamente para auditoria de venda',
-      nome: 'Processos',
-      telefone: '93928450524',
-      email: 'marketingpa@amazonett.com.br',
+      ...atendimentoPadraoPorHost[host],
     };
 
-    // const response = await firstValueFrom(
-    //   this.httpService.post(
-    //     `${config.url}/api/v1/integracao/atendimento`, // confirme o path na doc Hubsoft
-    //     requestBody,
-    //     {
-    //       headers: {
-    //         Authorization: `Bearer ${token}`,
-    //         'Content-Type': 'application/json',
-    //       },
-    //     },
-    //   ),
-    // );
+    const response = await firstValueFrom(
+      this.httpService.post(
+        `${config.url}/api/v1/integracao/atendimento`, // confirme o path na doc Hubsoft
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      ),
+    );
+
+    this.logger.log('Atendimento criado com sucesso', response.data);
 
     return {
       message: 'Ticket created successfully',
