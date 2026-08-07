@@ -80,28 +80,27 @@ export class HubsoftService {
 
   async createTicket(body: any): Promise<any> {
     const token = await this.garantirTokenValido();
-    console.log(new Date().toISOString(), 'today');
+    console.log(new Date().toISOString(), "today");
     console.log(body);
 
     try {
-    //   const response = await firstValueFrom(
-    //     this.httpService.post(
-    //       `/api/v1/integracao/atendimento`,
-    //       body,
-    //       {
-    //         headers: {
-    //           Authorization: `Bearer ${token}`,
-    //           "Content-Type": "application/json",
-    //         },
-    //       },
-    //     ),
-    //   );
-  
-      return {
-        message: 'Ticket created successfully',
-        data: body,
-      }
+      //   const response = await firstValueFrom(
+      //     this.httpService.post(
+      //       `/api/v1/integracao/atendimento`,
+      //       body,
+      //       {
+      //         headers: {
+      //           Authorization: `Bearer ${token}`,
+      //           "Content-Type": "application/json",
+      //         },
+      //       },
+      //     ),
+      //   );
 
+      return {
+        message: "Ticket created successfully",
+        data: body,
+      };
     } catch (error) {
       this.logger.error(
         "Erro ao criar atendimento no Hubsoft",
