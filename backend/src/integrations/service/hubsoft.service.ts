@@ -21,7 +21,7 @@ export class HubsoftService {
   private readonly logger = new Logger(HubsoftService.name);
   private readonly tokens: Partial<Record<Host, HostTokenState>> = {};
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) { }
 
   private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
@@ -89,8 +89,10 @@ export class HubsoftService {
   }
 
   async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
+    this.logger.log('paylaod', payload)
     const descricao = payload.body.descricao_abertura;
     const numeroOrdem = payload.body.numero_ordem_servico;
+    const ordem = payload.body;
     const host = this.resolverHost(numeroOrdem);
 
     this.logger.log(
@@ -121,7 +123,31 @@ export class HubsoftService {
 
     this.logger.log('Ordem de instalação válida. Criando atendimento...');
 
-    // TODO: implementar chamada real de criação de atendimento no Hubsoft
+
+    const requestBody = {
+      id_cliente_servico: payload.body.id_cliente_servico,
+      id_usuario_abertura: payload.body.id_usuario_abertura,
+      id_tipo_atendimento: 314,
+      id_atendimento_status: 2,
+      descricao: 'Atendimento aberto automaticamente para auditoria de venda',
+      nome: 'Processos',
+      telefone: '93928450524',
+      email: 'marketingpa@amazonett.com.br',
+    };
+
+    // const response = await firstValueFrom(
+    //   this.httpService.post(
+    //     `${config.url}/api/v1/integracao/atendimento`, // confirme o path na doc Hubsoft
+    //     requestBody,
+    //     {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //         'Content-Type': 'application/json',
+    //       },
+    //     },
+    //   ),
+    // );
+
     return {
       message: 'Ticket created successfully',
       data: {
