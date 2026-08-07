@@ -18,3 +18,4 @@ export default new DataSource({
   entities: [Users, Pais, Estado, Cidade, Empresas, Unidades, Role],
   migrations: ['src/migrations/*.ts'],
 });
+// add teste 
