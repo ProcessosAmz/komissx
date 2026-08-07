@@ -1,8 +1,9 @@
-import { Commission } from "@/module/commissions/entities/commission.entity";
 import { Empresas } from "@/module/empresas/entities/empresas.entity";
 import { Cidade, Estado, Pais } from "@/module/localidade/entities";
+import { Permission } from "@/module/permissions/entities/permission.entity";
 import { Role } from "@/module/roles/entities/role.entity";
 import { Unidades } from "@/module/unidades/entities/unidades.entity";
+import { UserPermission } from "@/module/users/entities";
 import { Users } from "@/module/users/entities/users.entity";
 import { config } from "dotenv";
 import { DataSource } from "typeorm";
@@ -24,9 +25,8 @@ export default new DataSource({
     Empresas,
     Unidades,
     Role,
-    Permissions,
-    Commission,
+    Permission,
+    UserPermission,
   ],
   migrations: ["src/migrations/*.ts"],
 });
-// add teste
