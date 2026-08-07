@@ -1,35 +1,11 @@
-import { forwardRef, useState, type InputHTMLAttributes } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import * as React from "react"
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label: string;
-  error?: string;
-  register?: ReturnType<
-    typeof import("react-hook-form").useForm
-  >["register"] extends (name: string) => infer R
-  ? R
-  : never;
-}
+import { cn } from "@/lib/utils"
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      id,
-      label,
-      type = "text",
-      placeholder,
-      error,
-      register,
-      disabled,
-      ...rest
-    },
-    ref
-  ) => {
-    const [showPassword, setShowPassword] = useState(false);
-
-    const isPassword = type === "password";
-
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
     return (
+<<<<<<< HEAD
       <div className="field">
         <label htmlFor={id}>{label}</label>
 
@@ -73,10 +49,20 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p id={`${id}-error`} className="field-error">
             {error}
           </p>
+=======
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          className
+>>>>>>> e2b5dee (222)
         )}
-      </div>
-    );
+        ref={ref}
+        {...props}
+      />
+    )
   }
-);
+)
+Input.displayName = "Input"
 
-Input.displayName = "Input";
+export { Input }
