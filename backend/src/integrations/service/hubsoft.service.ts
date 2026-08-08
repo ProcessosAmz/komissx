@@ -97,55 +97,71 @@ export class HubsoftService {
     const descricao = payload.body.descricao_abertura;
     const numeroOrdem = payload.body.numero_ordem_servico;
     const host = this.resolverHost(numeroOrdem);
+
     if (!host) {
       this.logger.warn(
         `Prefixo desconhecido em numero_ordem_servico: ${numeroOrdem.slice(0, 4)}`,
       );
       return null;
     }
+
     if (host !== Host.MANIA) {
       this.logger.warn(
         `Host ${host} ignorado — validando apenas Mania por enquanto`,
       );
       return null;
     }
+
     const isInstalacao = this.isOrdemDeInstalacao(
       host,
       payload.body.id_tipo_ordem_servico,
     );
+
     if (!isInstalacao) {
       this.logger.warn(
         `Tipo de ordem ${payload.body.id_tipo_ordem_servico} não é instalação para o host ${host}.`,
       );
       return null;
     }
-    const config = getHubsoftConfig(host);
-    const token = await this.garantirTokenValido(host);
-    this.logger.log('Ordem de instalação válida. Buscando cliente...');
-    const contato = await this.hubsoftClienteRepository.getByIdClienteServico(
-      host,
-      payload.body.id_cliente_servico,
-      token,
-    );
-    if (!contato) {
-      this.logger.warn(
-        `Contato não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
-      );
-      return null;
-    }
-    this.logger.log(
-      `cliente encontrado: ${contato.nome} | ${contato.telefone} | ${contato.email}`,
-    );
-    this.logger.log('Criando atendimento...');
-    const requestBody = {
-      id_cliente_servico: payload.body.id_cliente_servico,
-      id_usuario_abertura: payload.body.id_usuario_abertura,
-      ...atendimentoPadraoPorHost[host],
-      nome: contato.nome,
-      telefone: contato.telefone,
-      email: contato.email,
-    };
     try {
+      
+      const config = getHubsoftConfig(host);
+      const token = await this.garantirTokenValido(host);
+      const atendimentoPadrao = atendimentoPadraoPorHost[host];
+
+      this.logger.log('Ordem de instalação válida. Buscando cliente...');
+
+      const contato = await this.hubsoftClienteRepository.getByIdClienteServico(
+        host,
+        payload.body.id_cliente_servico,
+        token,
+      );
+
+
+      if (!contato) {
+        this.logger.warn(
+          `Contato não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
+        );
+        return null;
+      }
+
+      const nome = contato.nome || atendimentoPadrao.nome;
+      const telefone = contato.telefone || atendimentoPadrao.telefone;
+      const email = contato.email || atendimentoPadrao.email;
+
+      this.logger.log(`cliente encontrado: ${nome} | ${telefone} | ${email}`);
+      this.logger.log('Criando atendimento...');
+
+      const requestBody = {
+        id_cliente_servico: payload.body.id_cliente_servico,
+        id_usuario_abertura: payload.body.id_usuario_abertura,
+        ...atendimentoPadrao,
+        nome,
+        telefone,
+        email,
+      };
+
+
       const response = await firstValueFrom(
         this.httpService.post(
           `${config.url}/api/v1/integracao/atendimento`,
@@ -158,9 +174,11 @@ export class HubsoftService {
           },
         ),
       );
+
       this.logger.log(
         `Atendimento criado com sucesso: ${JSON.stringify(response.data)}`,
       );
+
       return {
         message: 'Ticket created successfully',
         data: {
@@ -173,6 +191,20 @@ export class HubsoftService {
     } catch (error) {
       this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
     }
+  }
+
+  private resolverHost(numeroOrdemServico: string): Host | null {
+    if (!numeroOrdemServico || numeroOrdemServico.length < 4) {
+      return null;
+    }
+
+    const prefixo = numeroOrdemServico.slice(0, 4);
+
+    if (!(prefixo in OrdemServicoHostPrefixo)) {
+      return null;
+    }
+
+    return OrdemServicoHostPrefixo[prefixo as OrdemServicoHostPrefixoKey];
   }
 
   private isOrdemDeInstalacao(host: Host, idTipo: number): boolean {

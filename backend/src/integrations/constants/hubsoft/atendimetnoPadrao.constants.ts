@@ -22,7 +22,7 @@ export const atendimentoPadraoPorHost: Record<Host, AtendimentoPadrao> = {
   },
   [Host.MANIA]: {
     id_tipo_atendimento: 475,
-    id_atendimento_status: 2,
+    id_atendimento_status: 12,
     descricao: 'Atendimento aberto automaticamente para auditoria de venda',
     nome: 'Processos Api',
     telefone: '93928450524',
