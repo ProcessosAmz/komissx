@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { HubsoftService } from './service/hubsoft.service';
-import { IntegrationsController } from './controller/index.controller';
-import { HubsoftClienteRepository } from './repository/hubsoft/hubsoftGetByIdCliente.repository';
+import { HubsoftService } from '@/integrations/service/hubsoft.service';
+import { IntegrationsController } from '@/integrations/controller/index.controller';
+import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
+import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
+
 
 @Module({
   imports: [HttpModule],
   controllers: [IntegrationsController],
-  providers: [HubsoftService, HubsoftClienteRepository],
+  providers: [HubsoftService, HubsoftGetByIdClienteRepository, HubsoftCreateAtendimentoRepository],
   exports: [HubsoftService],
 })
 export class IntegrationsModule { }
