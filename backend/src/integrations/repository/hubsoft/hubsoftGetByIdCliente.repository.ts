@@ -11,18 +11,34 @@ export type ClienteServicoContato = {
 };
 
 @Injectable()
-export class HubsoftClienteRepository {
-  private readonly logger = new Logger(HubsoftClienteRepository.name);
+export class HubsoftGetByIdClienteRepository {
+  private readonly logger = new Logger(HubsoftGetByIdClienteRepository.name);
 
   constructor(private readonly httpService: HttpService) {}
 
-  async getByIdClienteServico(
+  async execute(
     host: Host,
     idClienteServico: number,
     token: string,
   ): Promise<ClienteServicoContato | null> {
     const config = getHubsoftConfig(host);
 
+    if(!idClienteServico) {
+      this.logger.warn('ID do cliente servico não informado');
+      return null;
+    }
+
+    if(!token) {
+      this.logger.warn('Token não informado');
+      throw new Error('Token não informado');
+    }
+
+    if(!config) {
+      this.logger.warn('Configuração do Hubsoft não encontrada');
+      throw new Error('Configuração do Hubsoft não encontrada');
+    }
+
+    try {
     const response = await firstValueFrom(
       this.httpService.get(`${config.url}/api/v1/integracao/cliente`, {
         headers: {
@@ -38,17 +54,14 @@ export class HubsoftClienteRepository {
 
     const cliente = response.data?.clientes?.[0];
 
-    if (!cliente) {
-      this.logger.warn(
-        `Cliente não encontrado para id_cliente_servico=${idClienteServico}`,
-      );
-      return null;
-    }
-
     return {
       nome: cliente.nome_razaosocial,
       telefone: cliente.telefone_primario ?? cliente.telefones?.[0]?.telefone,
       email: cliente.email_primario ?? cliente.emails?.[0]?.email,
     };
+  } catch (error) {
+    this.logger.error(`Erro ao buscar cliente no Hubsoft: ${error}`);
+    throw error;
   }
+}
 }

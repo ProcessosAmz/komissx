@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { HubsoftService } from './service/hubsoft.service';
 import { IntegrationsController } from './controller/index.controller';
-import { HubsoftClienteRepository } from './repository/hubsoft/hubsoftClienteRepository';
+import { HubsoftClienteRepository } from './repository/hubsoft/hubsoftGetByIdCliente.repository';
 
 @Module({
   imports: [HttpModule],

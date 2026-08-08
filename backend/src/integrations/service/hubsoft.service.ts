@@ -8,10 +8,11 @@ import {
   OrdemServicoHostPrefixo,
   OrdemServicoHostPrefixoKey,
 } from 'src/common/enums/OrdemServicoHostPrefix.type';
-import { getHubsoftConfig } from '../constants/hubsoft/hubsoftConfig.constants';
+import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
 import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
 import { getErrorMessage } from '@/utils/error.utils';
-import { HubsoftClienteRepository } from '../repository/hubsoft/hubsoftClienteRepository';
+import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
+import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
 
 type HostTokenState = {
   accessToken: string;
@@ -25,8 +26,9 @@ export class HubsoftService {
 
   constructor(
     private readonly httpService: HttpService,
-    private readonly hubsoftClienteRepository: HubsoftClienteRepository,
-  ) { }
+    private readonly hubsoftGetByIdClienteRepository: HubsoftGetByIdClienteRepository,
+    private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
+  ) {}
 
   private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
@@ -94,7 +96,6 @@ export class HubsoftService {
   }
 
   async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
-    const descricao = payload.body.descricao_abertura;
     const numeroOrdem = payload.body.numero_ordem_servico;
     const host = this.resolverHost(numeroOrdem);
 
@@ -123,31 +124,29 @@ export class HubsoftService {
       );
       return null;
     }
+
     try {
-      
-      const config = getHubsoftConfig(host);
       const token = await this.garantirTokenValido(host);
       const atendimentoPadrao = atendimentoPadraoPorHost[host];
 
       this.logger.log('Ordem de instalação válida. Buscando cliente...');
 
-      const contato = await this.hubsoftClienteRepository.getByIdClienteServico(
+      const cliente = await this.hubsoftGetByIdClienteRepository.execute(
         host,
         payload.body.id_cliente_servico,
         token,
       );
 
-
-      if (!contato) {
+      if (!cliente) {
         this.logger.warn(
-          `Contato não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
+          `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
         );
         return null;
       }
 
-      const nome = contato.nome || atendimentoPadrao.nome;
-      const telefone = contato.telefone || atendimentoPadrao.telefone;
-      const email = contato.email || atendimentoPadrao.email;
+      const nome = cliente.nome;
+      const telefone = cliente.telefone;
+      const email = cliente.email;
 
       this.logger.log(`cliente encontrado: ${nome} | ${telefone} | ${email}`);
       this.logger.log('Criando atendimento...');
@@ -161,32 +160,16 @@ export class HubsoftService {
         email,
       };
 
-
-      const response = await firstValueFrom(
-        this.httpService.post(
-          `${config.url}/api/v1/integracao/atendimento`,
-          requestBody,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
+      const atendimento = await this.hubsoftCreateAtendimentoRepository.execute(
+        host,
+        requestBody,
+        token,
       );
 
-      this.logger.log(
-        `Atendimento criado com sucesso: ${JSON.stringify(response.data)}`,
-      );
+      this.logger.log(`Atendimento criado com sucesso codigo_cliente: ${atendimento.cliente.codigo_cliente}`);
 
       return {
-        message: 'Ticket created successfully',
-        data: {
-          host,
-          name_description: descricao,
-          hubUrl: config.url,
-          atendimento: response.data?.atendimento,
-        },
+        message: 'Atendimento criado com sucesso',
       };
     } catch (error) {
       this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
