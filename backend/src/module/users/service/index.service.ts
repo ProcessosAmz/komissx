@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Users } from '@/module/users/entities/users.entity';
 import { CreateUserDto, FilterUsersDto } from '@/module/users/dto';
-import { getErrorMessage } from '@/utils/error.utilts';
+import { getErrorMessage } from '@/utils/error.utils';
 import { UserListItem } from '@/module/users/types/user';
 
 @Injectable()

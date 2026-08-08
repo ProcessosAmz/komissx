@@ -7,6 +7,7 @@ import { UnidadesModule } from './module/unidades/index.module';
 import { RolesModule } from './module/roles/index.module';
 import { PermissionsModule } from './module/permissions/index.module';
 import { UsersModule } from './module/users/index.module';
+import { IntegrationsModule } from './integrations/index.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { UsersModule } from './module/users/index.module';
     RolesModule,
     PermissionsModule,
     UsersModule,
+    IntegrationsModule
   ],
 })
 export class AppModule {}

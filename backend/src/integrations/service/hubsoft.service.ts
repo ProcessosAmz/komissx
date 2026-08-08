@@ -1,112 +1,207 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable, Logger } from "@nestjs/common";
-import { AxiosResponse } from "axios";
-import { firstValueFrom } from "rxjs";
+import { HttpService } from '@nestjs/axios';
+import { Injectable, Logger } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
+import { Host } from 'src/common/enums/host.enum';
+import { OrdemServicoTipoId } from 'src/common/enums/OrdemServicoStatus.enum';
+import { atendimentoPadraoPorHost } from '@/integrations/constants/hubsoft/atendimetnoPadrao.constants';
+import {
+  OrdemServicoHostPrefixo,
+  OrdemServicoHostPrefixoKey,
+} from 'src/common/enums/OrdemServicoHostPrefix.type';
+import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
+import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
+import { getErrorMessage } from '@/utils/error.utils';
+import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
+import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
+
+type HostTokenState = {
+  accessToken: string;
+  expiresAt: number;
+};
 
 @Injectable()
 export class HubsoftService {
   private readonly logger = new Logger(HubsoftService.name);
+  private readonly tokens: Partial<Record<Host, HostTokenState>> = {};
 
-  // 1. Armazena o estado no escopo da classe
-  private accessToken: string | null = null;
-  private expiresAt: number | null = null;
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly hubsoftGetByIdClienteRepository: HubsoftGetByIdClienteRepository,
+    private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
+  ) {}
 
-  constructor(private readonly httpService: HttpService) {}
-
-  // 2. Método privado para garantir que temos um token válido
-  private async garantirTokenValido(): Promise<string> {
+  private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
+    const tokenAtual = this.tokens[host];
 
-    // Se o token existe e ainda não expirou, reutiliza
-    if (this.accessToken && this.expiresAt && agora < this.expiresAt) {
-      return this.accessToken;
+    if (tokenAtual && agora < tokenAtual.expiresAt) {
+      return tokenAtual.accessToken;
     }
 
-    // Caso contrário, faz o login para obter um novo
-    return this.logarHubsoft();
+    return this.logarHubsoft(host);
   }
 
-  private async logarHubsoft(): Promise<string> {
-    this.logger.log("Logando no Hubsoft...");
+  private async logarHubsoft(host: Host): Promise<string> {
+    const config = getHubsoftConfig(host);
+    this.logger.log(`Logando no Hubsoft (${host})...`);
+
+    if (!config.url) {
+      throw new Error(`HUB_URL não configurada para o host ${host}`);
+    }
+
     try {
       const params = new URLSearchParams();
-      params.append("client_id", process.env.HUB_CLIENT_ID || "");
-      params.append("client_secret", process.env.HUB_CLIENT_SECRET || "");
-      params.append("grant_type", process.env.HUB_GRANT_TYPE || "");
-      params.append("username", process.env.HUB_USERNAME || "");
-      params.append("password", process.env.HUB_PASSWORD || "");
+      params.append('client_id', config.clientId);
+      params.append('client_secret', config.clientSecret);
+      params.append('grant_type', config.grantType);
+      params.append('username', config.username);
+      params.append('password', config.password);
 
-      // Mudança para firstValueFrom (substituto do toPromise)
       const response = await firstValueFrom(
-        this.httpService.post(`${process.env.HUB_URL}/oauth/token`, params, {
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        this.httpService.post(`${config.url}/oauth/token`, params, {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         }),
       );
 
-      this.logger.log("Logado com sucesso no Hubsoft");
+      this.logger.log(`Logado com sucesso no Hubsoft (${host})`);
 
-      // Salva os dados na classe
-      const token = response.data.access_token;
-      this.accessToken = token;
-      // Margem de segurança de 60 segundos
-      this.expiresAt = Date.now() + (response.data.expires_in - 60) * 1000;
+      const accessToken = response.data.access_token;
+      this.tokens[host] = {
+        accessToken,
+        expiresAt: Date.now() + (response.data.expires_in - 60) * 1000,
+      };
 
-      return token;
+      return accessToken;
     } catch (error) {
-      this.logger.error("Erro ao logar no Hubsoft", error);
-      throw error;
+      this.logAndRethrow(`Erro ao logar no Hubsoft (${host})`, error);
     }
   }
 
-  // 3. Função de busca adaptada para garantir o token antes de disparar
-  async buscarVendedores(): Promise<AxiosResponse<any>> {
-    // Aguarda a validação/geração do token
-    const token = await this.garantirTokenValido();
+  async buscarVendedores(host: Host): Promise<any> {
+    const config = getHubsoftConfig(host);
+    const token = await this.garantirTokenValido(host);
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get("rota/para/buscar/vendedores", {
+        this.httpService.get(`${config.url}/rota/para/buscar/vendedores`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }),
       );
-      return response.data; // Retorna diretamente os dados da API
+      return response.data;
     } catch (error) {
-      this.logger.error("Erro ao buscar vendedores", error);
-      throw error;
+      this.logAndRethrow('Erro ao buscar vendedores', error);
     }
   }
 
-  async createTicket(body: any): Promise<any> {
-    const token = await this.garantirTokenValido();
-    console.log(new Date().toISOString(), "today");
-    console.log(body);
+  async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
+    const numeroOrdem = payload.body.numero_ordem_servico;
+    const host = this.resolverHost(numeroOrdem);
+
+    if (!host) {
+      this.logger.warn(
+        `Prefixo desconhecido em numero_ordem_servico: ${numeroOrdem.slice(0, 4)}`,
+      );
+      return null;
+    }
+
+    if (host !== Host.MANIA) {
+      this.logger.warn(
+        `Host ${host} ignorado — validando apenas Mania por enquanto`,
+      );
+      return null;
+    }
+
+    const isInstalacao = this.isOrdemDeInstalacao(
+      host,
+      payload.body.id_tipo_ordem_servico,
+    );
+
+    if (!isInstalacao) {
+      this.logger.warn(
+        `Tipo de ordem ${payload.body.id_tipo_ordem_servico} não é instalação para o host ${host}.`,
+      );
+      return null;
+    }
 
     try {
-      //   const response = await firstValueFrom(
-      //     this.httpService.post(
-      //       `/api/v1/integracao/atendimento`,
-      //       body,
-      //       {
-      //         headers: {
-      //           Authorization: `Bearer ${token}`,
-      //           "Content-Type": "application/json",
-      //         },
-      //       },
-      //     ),
-      //   );
+      const token = await this.garantirTokenValido(host);
+      const atendimentoPadrao = atendimentoPadraoPorHost[host];
+
+      this.logger.log('Ordem de instalação válida. Buscando cliente...');
+
+      const cliente = await this.hubsoftGetByIdClienteRepository.execute(
+        host,
+        payload.body.id_cliente_servico,
+        token,
+      );
+
+      if (!cliente) {
+        this.logger.warn(
+          `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
+        );
+        return null;
+      }
+
+      const nome = cliente.nome;
+      const telefone = cliente.telefone;
+      const email = cliente.email;
+
+      this.logger.log(`cliente encontrado: ${nome} | ${telefone} | ${email}`);
+      this.logger.log('Criando atendimento...');
+
+      const requestBody = {
+        id_cliente_servico: payload.body.id_cliente_servico,
+        id_usuario_abertura: payload.body.id_usuario_abertura,
+        ...atendimentoPadrao,
+        nome,
+        telefone,
+        email,
+      };
+
+      const atendimento = await this.hubsoftCreateAtendimentoRepository.execute(
+        host,
+        requestBody,
+        token,
+      );
+
+      this.logger.log(`Atendimento criado com sucesso codigo_cliente: ${atendimento.cliente.codigo_cliente}`);
 
       return {
-        message: "Ticket created successfully",
-        data: body,
+        message: 'Atendimento criado com sucesso',
       };
     } catch (error) {
-      this.logger.error(
-        "Erro ao criar atendimento no Hubsoft",
-        error.response?.data || error.message,
-      );
-      throw error;
+      this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
     }
+  }
+
+  private resolverHost(numeroOrdemServico: string): Host | null {
+    if (!numeroOrdemServico || numeroOrdemServico.length < 4) {
+      return null;
+    }
+
+    const prefixo = numeroOrdemServico.slice(0, 4);
+
+    if (!(prefixo in OrdemServicoHostPrefixo)) {
+      return null;
+    }
+
+    return OrdemServicoHostPrefixo[prefixo as OrdemServicoHostPrefixoKey];
+  }
+
+  private isOrdemDeInstalacao(host: Host, idTipo: number): boolean {
+    return (OrdemServicoTipoId[host].INSTALACAO as readonly number[]).includes(
+      idTipo,
+    );
+  }
+
+  private logAndRethrow(context: string, error: unknown): never {
+    const message = getErrorMessage(error);
+    this.logger.error(
+      `${context}: ${message}`,
+      error instanceof Error ? error.stack : undefined,
+    );
+    throw error;
   }
 }

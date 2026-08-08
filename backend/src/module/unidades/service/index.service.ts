@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Unidades } from '@/module/unidades/entities/unidades.entity';
 import { FilterUnidadesDto } from '@/module/unidades/dto/filterUnidade.dto';
-import { getErrorMessage } from '@/utils/error.utilts';
+import { getErrorMessage } from '@/utils/error.utils';
 
 @Injectable()
 export class UnidadesService {
