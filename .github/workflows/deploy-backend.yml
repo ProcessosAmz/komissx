@@ -9,22 +9,25 @@ jobs:
   deploy:
     runs-on: self-hosted
 
+    defaults:
+      run:
+        shell: powershell
+        working-directory: ./backend
+
     steps:
 
       # 1. Baixa o código do GitHub
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Verifica onde o runner está trabalhando
+      # 2. Verifica o diretório
       - name: Show current directory
-        shell: powershell
         run: |
           pwd
           dir
 
       # 3. Cria o .env com os Secrets do GitHub
       - name: Create .env
-        shell: powershell
         run: |
           @"
           AMAZONET_HUB_URL=${{ secrets.AMAZONET_HUB_URL }}
@@ -57,30 +60,25 @@ jobs:
 
       # 4. Derruba containers antigos
       - name: Docker down
-        shell: powershell
         run: |
           docker compose down --remove-orphans
 
       # 5. Build da aplicação
       - name: Docker build
-        shell: powershell
         run: |
           docker compose build --no-cache
 
       # 6. Sobe aplicação e banco
       - name: Docker up
-        shell: powershell
         run: |
           docker compose up -d
 
       # 7. Verifica containers
       - name: Docker ps
-        shell: powershell
         run: |
           docker ps
 
       # 8. Verifica logs do backend
       - name: Backend logs
-        shell: powershell
         run: |
           docker compose logs --tail=50 backend
