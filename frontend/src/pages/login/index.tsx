@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/stores/auth.store";
 import { AsideBrand } from "@/components/login";
 import { LoginForm } from "@/pages/login/form";
-import "@/components/styles/Login.css";
 
 export default function Login() {
   const navigate = useNavigate();

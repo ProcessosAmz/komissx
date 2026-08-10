@@ -57,7 +57,7 @@ function PermissionGuard({ modulo, children }: { modulo: keyof typeof PERMISSOES
 
 function TelaFechamentoGuard({ tela, children }: { tela: string; children: React.ReactNode }) {
   const user = useAuth((s) => s.user);
-  if (!user) return <Navigate to="/autenticacao" replace />;
+  if (!user) return <Navigate to="/auth" replace />;
   if (user.role === 'ADMIN') return <>{children}</>;
 
   const temPermissao = user.telas_fechamento?.includes(tela);
@@ -133,7 +133,7 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route path="*" element={<Navigate to="/autenticacao" replace />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </BrowserRouter>
   );
