@@ -213,6 +213,7 @@ export class HubsoftService {
         message: 'Atendimento criado com sucesso',
       };
     } catch (error) {
+      this.logger.error(`Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`);
       await this.hubsoftLogger.createTicket({
         action: 'create_error',
         message: `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
