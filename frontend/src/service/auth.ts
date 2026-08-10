@@ -1,15 +1,13 @@
 import { API } from "@/lib/axios";
-
-
-
-// TODO: TYPES FOR THE RESPONSES
+import { LoginPayload, LoginResponse } from "@/types/auth";
 
 export class AuthService {
-    static readonly path = '/auth'
+    static readonly path = "/auth";
 
-    static async login(email: string, password: string) {
-        const response = await API.post(`${this.path}/login`, { email, password });
-        return response.data;
+    static async login(payload: LoginPayload): Promise<LoginResponse> {
+        const response = await API.post(`${this.path}/login`, payload);
+        return response.data as LoginResponse;
+
     }
 
     static async logout() {
