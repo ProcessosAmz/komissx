@@ -1,5 +1,3 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
-import { createUserSchema, type CreateUserFormData } from "@/utils/validators/user";
+import { Input } from "@/components/ui/input";
 import { useCreateUser } from "@/hook/useCreateUser";
 
 const SUPERVISOR_ROLE_ID = 1;
@@ -36,41 +33,30 @@ type Props = {
 export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
   const createUser = useCreateUser();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateUserFormData>({
-    resolver: zodResolver(createUserSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      hubsoftId: undefined as unknown as number,
-      roleId: SUPERVISOR_ROLE_ID,
-      operadoraId: 1,
-      regionalId: 1,
-      supervisorId: null,
-      participaFechamento: false,
-      active: true,
-    },
-  });
+  // const {
+  //   register,
+  //   handleSubmit,
+  //   reset,
+  //   watch,
+  //   setValue,
+  //   formState: { errors, isSubmitting },
+  // } = useForm<CreateUserFormData>({
+  //   resolver: zodResolver(createUserSchema),
+  //   defaultValues: {
+  //     name: "",
+  //     email: "",
+  //     password: "",
+  //     hubsoftId: 0,
+  //     roleId: SUPERVISOR_ROLE_ID.toString(),
+  //     empresaId: "1",
+  //     regionalId: "1",
+  //     supervisorId: null,
+  //     participaFechamento: false,
+  //     active: true,
+  //   },
+  // });
 
-  const participaFechamento = watch("participaFechamento");
 
-  const onSubmit = async (data: CreateUserFormData) => {
-    await createUser.mutateAsync({
-      ...data,
-      roleId: SUPERVISOR_ROLE_ID,
-      supervisorId: null,
-      active: true,
-    });
-    reset();
-    onOpenChange(false);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -82,7 +68,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={() => console.log("submit")} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -90,11 +76,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               </label>
               <Input
                 className={inputClassName}
-                {...register("name")}
               />
-              {errors.name && (
-                <p className="text-[11px] text-red-400">{errors.name.message}</p>
-              )}
             </div>
 
             <div className="space-y-1.5">
@@ -104,11 +86,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               <Input
                 type="email"
                 className={inputClassName}
-                {...register("email")}
               />
-              {errors.email && (
-                <p className="text-[11px] text-red-400">{errors.email.message}</p>
-              )}
             </div>
 
             <div className="space-y-1.5">
@@ -118,11 +96,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               <Input
                 type="password"
                 className={inputClassName}
-                {...register("password")}
               />
-              {errors.password && (
-                <p className="text-[11px] text-red-400">{errors.password.message}</p>
-              )}
             </div>
 
             <div className="space-y-1.5">
@@ -143,20 +117,15 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               <Input
                 type="number"
                 className={inputClassName}
-                {...register("hubsoftId")}
               />
-              {errors.hubsoftId && (
-                <p className="text-[11px] text-red-400">{errors.hubsoftId.message}</p>
-              )}
             </div>
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                Operadora
+                Empresa
               </label>
-              <select
+              <select 
                 className="w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold"
-                {...register("operadoraId")}
               >
                 {EMPRESAS.map((empresa) => (
                   <option key={empresa.id} value={empresa.id}>
@@ -164,9 +133,6 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
                   </option>
                 ))}
               </select>
-              {errors.operadoraId && (
-                <p className="text-[11px] text-red-400">{errors.operadoraId.message}</p>
-              )}
             </div>
 
             <div className="space-y-1.5">
@@ -175,7 +141,6 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               </label>
               <select
                 className="w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold"
-                {...register("regionalId")}
               >
                 {REGIONAIS.map((regional) => (
                   <option key={regional.id} value={regional.id}>
@@ -183,9 +148,6 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
                   </option>
                 ))}
               </select>
-              {errors.regionalId && (
-                <p className="text-[11px] text-red-400">{errors.regionalId.message}</p>
-              )}
             </div>
           </div>
 
@@ -196,25 +158,23 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
             <button
               type="button"
               className={`relative h-5 w-9 rounded-full transition-colors ${
-                participaFechamento ? "bg-indigo-500" : "bg-slate-700"
+                "bg-indigo-500"
               }`}
               aria-label="Participa fechamento mensal"
               onClick={() =>
-                setValue("participaFechamento", !participaFechamento, {
-                  shouldDirty: true,
-                })
+                console.log("click")
               }
             >
               <span
                 className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-                  participaFechamento ? "left-4" : "left-0.5"
+                  "left-4"
                 }`}
               />
             </button>
           </div>
 
-          <input type="hidden" {...register("roleId")} />
-          <input type="hidden" {...register("active")} />
+          <input type="hidden" value={SUPERVISOR_ROLE_ID.toString()} />
+          <input type="hidden" value="true" name="participaFechamento" />
 
           <DialogFooter>
             <Button
@@ -226,7 +186,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || createUser.isPending}
+              disabled={createUser.isPending}
               className="bg-indigo-600 hover:bg-indigo-500"
             >
               {createUser.isPending ? "Criando..." : "Criar supervisor"}

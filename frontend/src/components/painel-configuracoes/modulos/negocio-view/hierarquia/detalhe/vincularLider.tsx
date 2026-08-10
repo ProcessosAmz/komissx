@@ -2,7 +2,7 @@ import { Plus, Unlink } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { HierarquiaNode } from "@/types/cargo";
 import { cargoBadgeClass, getIniciais } from "@/utils/hierarquia";
 
@@ -18,7 +18,6 @@ export function VincularLideres({ lideres }: VincularLideresProps) {
       </h5>
 
       <Input
-        label="Buscar líder para vincular..."
         placeholder="Buscar líder para vincular..."
         className="h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs"
       />

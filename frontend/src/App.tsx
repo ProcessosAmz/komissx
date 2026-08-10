@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth, PERMISSOES } from "@/stores/auth.store";
+import Login from "@/pages/login/index";
 
-import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import PainelConfiguracoes from "@/pages/painel-configuracoes";
 import AcademyPage from "./pages/Academy";
 import { DefaultLayout } from "./layouts/DefaultLayout";
-import AdminLayout from "./layouts/AdminLayout"; 
+import AdminLayout from "./layouts/AdminLayout";
 
 import HubFechamentos from './pages/Fechamentos';
 import Tecnicos from './pages/Fechamentos/semanal/tecnicos';
@@ -32,7 +32,7 @@ function RootRedirect() {
   if (PERMISSOES.producao(user.role)) return <Navigate to="dashboard" replace />;
   if (PERMISSOES.academy(user.role)) return <Navigate to="academy" replace />;
   if (PERMISSOES.fechamento(user.role)) return <Navigate to="fechamentos" replace />;
-  
+
   return <Navigate to="/autenticacao" replace />;
 }
 
@@ -70,8 +70,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/autenticacao" replace />} />
-        <Route path="/autenticacao" element={<Login />} />
+        <Route path="/auth" element={<Login />} />
 
         <Route path="/admin" element={<PrivateLayout />}>
           {/* O index agora calcula dinamicamente para onde o usuário deve ir */}

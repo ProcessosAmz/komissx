@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { HierarquiaNode } from "@/types/cargo";
 
 type FormularioColaboradorProps = {
@@ -16,7 +16,6 @@ export function FormularioColaborador({
             Nome
           </label>
           <Input
-            label="Nome"
             defaultValue={selecionado.nome}
             key={`${selecionado.id}-nome`}
             className="h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs"
@@ -27,7 +26,6 @@ export function FormularioColaborador({
             Email
           </label>
           <Input
-            label="Email"
             defaultValue={selecionado.email}
             key={`${selecionado.id}-email`}
             className="h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs"
@@ -38,7 +36,6 @@ export function FormularioColaborador({
             Cargo
           </label>
           <Input
-            label="Cargo"
             defaultValue={selecionado.cargo}
             disabled
             key={`${selecionado.id}-cargo`}
@@ -63,7 +60,6 @@ export function FormularioColaborador({
             Regional
           </label>
           <Input
-            label="Regional"
             defaultValue={selecionado.regional}
             key={`${selecionado.id}-regional`}
             className="h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs"
@@ -74,7 +70,6 @@ export function FormularioColaborador({
             ID Hubsoft
           </label>
           <Input
-            label="ID Hubsoft"
             defaultValue={selecionado.idHubsoft}
             key={`${selecionado.id}-hubsoft`}
             className="h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs"
