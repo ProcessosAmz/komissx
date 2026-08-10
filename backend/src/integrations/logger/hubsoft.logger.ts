@@ -10,7 +10,7 @@ import { CreateTicketLogData } from '@/integrations/logger/type/createTicket.typ
 @Injectable()
 export class HubsoftLogger {
   private readonly moduleName = 'hubsoft';
-  private readonly logsDirectory = path.join(__dirname, '..', 'logs');
+  private readonly logsDirectory = path.join(process.cwd(), 'src', 'integrations', 'logs')
 
   constructor(private readonly fileLoggerService: FileLoggerService) {}
 
