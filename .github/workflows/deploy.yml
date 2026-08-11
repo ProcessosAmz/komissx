@@ -20,7 +20,7 @@ jobs:
       - name: Create backend .env
         working-directory: ./backend
         run: |
-          @"
+          $envContent = @"
           AMAZONET_HUB_URL=${{ secrets.AMAZONET_HUB_URL }}
           AMAZONET_HUB_CLIENT_ID=${{ secrets.AMAZONET_HUB_CLIENT_ID }}
           AMAZONET_HUB_CLIENT_SECRET=${{ secrets.AMAZONET_HUB_CLIENT_SECRET }}
@@ -29,7 +29,6 @@ jobs:
           AMAZONET_HUB_GRANT_TYPE=${{ secrets.AMAZONET_HUB_GRANT_TYPE }}
           AMAZONET_METABASE_INSTALACAO_TECNICO=${{ secrets.AMAZONET_METABASE_INSTALACAO_TECNICO }}
           AMAZONET_BOT_TOKEN=${{ secrets.AMAZONET_BOT_TOKEN }}
-
           MANIA_HUB_URL=${{ secrets.MANIA_HUB_URL }}
           MANIA_HUB_CLIENT_ID=${{ secrets.MANIA_HUB_CLIENT_ID }}
           MANIA_HUB_CLIENT_SECRET=${{ secrets.MANIA_HUB_CLIENT_SECRET }}
@@ -38,29 +37,33 @@ jobs:
           MANIA_HUB_GRANT_TYPE=${{ secrets.MANIA_HUB_GRANT_TYPE }}
           MANIA_METABASE_INSTALACAO_TECNICO=${{ secrets.MANIA_METABASE_INSTALACAO_TECNICO }}
           MANIA_BOT_TOKEN=${{ secrets.MANIA_BOT_TOKEN }}
-
           METABASE_INSTALACAO_TECNICO=${{ secrets.METABASE_INSTALACAO_TECNICO }}
-
           PORT_NEST=${{ secrets.PORT_NEST }}
-
           DB_HOST=postgres
           DB_PORT=5432
           DB_USERNAME=${{ secrets.DB_USERNAME }}
           DB_DATABASE=${{ secrets.DB_DATABASE }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          "@ | Out-File -FilePath .env -Encoding ascii -Force
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          "@
+          $normalized = ($envContent -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join "`n"
+          [System.IO.File]::WriteAllText("$PWD\.env", $normalized + "`n")
 
       - name: Create frontend .env
         working-directory: ./frontend
         run: |
-          @"
+          $envContent = @"
           VITE_API_URL=${{ secrets.VITE_API_URL }}
-          "@ | Out-File -FilePath .env -Encoding ascii -Force
+          "@
+          $normalized = ($envContent -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join "`n"
+          [System.IO.File]::WriteAllText("$PWD\.env", $normalized + "`n")
 
       - name: Deploy backend
         working-directory: ./backend
         run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --build
+          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --build --force-recreate backend
+          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d redis postgres
 
       - name: Run migrations
         run: |
@@ -70,6 +73,11 @@ jobs:
         working-directory: ./frontend
         run: |
           docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --build
+
+      - name: Verify backend DB env
+        run: |
+          docker exec komissx_backend printenv DB_USERNAME
+          docker exec komissx_backend printenv DB_DATABASE
 
       - name: Docker ps
         run: |
