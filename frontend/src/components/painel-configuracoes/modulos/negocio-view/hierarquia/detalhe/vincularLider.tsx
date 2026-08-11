@@ -2,7 +2,7 @@ import { Plus, Unlink } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { HierarquiaNode } from "@/types/cargo";
 import { cargoBadgeClass, getIniciais } from "@/utils/hierarquia";
 

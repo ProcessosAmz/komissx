@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { useEmpresas } from "@/hook/useEmpresa";
 import { useEstados } from "@/hook/useEstados";
 import { useUnidades } from "@/hook/useUnidade";
