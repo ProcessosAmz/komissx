@@ -163,35 +163,29 @@ export default function Login() {
 
               <Input
                 id="tenantId"
-                label="Empresa (Tenant ID)"
-                placeholder="amazonet"
-                error={errors.tenantId?.message}
-                register={register("tenantId")}
+                placeholder="Empresa (Tenant ID)"
+                {...register("tenantId")}
                 disabled={isSubmitting}
                 autoComplete="organization"
               />
 
               <Input
                 id="email"
-                label="E-mail Corporativo"
+                placeholder="E-mail Corporativo"
                 type="email"
-                placeholder="nome@empresa.com"
-                error={errors.email?.message}
-                register={register("email")}
                 disabled={isSubmitting}
                 autoComplete="email"
+                {...register("email")}
               />
 
               <div className="password-wrapper">
                 <Input
                   id="password"
-                  label="Senha"
+                  placeholder="Senha"
                   type="password"
-                  placeholder="••••••••"
-                  error={errors.password?.message}
-                  register={register("password")}
                   disabled={isSubmitting}
                   autoComplete="current-password"
+                  {...register("password")}
                 />
                 <a href="#recuperar" className="forgot-link">Esqueceu a senha?</a>
               </div>
