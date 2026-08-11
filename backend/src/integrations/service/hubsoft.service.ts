@@ -2,18 +2,20 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { Host } from 'src/common/enums/host.enum';
-import { OrdemServicoTipoId } from 'src/common/enums/OrdemServicoStatus.enum';
 import { atendimentoPadraoPorHost } from '@/integrations/constants/hubsoft/atendimetnoPadrao.constants';
-import {
-  OrdemServicoHostPrefixo,
-  OrdemServicoHostPrefixoKey,
-} from 'src/common/enums/OrdemServicoHostPrefix.type';
 import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
 import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
 import { getErrorMessage } from '@/utils/error.utils';
 import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
 import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
-import { HubsoftLogger } from '../logger/hubsoft.logger';
+import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
+import { RedisService } from '@/integrations/redis/service/index.service';
+import {
+  resolveOrdemServicoHost,
+  isOrdemDeInstalacao,
+  claimWebhookTicket,
+  releaseWebhookTicket,
+} from '@/integrations/service/helper';
 
 type HostTokenState = {
   accessToken: string;
@@ -30,7 +32,8 @@ export class HubsoftService {
     private readonly hubsoftGetByIdClienteRepository: HubsoftGetByIdClienteRepository,
     private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
     private readonly hubsoftLogger: HubsoftLogger,
-  ) { }
+    private readonly redisService: RedisService,
+  ) {}
 
   private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
@@ -99,7 +102,7 @@ export class HubsoftService {
 
   async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
     const numeroOrdem = payload.body.numero_ordem_servico;
-    const host = this.resolverHost(numeroOrdem);
+    const host = resolveOrdemServicoHost(numeroOrdem);
 
     if (!host) {
       await this.hubsoftLogger.createTicket({
@@ -123,12 +126,12 @@ export class HubsoftService {
       return null;
     }
 
-    const isInstalacao = this.isOrdemDeInstalacao(
+    const instalacao = isOrdemDeInstalacao(
       host,
       payload.body.id_tipo_ordem_servico,
     );
 
-    if (!isInstalacao) {
+    if (!instalacao) {
       await this.hubsoftLogger.createTicket({
         action: 'tipo_ignorado',
         message: `Tipo de ordem ${payload.body.id_tipo_ordem_servico} não é instalação para o host ${host}`,
@@ -139,6 +142,27 @@ export class HubsoftService {
       return null;
     }
 
+    const ordemServicoId = payload.body.id_ordem_servico;
+    const claimed = await claimWebhookTicket(
+      this.redisService,
+      host,
+      ordemServicoId,
+    );
+
+    if (!claimed) {
+      await this.hubsoftLogger.createTicket({
+        action: 'duplicado_ignorado',
+        message: `Webhook já processado para host=${host} ordem=${ordemServicoId}`,
+        host,
+        isInstalacao: instalacao,
+        payload: payload.body,
+      });
+      return {
+        message: 'Webhook já processado',
+        duplicate: true,
+      };
+    }
+
     try {
       const token = await this.garantirTokenValido(host);
       const atendimentoPadrao = atendimentoPadraoPorHost[host];
@@ -147,7 +171,7 @@ export class HubsoftService {
         action: 'buscar_cliente',
         message: 'Ordem de instalação válida. Buscando cliente...',
         host,
-        isInstalacao,
+        isInstalacao: instalacao,
         payload: payload.body,
       });
 
@@ -158,11 +182,12 @@ export class HubsoftService {
       );
 
       if (!cliente) {
+        await releaseWebhookTicket(this.redisService, host, ordemServicoId);
         await this.hubsoftLogger.createTicket({
           action: 'cliente_nao_encontrado',
           message: `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
           host,
-          isInstalacao,
+          isInstalacao: instalacao,
           payload: payload.body,
           cliente: null,
         });
@@ -177,7 +202,7 @@ export class HubsoftService {
         action: 'cliente_encontrado',
         message: `Cliente encontrado: ${nome} | ${telefone} | ${email}`,
         host,
-        isInstalacao,
+        isInstalacao: instalacao,
         payload: payload.body,
         cliente,
       });
@@ -201,48 +226,33 @@ export class HubsoftService {
         action: 'create',
         message: 'Atendimento criado com sucesso',
         host,
-        isInstalacao,
+        isInstalacao: instalacao,
         payload: payload.body,
         cliente,
         atendimento,
       });
 
-      this.logger.log(`Atendimento criado com sucesso codigo_cliente: ${atendimento.cliente.codigo_cliente}, Host: ${host}`);
-      
+      this.logger.log(
+        `Atendimento criado com sucesso codigo_cliente: ${atendimento.cliente.codigo_cliente}, Host: ${host}`,
+      );
+
       return {
         message: 'Atendimento criado com sucesso',
       };
     } catch (error) {
-      this.logger.error(`Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`);
+      await releaseWebhookTicket(this.redisService, host, ordemServicoId);
+      this.logger.error(
+        `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
+      );
       await this.hubsoftLogger.createTicket({
         action: 'create_error',
         message: `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
         host,
-        isInstalacao,
+        isInstalacao: instalacao,
         payload: payload.body,
       });
       this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
     }
-  }
-
-  private resolverHost(numeroOrdemServico: string): Host | null {
-    if (!numeroOrdemServico || numeroOrdemServico.length < 4) {
-      return null;
-    }
-
-    const prefixo = numeroOrdemServico.slice(0, 4);
-
-    if (!(prefixo in OrdemServicoHostPrefixo)) {
-      return null;
-    }
-
-    return OrdemServicoHostPrefixo[prefixo as OrdemServicoHostPrefixoKey];
-  }
-
-  private isOrdemDeInstalacao(host: Host, idTipo: number): boolean {
-    return (OrdemServicoTipoId[host].INSTALACAO as readonly number[]).includes(
-      idTipo,
-    );
   }
 
   private logAndRethrow(context: string, error: unknown): never {
