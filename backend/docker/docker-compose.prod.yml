@@ -6,17 +6,15 @@ services:
     restart: unless-stopped
 
     env_file:
-      - .env
+      - ../.env
 
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
 
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -26,31 +24,32 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-      
-
 
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
 
     container_name: komissx_backend
     restart: unless-stopped
 
     env_file:
-      - .env
+      - ../.env
 
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      PORT_NEST: 3000
 
     ports:
-      - "${PORT_NEST}:3000"
+      - "3000:3000"
 
     depends_on:
       postgres:
         condition: service_healthy
-
 
 volumes:
   postgres_data:

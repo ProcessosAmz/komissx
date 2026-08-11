@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { createUserSchema, type CreateUserFormData } from "@/utils/validators/user";
 import { useCreateUser } from "@/hook/useCreateUser";
 

@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { HierarquiaNode } from "@/types/cargo";
 
 type FormularioColaboradorProps = {

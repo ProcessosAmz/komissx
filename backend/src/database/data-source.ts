@@ -1,6 +1,7 @@
 import { Commission } from "@/module/commissions/entities/commission.entity";
 import { Empresas } from "@/module/empresas/entities/empresas.entity";
 import { Cidade, Estado, Pais } from "@/module/localidade/entities";
+import { Permission } from "@/module/permissions/entities/permission.entity";
 import { Role } from "@/module/roles/entities/role.entity";
 import { Unidades } from "@/module/unidades/entities/unidades.entity";
 import { Users } from "@/module/users/entities/users.entity";
@@ -24,9 +25,8 @@ export default new DataSource({
     Empresas,
     Unidades,
     Role,
-    Permissions,
+    Permission,
     Commission,
   ],
   migrations: ["src/migrations/*.ts"],
 });
-// add teste
