@@ -6,7 +6,7 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 import "../components/styles/Login.css";
 
-import { Input } from "../components/ui/Input";
+import { Input } from "../components/ui/input";
 import { Logo } from "../components/common/Logo";
 import { loginSchema, type LoginFormData } from "../utils/validators/auth";
 import { useAuth, type Role, mockUsuariosTestes } from "../stores/auth.store"; // 🚀 CORREÇÃO: Importando a massa de dados atualizada da store
