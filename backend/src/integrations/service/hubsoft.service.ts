@@ -31,6 +31,7 @@ export class HubsoftService {
     private readonly httpService: HttpService,
     private readonly hubsoftGetByIdClienteRepository: HubsoftGetByIdClienteRepository,
     private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
+    private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
     private readonly hubsoftLogger: HubsoftLogger,
     private readonly redisService: RedisService,
   ) {}
@@ -215,6 +216,38 @@ export class HubsoftService {
         payload: payload.body,
         cliente,
       });
+
+      const hoje = new Date().toISOString().slice(0, 10);
+      const atendimentosExistentes =
+        await this.hubsoftGetAtendimentosRepository.execute(
+          host,
+          {
+            pagina: 0,
+            itens_por_pagina: 20,
+            data_inicio: hoje,
+            data_fim: hoje,
+            tipo_atendimento: String(atendimentoPadrao.id_tipo_atendimento),
+            status_atendimento: String(atendimentoPadrao.id_atendimento_status),
+            id_servico: payload.body.id_cliente_servico,
+            tipo_data: 'data_cadastro',
+          },
+          token,
+        );
+
+      if (atendimentosExistentes.length > 0) {
+        await this.hubsoftLogger.createTicket({
+          action: 'atendimento_ja_existe',
+          message: `Cliente ${payload.body.id_cliente_servico} já possui atendimento de auditoria aberto`,
+          host,
+          isInstalacao: instalacao,
+          payload: payload.body,
+          cliente,
+        });
+        return {
+          message: 'Atendimento de auditoria já existe para o cliente',
+          duplicate: true,
+        };
+      }
 
       const requestBody = {
         id_cliente_servico: payload.body.id_cliente_servico,
