@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { CreateCommissionDto } from '../dto/createCommission.dto';
-import { UpdateCommissionDto } from '../dto/updateCommission.dto';
+import { Injectable } from "@nestjs/common";
+import { CreateCommissionDto } from "@/module/commissions/dto/createCommission.dto";
+import { UpdateCommissionDto } from "@/module/commissions/dto/updateCommission.dto";
 
 @Injectable()
 export class CommissionsService {
   create(createCommissionDto: CreateCommissionDto) {
-    return 'This action adds a new commission';
+    void createCommissionDto;
+    return "This action adds a new commission";
   }
 
   findAll() {
@@ -17,6 +18,7 @@ export class CommissionsService {
   }
 
   update(id: number, updateCommissionDto: UpdateCommissionDto) {
+    void updateCommissionDto;
     return `This action updates a #${id} commission`;
   }
 

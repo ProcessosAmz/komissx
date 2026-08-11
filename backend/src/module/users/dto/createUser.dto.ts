@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsBoolean,
   IsEmail,
@@ -9,19 +9,19 @@ import {
   IsUUID,
   MinLength,
   ValidateIf,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateUserDto {
-  @ApiProperty({ example: 'Jessica Martins' })
+  @ApiProperty({ example: "Jessica Martins" })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'jessica@amazonet.com' })
+  @ApiProperty({ example: "jessica@amazonet.com" })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'senha123', minLength: 6 })
+  @ApiProperty({ example: "senha123", minLength: 6 })
   @IsString()
   @MinLength(6)
   password: string;
@@ -31,15 +31,15 @@ export class CreateUserDto {
   @IsNotEmpty()
   hubsoftId: number;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({ example: "123e4567-e89b-12d3-a456-426614174000" })
   @IsUUID()
   roleId: string;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({ example: "123e4567-e89b-12d3-a456-426614174000" })
   @IsUUID()
   empresaId: string;
 
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({ example: "123e4567-e89b-12d3-a456-426614174000" })
   @IsUUID()
   unidadeId: string;
 

@@ -1,16 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import * as path from 'path';
-import { FileLoggerService } from '@/module/logger/service/fileLogger.service';
-import { Host } from '@/common/enums/host.enum';
-import { ClienteServicoContato } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
-import { HubsoftAtendimento } from '@/integrations/types/OrdemServicoWebhook.type';
-import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
-import { CreateTicketLogData } from '@/integrations/logger/type/createTicket.type';
+import { Injectable } from "@nestjs/common";
+import * as path from "path";
+import { FileLoggerService } from "@/module/logger/service/fileLogger.service";
+import { Host } from "@/common/enums/host.enum";
+import { HubsoftAtendimento } from "@/integrations/types/OrdemServicoWebhook.type";
+import { OrdemServicoWebhook } from "@/integrations/types/OrdemServicoWebhook.type";
+import { CreateTicketLogData } from "@/integrations/logger/type/createTicket.type";
+import { ClienteServicoContato } from "@/integrations/types/OrdemServicoWebhook.type";
 
 @Injectable()
 export class HubsoftLogger {
-  private readonly moduleName = 'hubsoft';
-  private readonly logsDirectory = path.join(process.cwd(), 'src', 'integrations', 'logs')
+  private readonly moduleName = "hubsoft";
+  private readonly logsDirectory = path.join(
+    process.cwd(),
+    "src",
+    "integrations",
+    "logs",
+  );
 
   constructor(private readonly fileLoggerService: FileLoggerService) {}
 
@@ -19,7 +24,7 @@ export class HubsoftLogger {
     message: string;
     host: Host | null;
     isInstalacao: boolean;
-    payload: OrdemServicoWebhook['body'];
+    payload: OrdemServicoWebhook["body"];
     cliente?: ClienteServicoContato | null;
     atendimento?: HubsoftAtendimento | null;
   }) {
@@ -58,7 +63,7 @@ export class HubsoftLogger {
       logsDirectory: this.logsDirectory,
       module: this.moduleName,
       action: params.action,
-      entity: 'atendimento',
+      entity: "atendimento",
       entityId: params.atendimento?.id_atendimento,
       message: params.message,
       data,

@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import * as path from 'path';
-import { FileLogInput } from '@/module/logger/dto/fileLog.dto';
-import { MountedLogger } from '@/module/logger/type/mountedLogger.type';
+import { Injectable, Logger } from "@nestjs/common";
+import { promises as fs } from "fs";
+import * as path from "path";
+import { FileLogInput } from "@/module/logger/dto/fileLog.dto";
+import { MountedLogger } from "@/module/logger/type/mountedLogger.type";
 
 @Injectable()
 export class FileLoggerService {
@@ -16,7 +16,7 @@ export class FileLoggerService {
     await fs.writeFile(
       mounted.filePath,
       `${JSON.stringify(payload, null, 2)}\n`,
-      'utf8',
+      "utf8",
     );
 
     this.nestLogger.log(`Log escrito em: ${mounted.filePath}`);
@@ -83,14 +83,14 @@ export class FileLoggerService {
   }
 
   private pad(value: number): string {
-    return String(value).padStart(2, '0');
+    return String(value).padStart(2, "0");
   }
 
   private normalize(value: string): string {
     return value
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_]/g, '');
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "");
   }
 }

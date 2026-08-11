@@ -27,6 +27,39 @@ export type OrdemServicoWebhook = {
   };
 };
 
+export type ClienteServicoContato = {
+  nome: string;
+  telefone: string;
+  email: string;
+};
+
+export type HubsoftClienteApi = {
+  nome_razaosocial?: string;
+  telefone_primario?: string;
+  email_primario?: string;
+  telefones?: Array<{ telefone?: string }>;
+  emails?: Array<{ email?: string }>;
+};
+
+export type HubsoftClienteResponse = {
+  clientes?: HubsoftClienteApi[];
+};
+
+export type HubsoftTokenResponse = {
+  access_token: string;
+  expires_in: number;
+};
+
+export type HostTokenState = {
+  accessToken: string;
+  expiresAt: number;
+};
+
+export type CreateTicketResult = {
+  message: string;
+  duplicate?: boolean;
+};
+
 export type HubsoftAtendimentoCliente = {
   codigo_cliente: number;
   nome_razaosocial: string;
@@ -67,20 +100,20 @@ export type HubsoftAtendimento = {
   destino: string;
   cliente: HubsoftAtendimentoCliente;
   servico: HubsoftAtendimentoServico;
-  pop: unknown | null;
-  prospecto: unknown | null;
+  pop: unknown;
+  prospecto: unknown;
   ordens_servico: unknown[];
   atendimento_checklist: unknown[];
 };
 
 export type HubsoftCriarAtendimentoResponse =
   | {
-      status: 'success';
+      status: "success";
       msg: string;
       atendimento: HubsoftAtendimento;
     }
   | {
-      status: 'error';
+      status: "error";
       msg: string;
       errors: string[];
     };

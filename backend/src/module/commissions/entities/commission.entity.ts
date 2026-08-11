@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('commissions')
+@Entity("commissions")
 export class Commission {
   @PrimaryGeneratedColumn()
   id: number;
@@ -11,7 +11,7 @@ export class Commission {
   @Column()
   referenceId: string; // ID da venda ou ordem de serviço do Hubsoft
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column("decimal", { precision: 10, scale: 2 })
   commissionValue: number;
 
   @Column()

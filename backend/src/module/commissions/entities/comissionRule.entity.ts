@@ -1,8 +1,8 @@
-import { CommissionEvent } from '../../../common/enums/commissionEvent.enum';
-import { CommissionRuleType } from '../../../common/enums/commissionRuleType.enum';
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { CommissionEvent } from "@/common/enums/commissionEvent.enum";
+import { CommissionRuleType } from "@/common/enums/commissionRuleType.enum";
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('commission_rules')
+@Entity("commission_rules")
 export class CommissionRule {
   @PrimaryGeneratedColumn()
   id: number;
@@ -19,10 +19,10 @@ export class CommissionRule {
   @Column()
   ruleType: CommissionRuleType;
 
-  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  @Column("decimal", { precision: 10, scale: 2, nullable: true })
   valor: number;
 
-  @Column('jsonb', { nullable: true })
+  @Column("jsonb", { nullable: true })
   config: Record<string, unknown> | null;
 
   @Column({ default: true })

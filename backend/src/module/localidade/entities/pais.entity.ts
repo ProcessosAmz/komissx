@@ -5,12 +5,12 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Estado } from './estado.entity';
+} from "typeorm";
+import { Estado } from "./estado.entity";
 
-@Entity('paises')
+@Entity("paises")
 export class Pais {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -25,9 +25,9 @@ export class Pais {
   @OneToMany(() => Estado, (estado) => estado.pais)
   estados: Estado[];
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }

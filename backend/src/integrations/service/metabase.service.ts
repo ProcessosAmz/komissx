@@ -1,9 +1,9 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
-import { RelatorioTecnicoDto } from '../../module/reports/dto/relatorioTecnicoInstalacao.dto';
-import { MetabaseParameter } from '../../common/interfaces/metabaseParameter.interface';
-import { METABASE_INSTALLATION_FILTERS } from '../constants/metabase/metabase.constants';
+import { HttpService } from "@nestjs/axios";
+import { Injectable } from "@nestjs/common";
+import { firstValueFrom } from "rxjs";
+import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
+import { MetabaseParameter } from "@/common/interfaces/metabaseParameter.interface";
+import { METABASE_INSTALLATION_FILTERS } from "@/integrations/constants/metabase/metabase.constants";
 
 @Injectable()
 export class MetaService {
@@ -36,7 +36,7 @@ export class MetaService {
     const parameters = this.montarParametros(dto);
 
     const response = await firstValueFrom(
-      this.http.get(process.env.METABASE_INSTALACAO_TECNICO!, {
+      this.http.get<unknown[]>(process.env.METABASE_INSTALACAO_TECNICO!, {
         params: {
           parameters: JSON.stringify(parameters),
         },
@@ -44,10 +44,12 @@ export class MetaService {
       }),
     );
 
+    const data = response.data ?? [];
+
     return {
       success: true,
-      total: response.data.length,
-      data: response.data,
+      total: data.length,
+      data,
     };
   }
 }

@@ -7,13 +7,13 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Pais } from './pais.entity';
-import { Cidade } from './cidade.entity';
+} from "typeorm";
+import { Pais } from "./pais.entity";
+import { Cidade } from "./cidade.entity";
 
-@Entity('estados')
+@Entity("estados")
 export class Estado {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -22,11 +22,11 @@ export class Estado {
   @Column({ length: 2 })
   uf: string;
 
-  @Column({ name: 'pais_id', type: 'uuid' })
+  @Column({ name: "pais_id", type: "uuid" })
   paisId: string;
 
   @ManyToOne(() => Pais, (pais) => pais.estados)
-  @JoinColumn({ name: 'pais_id' })
+  @JoinColumn({ name: "pais_id" })
   pais: Pais;
 
   @OneToMany(() => Cidade, (cidade) => cidade.estado)
@@ -35,9 +35,9 @@ export class Estado {
   @Column({ default: true })
   active: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }

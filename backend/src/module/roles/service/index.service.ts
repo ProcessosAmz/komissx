@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { CreateRoleDto } from '../dto/create.role.dto';
-import { UpdateRoleDto } from '../dto/update.role.dto';
+import { Injectable } from "@nestjs/common";
+import { CreateRoleDto } from "@/module/roles/dto/create.role.dto";
+import { UpdateRoleDto } from "@/module/roles/dto/update.role.dto";
 
 @Injectable()
 export class RolesService {
   create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
+    void createRoleDto;
+    return "This action adds a new role";
   }
 
   findAll() {
@@ -17,6 +18,7 @@ export class RolesService {
   }
 
   update(id: number, updateRoleDto: UpdateRoleDto) {
+    void updateRoleDto;
     return `This action updates a #${id} role`;
   }
 

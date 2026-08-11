@@ -1,26 +1,26 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
-import { Host } from 'src/common/enums/host.enum';
-import { atendimentoPadraoPorHost } from '@/integrations/constants/hubsoft/atendimetnoPadrao.constants';
-import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
-import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
-import { getErrorMessage } from '@/utils/error.utils';
-import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
-import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
-import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
-import { RedisService } from '@/integrations/redis/service/index.service';
+import { HttpService } from "@nestjs/axios";
+import { Injectable, Logger } from "@nestjs/common";
+import { firstValueFrom } from "rxjs";
+import { Host } from "@/common/enums/host.enum";
+import { atendimentoPadraoPorHost } from "@/integrations/constants/hubsoft/atendimetnoPadrao.constants";
+import { getHubsoftConfig } from "@/integrations/constants/hubsoft/hubsoftConfig.constants";
+import {
+  OrdemServicoWebhook,
+  HubsoftTokenResponse,
+  HostTokenState,
+  CreateTicketResult,
+} from "@/integrations/types/OrdemServicoWebhook.type";
+import { getErrorMessage } from "@/utils/error.utils";
+import { HubsoftGetByIdClienteRepository } from "@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository";
+import { HubsoftCreateAtendimentoRepository } from "@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository";
+import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
+import { RedisService } from "@/integrations/redis/service/index.service";
 import {
   resolveOrdemServicoHost,
   isOrdemDeInstalacao,
   claimWebhookTicket,
   releaseWebhookTicket,
-} from '@/integrations/service/helper';
-
-type HostTokenState = {
-  accessToken: string;
-  expiresAt: number;
-};
+} from "@/integrations/service/helper";
 
 @Injectable()
 export class HubsoftService {
@@ -56,16 +56,20 @@ export class HubsoftService {
 
     try {
       const params = new URLSearchParams();
-      params.append('client_id', config.clientId);
-      params.append('client_secret', config.clientSecret);
-      params.append('grant_type', config.grantType);
-      params.append('username', config.username);
-      params.append('password', config.password);
+      params.append("client_id", config.clientId);
+      params.append("client_secret", config.clientSecret);
+      params.append("grant_type", config.grantType);
+      params.append("username", config.username);
+      params.append("password", config.password);
 
       const response = await firstValueFrom(
-        this.httpService.post(`${config.url}/oauth/token`, params, {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }),
+        this.httpService.post<HubsoftTokenResponse>(
+          `${config.url}/oauth/token`,
+          params,
+          {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          },
+        ),
       );
 
       this.logger.log(`Logado com sucesso no Hubsoft (${host})`);
@@ -82,31 +86,36 @@ export class HubsoftService {
     }
   }
 
-  async buscarVendedores(host: Host): Promise<any> {
+  async buscarVendedores(host: Host): Promise<unknown> {
     const config = getHubsoftConfig(host);
     const token = await this.garantirTokenValido(host);
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${config.url}/rota/para/buscar/vendedores`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        this.httpService.get<unknown>(
+          `${config.url}/rota/para/buscar/vendedores`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        }),
+        ),
       );
       return response.data;
     } catch (error) {
-      this.logAndRethrow('Erro ao buscar vendedores', error);
+      this.logAndRethrow("Erro ao buscar vendedores", error);
     }
   }
 
-  async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
+  async createTicket(
+    payload: OrdemServicoWebhook,
+  ): Promise<CreateTicketResult | null> {
     const numeroOrdem = payload.body.numero_ordem_servico;
     const host = resolveOrdemServicoHost(numeroOrdem);
 
     if (!host) {
       await this.hubsoftLogger.createTicket({
-        action: 'host_invalido',
+        action: "host_invalido",
         message: `Prefixo desconhecido em numero_ordem_servico: ${numeroOrdem.slice(0, 4)}`,
         host: null,
         isInstalacao: false,
@@ -117,7 +126,7 @@ export class HubsoftService {
 
     if (host !== Host.MANIA) {
       await this.hubsoftLogger.createTicket({
-        action: 'host_ignorado',
+        action: "host_ignorado",
         message: `Host ${host} ignorado — validando apenas Mania por enquanto`,
         host,
         isInstalacao: false,
@@ -133,7 +142,7 @@ export class HubsoftService {
 
     if (!instalacao) {
       await this.hubsoftLogger.createTicket({
-        action: 'tipo_ignorado',
+        action: "tipo_ignorado",
         message: `Tipo de ordem ${payload.body.id_tipo_ordem_servico} não é instalação para o host ${host}`,
         host,
         isInstalacao: false,
@@ -151,14 +160,14 @@ export class HubsoftService {
 
     if (!claimed) {
       await this.hubsoftLogger.createTicket({
-        action: 'duplicado_ignorado',
+        action: "duplicado_ignorado",
         message: `Webhook já processado para host=${host} ordem=${ordemServicoId}`,
         host,
         isInstalacao: instalacao,
         payload: payload.body,
       });
       return {
-        message: 'Webhook já processado',
+        message: "Webhook já processado",
         duplicate: true,
       };
     }
@@ -168,8 +177,8 @@ export class HubsoftService {
       const atendimentoPadrao = atendimentoPadraoPorHost[host];
 
       await this.hubsoftLogger.createTicket({
-        action: 'buscar_cliente',
-        message: 'Ordem de instalação válida. Buscando cliente...',
+        action: "buscar_cliente",
+        message: "Ordem de instalação válida. Buscando cliente...",
         host,
         isInstalacao: instalacao,
         payload: payload.body,
@@ -184,7 +193,7 @@ export class HubsoftService {
       if (!cliente) {
         await releaseWebhookTicket(this.redisService, host, ordemServicoId);
         await this.hubsoftLogger.createTicket({
-          action: 'cliente_nao_encontrado',
+          action: "cliente_nao_encontrado",
           message: `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
           host,
           isInstalacao: instalacao,
@@ -199,7 +208,7 @@ export class HubsoftService {
       const email = cliente.email;
 
       await this.hubsoftLogger.createTicket({
-        action: 'cliente_encontrado',
+        action: "cliente_encontrado",
         message: `Cliente encontrado: ${nome} | ${telefone} | ${email}`,
         host,
         isInstalacao: instalacao,
@@ -223,8 +232,8 @@ export class HubsoftService {
       );
 
       await this.hubsoftLogger.createTicket({
-        action: 'create',
-        message: 'Atendimento criado com sucesso',
+        action: "create",
+        message: "Atendimento criado com sucesso",
         host,
         isInstalacao: instalacao,
         payload: payload.body,
@@ -237,7 +246,7 @@ export class HubsoftService {
       );
 
       return {
-        message: 'Atendimento criado com sucesso',
+        message: "Atendimento criado com sucesso",
       };
     } catch (error) {
       await releaseWebhookTicket(this.redisService, host, ordemServicoId);
@@ -245,13 +254,13 @@ export class HubsoftService {
         `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
       );
       await this.hubsoftLogger.createTicket({
-        action: 'create_error',
+        action: "create_error",
         message: `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
         host,
         isInstalacao: instalacao,
         payload: payload.body,
       });
-      this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
+      this.logAndRethrow("Erro ao criar atendimento no Hubsoft", error);
     }
   }
 

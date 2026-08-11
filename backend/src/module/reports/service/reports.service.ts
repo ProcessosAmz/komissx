@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { MetaService } from '../../../integrations/service/metabase.service';
-import { RelatorioTecnicoDto } from '../dto/relatorioTecnicoInstalacao.dto';
+import { Injectable } from "@nestjs/common";
+import { MetaService } from "@/integrations/service/metabase.service";
+import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
 
 @Injectable()
 export class ReportService {

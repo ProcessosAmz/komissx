@@ -3,14 +3,14 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
-import { Users } from '@/module/users/entities/users.entity';
-import { CreateUserDto, FilterUsersDto } from '@/module/users/dto';
-import { getErrorMessage } from '@/utils/error.utils';
-import { UserListItem } from '@/module/users/types/user';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import * as bcrypt from "bcrypt";
+import { Users } from "@/module/users/entities/users.entity";
+import { CreateUserDto, FilterUsersDto } from "@/module/users/dto";
+import { getErrorMessage } from "@/utils/error.utils";
+import { UserListItem } from "@/module/users/types/user";
 
 @Injectable()
 export class UsersService {
@@ -30,7 +30,7 @@ export class UsersService {
 
     if (isEmailExists) {
       this.logger.warn(`Email already registered: ${createUserDto.email}`);
-      throw new ConflictException('Email já cadastrado');
+      throw new ConflictException("Email já cadastrado");
     }
 
     try {
@@ -55,57 +55,60 @@ export class UsersService {
           name: user.name,
           email: user.email,
         },
-        message: 'Usuário criado com sucesso',
+        message: "Usuário criado com sucesso",
       };
     } catch (error) {
       const message = getErrorMessage(error);
-      this.logger.error(`Failed to create user: ${message}`, (error as Error)?.stack);
-      throw new InternalServerErrorException('Erro ao criar usuário');
+      this.logger.error(
+        `Failed to create user: ${message}`,
+        (error as Error)?.stack,
+      );
+      throw new InternalServerErrorException("Erro ao criar usuário");
     }
   }
 
   async findAll(filters: FilterUsersDto) {
-    this.logger.log('Listing all users');
+    this.logger.log("Listing all users");
 
     try {
       const queryBuilder = this.usersRepository
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.role', 'role')
-        .leftJoinAndSelect('user.empresa', 'empresa')
-        .leftJoinAndSelect('user.unidade', 'unidade')
-        .leftJoinAndSelect('unidade.estado', 'estado')
-        .where('user.active = :active', { active: true });
+        .createQueryBuilder("user")
+        .leftJoinAndSelect("user.role", "role")
+        .leftJoinAndSelect("user.empresa", "empresa")
+        .leftJoinAndSelect("user.unidade", "unidade")
+        .leftJoinAndSelect("unidade.estado", "estado")
+        .where("user.active = :active", { active: true });
 
       if (filters.empresaId) {
-        queryBuilder.andWhere('user.empresa_id = :empresaId', {
+        queryBuilder.andWhere("user.empresa_id = :empresaId", {
           empresaId: filters.empresaId,
         });
       }
 
       if (filters.unidadeId) {
-        queryBuilder.andWhere('user.unidade_id = :unidadeId', {
+        queryBuilder.andWhere("user.unidade_id = :unidadeId", {
           unidadeId: filters.unidadeId,
         });
       }
 
       if (filters.estadoId) {
-        queryBuilder.andWhere('unidade.estado_id = :estadoId', {
+        queryBuilder.andWhere("unidade.estado_id = :estadoId", {
           estadoId: filters.estadoId,
         });
       }
 
       if (filters.search?.trim()) {
         queryBuilder.andWhere(
-          '(LOWER(user.name) LIKE LOWER(:search) OR LOWER(user.email) LIKE LOWER(:search))',
+          "(LOWER(user.name) LIKE LOWER(:search) OR LOWER(user.email) LIKE LOWER(:search))",
           { search: `%${filters.search.trim()}%` },
         );
       }
 
-      const users = await queryBuilder.orderBy('user.name', 'ASC').getMany();
+      const users = await queryBuilder.orderBy("user.name", "ASC").getMany();
 
       if (users.length === 0) {
-        this.logger.warn('No active users found for the given filters');
-        return { data: [], message: 'Nenhum usuário encontrado' };
+        this.logger.warn("No active users found for the given filters");
+        return { data: [], message: "Nenhum usuário encontrado" };
       }
 
       const mapped: UserListItem[] = users.map((user) => ({
@@ -114,11 +117,11 @@ export class UsersService {
         email: user.email,
         hubsoftId: user.hubsoftId,
         roleId: user.roleId,
-        roleName: user.role?.name ?? '',
+        roleName: user.role?.name ?? "",
         empresaId: user.empresaId,
-        empresaName: user.empresa?.name ?? '',
+        empresaName: user.empresa?.name ?? "",
         unidadeId: user.unidadeId,
-        unidadeName: user.unidade?.name ?? '',
+        unidadeName: user.unidade?.name ?? "",
         estadoId: user.unidade?.estadoId ?? null,
         estadoName: user.unidade?.estado?.name ?? null,
         supervisorId: user.supervisorId,
@@ -126,15 +129,18 @@ export class UsersService {
         active: user.active,
       }));
 
-      this.logger.log('Users listed successfully');
+      this.logger.log("Users listed successfully");
       return {
         data: this.buildTree(mapped),
-        message: 'Usuários listados com sucesso',
+        message: "Usuários listados com sucesso",
       };
     } catch (error) {
       const message = getErrorMessage(error);
-      this.logger.error(`Failed to list users: ${message}`, (error as Error)?.stack);
-      throw new InternalServerErrorException('Erro ao listar usuários');
+      this.logger.error(
+        `Failed to list users: ${message}`,
+        (error as Error)?.stack,
+      );
+      throw new InternalServerErrorException("Erro ao listar usuários");
     }
   }
 

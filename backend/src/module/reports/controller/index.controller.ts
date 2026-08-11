@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from "@nestjs/common";
-import { RelatorioTecnicoDto } from "../dto/relatorioTecnicoInstalacao.dto";
-import { ReportService } from "../service/reports.service";
+import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
+import { ReportService } from "@/module/reports/service/reports.service";
 
 @Controller("reports")
 export class ReportsController {

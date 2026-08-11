@@ -1,6 +1,6 @@
-import { RedisService } from '@/integrations/redis/service/index.service';
+import { RedisService } from "@/integrations/redis/service/index.service";
 
-const WEBHOOK_TICKET_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 
+const WEBHOOK_TICKET_TTL_SECONDS = 60 * 60 * 24 * 30; // 30
 
 export function buildWebhookTicketKey(
   host: string,
@@ -16,7 +16,7 @@ export async function claimWebhookTicket(
 ): Promise<boolean> {
   return redisService.setNxEx(
     buildWebhookTicketKey(host, ordemServicoId),
-    '1',
+    "1",
     WEBHOOK_TICKET_TTL_SECONDS,
   );
 }

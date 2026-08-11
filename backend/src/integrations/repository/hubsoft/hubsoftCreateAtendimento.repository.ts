@@ -1,10 +1,13 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
-import { Host } from '@/common/enums/host.enum';
-import { AtendimentoPadrao } from '@/integrations/constants/hubsoft/atendimetnoPadrao.constants';
-import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
-import { HubsoftAtendimento, HubsoftCriarAtendimentoResponse } from '@/integrations/types/OrdemServicoWebhook.type';
+import { HttpService } from "@nestjs/axios";
+import { Injectable, Logger } from "@nestjs/common";
+import { firstValueFrom } from "rxjs";
+import { Host } from "@/common/enums/host.enum";
+import { AtendimentoPadrao } from "@/integrations/constants/hubsoft/atendimetnoPadrao.constants";
+import { getHubsoftConfig } from "@/integrations/constants/hubsoft/hubsoftConfig.constants";
+import {
+  HubsoftAtendimento,
+  HubsoftCriarAtendimentoResponse,
+} from "@/integrations/types/OrdemServicoWebhook.type";
 
 export type CreateAtendimentoBody = AtendimentoPadrao & {
   id_cliente_servico: number;
@@ -14,7 +17,7 @@ export type CreateAtendimentoBody = AtendimentoPadrao & {
 @Injectable()
 export class HubsoftCreateAtendimentoRepository {
   private readonly logger = new Logger(HubsoftCreateAtendimentoRepository.name);
-  constructor(private readonly httpService: HttpService) { }
+  constructor(private readonly httpService: HttpService) {}
 
   async execute(
     host: Host,
@@ -24,17 +27,17 @@ export class HubsoftCreateAtendimentoRepository {
     const config = getHubsoftConfig(host);
 
     if (!body) {
-      this.logger.warn('Body não informado');
-      throw new Error('Body não informado');
+      this.logger.warn("Body não informado");
+      throw new Error("Body não informado");
     }
     if (!token) {
-      this.logger.warn('Token não informado');
-      throw new Error('Token não informado');
+      this.logger.warn("Token não informado");
+      throw new Error("Token não informado");
     }
 
     if (!config) {
-      this.logger.warn('Configuração do Hubsoft não encontrada');
-      throw new Error('Configuração do Hubsoft não encontrada');
+      this.logger.warn("Configuração do Hubsoft não encontrada");
+      throw new Error("Configuração do Hubsoft não encontrada");
     }
 
     try {
@@ -45,15 +48,17 @@ export class HubsoftCreateAtendimentoRepository {
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           },
         ),
       );
 
-      if (response.data.status === 'error') {
-        this.logger.error(`Erro ao criar atendimento no Hubsoft: ${response.data.errors.join('; ') || response.data.msg}`);
-        throw new Error(response.data.errors.join('; ') || response.data.msg);
+      if (response.data.status === "error") {
+        this.logger.error(
+          `Erro ao criar atendimento no Hubsoft: ${response.data.errors.join("; ") || response.data.msg}`,
+        );
+        throw new Error(response.data.errors.join("; ") || response.data.msg);
       }
 
       return response.data.atendimento;
@@ -62,4 +67,4 @@ export class HubsoftCreateAtendimentoRepository {
       throw error;
     }
   }
-} 
+}
