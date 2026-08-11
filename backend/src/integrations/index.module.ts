@@ -4,6 +4,7 @@ import { HubsoftService } from '@/integrations/service/hubsoft.service';
 import { IntegrationsController } from '@/integrations/controller/index.controller';
 import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
 import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
+import { HubsoftGetAtendimentosRepository } from '@/integrations/repository/hubsoft/hubsoftGetAtendimentos.repository';
 import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
 
 @Module({
@@ -13,6 +14,7 @@ import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
     HubsoftService,
     HubsoftGetByIdClienteRepository,
     HubsoftCreateAtendimentoRepository,
+    HubsoftGetAtendimentosRepository,
     HubsoftLogger,
   ],
   exports: [HubsoftService],

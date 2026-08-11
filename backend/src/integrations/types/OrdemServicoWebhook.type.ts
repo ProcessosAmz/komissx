@@ -75,12 +75,44 @@ export type HubsoftAtendimento = {
 
 export type HubsoftCriarAtendimentoResponse =
   | {
-      status: 'success';
-      msg: string;
-      atendimento: HubsoftAtendimento;
-    }
+    status: 'success';
+    msg: string;
+    atendimento: HubsoftAtendimento;
+  }
   | {
-      status: 'error';
-      msg: string;
-      errors: string[];
-    };
+    status: 'error';
+    msg: string;
+    errors: string[];
+  };
+
+export type HubsoftAtendimentoTodosQuery = {
+  pagina: number;
+  itens_por_pagina: number;
+  data_inicio: string;
+  data_fim: string;
+  tipo_atendimento?: string;
+  status_atendimento?: string;
+  id_servico?: number;
+  tipo_data?: 'data_cadastro' | 'data_fechamento';
+};
+
+export type HubsoftAtendimentoTodosResponse = {
+  atendimentos?: HubsoftAtendimento[];
+  total?: number;
+  pagina?: number;
+};
+
+export type HubsoftTokenResponse = {
+  access_token: string;
+  expires_in: number;
+};
+
+export type HostTokenState = {
+  accessToken: string;
+  expiresAt: number;
+};
+
+export type CreateTicketResult = {
+  message: string;
+  duplicate?: boolean;
+};

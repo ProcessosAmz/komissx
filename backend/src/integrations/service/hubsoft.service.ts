@@ -1,13 +1,19 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { Host } from 'src/common/enums/host.enum';
+import { Host } from '@/common/enums/host.enum';
 import { atendimentoPadraoPorHost } from '@/integrations/constants/hubsoft/atendimetnoPadrao.constants';
 import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
-import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
+import {
+  OrdemServicoWebhook,
+  HubsoftTokenResponse,
+  HostTokenState,
+  CreateTicketResult,
+} from '@/integrations/types/OrdemServicoWebhook.type';
 import { getErrorMessage } from '@/utils/error.utils';
 import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
 import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
+import { HubsoftGetAtendimentosRepository } from '@/integrations/repository/hubsoft/hubsoftGetAtendimentos.repository';
 import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
 import { RedisService } from '@/integrations/redis/service/index.service';
 import {
@@ -16,11 +22,6 @@ import {
   claimWebhookTicket,
   releaseWebhookTicket,
 } from '@/integrations/service/helper';
-
-type HostTokenState = {
-  accessToken: string;
-  expiresAt: number;
-};
 
 @Injectable()
 export class HubsoftService {
@@ -31,6 +32,7 @@ export class HubsoftService {
     private readonly httpService: HttpService,
     private readonly hubsoftGetByIdClienteRepository: HubsoftGetByIdClienteRepository,
     private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
+    private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
     private readonly hubsoftLogger: HubsoftLogger,
     private readonly redisService: RedisService,
   ) {}
@@ -63,9 +65,13 @@ export class HubsoftService {
       params.append('password', config.password);
 
       const response = await firstValueFrom(
-        this.httpService.post(`${config.url}/oauth/token`, params, {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        }),
+        this.httpService.post<HubsoftTokenResponse>(
+          `${config.url}/oauth/token`,
+          params,
+          {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          },
+        ),
       );
 
       this.logger.log(`Logado com sucesso no Hubsoft (${host})`);
@@ -82,17 +88,20 @@ export class HubsoftService {
     }
   }
 
-  async buscarVendedores(host: Host): Promise<any> {
+  async buscarVendedores(host: Host): Promise<unknown> {
     const config = getHubsoftConfig(host);
     const token = await this.garantirTokenValido(host);
 
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${config.url}/rota/para/buscar/vendedores`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        this.httpService.get<unknown>(
+          `${config.url}/rota/para/buscar/vendedores`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        }),
+        ),
       );
       return response.data;
     } catch (error) {
@@ -100,7 +109,9 @@ export class HubsoftService {
     }
   }
 
-  async createTicket(payload: OrdemServicoWebhook): Promise<any | null> {
+  async createTicket(
+    payload: OrdemServicoWebhook,
+  ): Promise<CreateTicketResult | null> {
     const numeroOrdem = payload.body.numero_ordem_servico;
     const host = resolveOrdemServicoHost(numeroOrdem);
 
@@ -206,6 +217,38 @@ export class HubsoftService {
         payload: payload.body,
         cliente,
       });
+
+      const hoje = new Date().toISOString().slice(0, 10);
+      const atendimentosExistentes =
+        await this.hubsoftGetAtendimentosRepository.execute(
+          host,
+          {
+            pagina: 0,
+            itens_por_pagina: 20,
+            data_inicio: hoje,
+            data_fim: hoje,
+            tipo_atendimento: String(atendimentoPadrao.id_tipo_atendimento),
+            status_atendimento: String(atendimentoPadrao.id_atendimento_status),
+            id_servico: payload.body.id_cliente_servico,
+            tipo_data: 'data_cadastro',
+          },
+          token,
+        );
+
+      if (atendimentosExistentes.length > 0) {
+        await this.hubsoftLogger.createTicket({
+          action: 'atendimento_ja_existe',
+          message: `Cliente ${payload.body.id_cliente_servico} já possui atendimento de auditoria aberto`,
+          host,
+          isInstalacao: instalacao,
+          payload: payload.body,
+          cliente,
+        });
+        return {
+          message: 'Atendimento de auditoria já existe para o cliente',
+          duplicate: true,
+        };
+      }
 
       const requestBody = {
         id_cliente_servico: payload.body.id_cliente_servico,
