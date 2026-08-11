@@ -13,7 +13,8 @@ import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.ty
 import { getErrorMessage } from '@/utils/error.utils';
 import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
 import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
-import { HubsoftLogger } from '../logger/hubsoft.logger';
+import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
+import { RedisService } from '@/integrations/redis/service/index.service';
 
 type HostTokenState = {
   accessToken: string;
@@ -24,13 +25,15 @@ type HostTokenState = {
 export class HubsoftService {
   private readonly logger = new Logger(HubsoftService.name);
   private readonly tokens: Partial<Record<Host, HostTokenState>> = {};
+  private readonly webhookTicketTtlSeconds = 60 * 60 * 24 * 30;
 
   constructor(
     private readonly httpService: HttpService,
     private readonly hubsoftGetByIdClienteRepository: HubsoftGetByIdClienteRepository,
     private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
     private readonly hubsoftLogger: HubsoftLogger,
-  ) { }
+    private readonly redisService: RedisService,
+  ) {}
 
   private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
@@ -139,6 +142,23 @@ export class HubsoftService {
       return null;
     }
 
+    const ordemServicoId = payload.body.id_ordem_servico;
+    const claimed = await this.claimWebhookTicket(host, ordemServicoId);
+
+    if (!claimed) {
+      await this.hubsoftLogger.createTicket({
+        action: 'duplicado_ignorado',
+        message: `Webhook já processado para host=${host} ordem=${ordemServicoId}`,
+        host,
+        isInstalacao,
+        payload: payload.body,
+      });
+      return {
+        message: 'Webhook já processado',
+        duplicate: true,
+      };
+    }
+
     try {
       const token = await this.garantirTokenValido(host);
       const atendimentoPadrao = atendimentoPadraoPorHost[host];
@@ -158,6 +178,7 @@ export class HubsoftService {
       );
 
       if (!cliente) {
+        await this.releaseWebhookTicket(host, ordemServicoId);
         await this.hubsoftLogger.createTicket({
           action: 'cliente_nao_encontrado',
           message: `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
@@ -207,13 +228,18 @@ export class HubsoftService {
         atendimento,
       });
 
-      this.logger.log(`Atendimento criado com sucesso codigo_cliente: ${atendimento.cliente.codigo_cliente}, Host: ${host}`);
-      
+      this.logger.log(
+        `Atendimento criado com sucesso codigo_cliente: ${atendimento.cliente.codigo_cliente}, Host: ${host}`,
+      );
+
       return {
         message: 'Atendimento criado com sucesso',
       };
     } catch (error) {
-      this.logger.error(`Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`);
+      await this.releaseWebhookTicket(host, ordemServicoId);
+      this.logger.error(
+        `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
+      );
       await this.hubsoftLogger.createTicket({
         action: 'create_error',
         message: `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
@@ -223,6 +249,30 @@ export class HubsoftService {
       });
       this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
     }
+  }
+
+  private buildWebhookTicketKey(host: string, ordemServicoId: number): string {
+    return `webhook:ticket:${host}:${ordemServicoId}`;
+  }
+
+  private async claimWebhookTicket(
+    host: string,
+    ordemServicoId: number,
+  ): Promise<boolean> {
+    return this.redisService.setNxEx(
+      this.buildWebhookTicketKey(host, ordemServicoId),
+      '1',
+      this.webhookTicketTtlSeconds,
+    );
+  }
+
+  private async releaseWebhookTicket(
+    host: string,
+    ordemServicoId: number,
+  ): Promise<void> {
+    await this.redisService.del(
+      this.buildWebhookTicketKey(host, ordemServicoId),
+    );
   }
 
   private resolverHost(numeroOrdemServico: string): Host | null {
