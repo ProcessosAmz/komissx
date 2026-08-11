@@ -9,6 +9,7 @@ import { PermissionsModule } from '@/module/permissions/index.module';
 import { UsersModule } from '@/module/users/index.module';
 import { IntegrationsModule } from '@/integrations/index.module';
 import { LoggerModule } from '@/module/logger/index.module';
+import { RedisModule } from '@/integrations/redis/index.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { LoggerModule } from '@/module/logger/index.module';
     UsersModule,
     IntegrationsModule,
     LoggerModule,
+    RedisModule,
   ],
 })
 export class AppModule {}
