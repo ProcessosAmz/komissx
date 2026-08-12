@@ -1,3 +1,5 @@
+import { Unidades } from "@/module/unidades/entities/unidades.entity";
+import { Users } from "@/module/users/entities/users.entity";
 import {
   Column,
   CreateDateColumn,
@@ -5,14 +7,11 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Unidades } from '@/module/unidades/entities/unidades.entity';
-import { Users } from '@/module/users/entities/users.entity';
+} from "typeorm";
 
-
-@Entity('empresas')
+@Entity("empresas")
 export class Empresas {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -27,9 +26,9 @@ export class Empresas {
   @OneToMany(() => Users, (user) => user.empresa)
   users: Users[];
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
 }

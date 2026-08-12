@@ -1,22 +1,36 @@
-import {
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { Users } from './users.entity';
-import { Permission } from '../../permissions/entities/permission.entity';
+import { Permission } from "@/module/permissions/entities/permission.entity";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { Users } from "./users.entity";
 
-@Entity('user_permissions')
+export enum PermissionOverrideType {
+  GRANT = "GRANT",
+  DENY = "DENY",
+}
+
+@Entity("user_permissions")
 export class UserPermission {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn({ name: "user_id", type: "uuid" })
+  userId: string;
 
-  @ManyToOne(() => Users, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
+  @PrimaryColumn({ name: "permission_id", type: "int" })
+  permissionId: number;
+
+  @Column({
+    name: "type",
+    type: "enum",
+    enum: PermissionOverrideType,
+  })
+  type: PermissionOverrideType;
+
+  @ManyToOne(() => Users, (user) => user.userPermissions, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "user_id" })
   user: Users;
 
-  @ManyToOne(() => Permission, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'permission_id' })
+  @ManyToOne(() => Permission, (permission) => permission.userPermissions, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "permission_id" })
   permission: Permission;
 }

@@ -1,6 +1,5 @@
 import { Empresas } from "@/module/empresas/entities/empresas.entity";
 import { Role } from "@/module/roles/entities/role.entity";
-import { Unidades } from "@/module/unidades/entities/unidades.entity";
 import {
   Column,
   CreateDateColumn,
@@ -11,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
+import { UserPermission } from "./userPermission.entity";
 
 @Entity("users")
 export class Users {
@@ -35,23 +35,16 @@ export class Users {
   @Column({ name: "empresa_id", type: "uuid" })
   empresaId: string;
 
-  @Column({ name: "unidade_id", type: "uuid" })
-  unidadeId: string;
-
   @Column({ name: "supervisor_id", type: "uuid", nullable: true })
   supervisorId: string | null;
 
-  @ManyToOne(() => Role, { nullable: false })
+  @ManyToOne(() => Role, (role) => role.users, { nullable: false })
   @JoinColumn({ name: "role_id" })
   role: Role;
 
   @ManyToOne(() => Empresas, (empresa) => empresa.users, { nullable: false })
   @JoinColumn({ name: "empresa_id" })
   empresa: Empresas;
-
-  @ManyToOne(() => Unidades, (unidade) => unidade.users, { nullable: false })
-  @JoinColumn({ name: "unidade_id" })
-  unidade: Unidades;
 
   @ManyToOne(() => Users, (user) => user.liderados, { nullable: true })
   @JoinColumn({ name: "supervisor_id" })
@@ -60,8 +53,8 @@ export class Users {
   @OneToMany(() => Users, (user) => user.supervisor)
   liderados: Users[];
 
-  @Column({ name: "participa_fechamento", default: false })
-  participaFechamento: boolean;
+  @OneToMany(() => UserPermission, (userPermission) => userPermission.user)
+  userPermissions: UserPermission[];
 
   @Column({ default: true })
   active: boolean;
