@@ -8,8 +8,17 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  if (corsOrigins.length === 0) {
+    logger.warn('CORS_ORIGINS vazio — nenhuma origem liberada');
+  }
+
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: corsOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
