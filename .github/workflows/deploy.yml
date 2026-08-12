@@ -46,6 +46,7 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           REDIS_HOST=redis
           REDIS_PORT=6379
+          CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
           "@
           $normalized = ($envContent -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join "`n"
           [System.IO.File]::WriteAllText("$PWD\.env", $normalized + "`n")
