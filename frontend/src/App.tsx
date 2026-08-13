@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth, PERMISSOES } from "@/stores/auth.store";
 
-import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Login from "@/pages/login/index";
 import PainelConfiguracoes from "@/pages/painel-configuracoes";
 import AcademyPage from "./pages/Academy";
 import { DefaultLayout } from "./layouts/DefaultLayout";
