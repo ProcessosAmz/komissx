@@ -60,15 +60,30 @@ jobs:
           $normalized = ($envContent -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join "`n"
           [System.IO.File]::WriteAllText("$PWD\.env", $normalized + "`n")
 
+      - name: Start infrastructure
+        working-directory: ./backend
+        run: |
+          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --wait postgres redis
+
+      - name: Build backend image
+        working-directory: ./backend
+        run: |
+          docker compose --env-file .env -f docker/docker-compose.prod.yml build backend
+
+      - name: Run migrations
+        working-directory: ./backend
+        run: |
+          docker compose --env-file .env -f docker/docker-compose.prod.yml run --rm --no-deps backend npm run migration:run
+
+      - name: Verify migrations
+        working-directory: ./backend
+        run: |
+          docker compose --env-file .env -f docker/docker-compose.prod.yml run --rm --no-deps backend npm run migration:show
+
       - name: Deploy backend
         working-directory: ./backend
         run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --build --force-recreate backend
-          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d redis postgres
-
-      - name: Run migrations
-        run: |
-          docker exec komissx_backend npm run migration:run
+          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --force-recreate backend
 
       - name: Deploy frontend
         working-directory: ./frontend
