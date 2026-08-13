@@ -46,6 +46,7 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           REDIS_HOST=redis
           REDIS_PORT=6379
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}
           "@
           $normalized = ($envContent -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join "`n"
@@ -89,11 +90,6 @@ jobs:
         working-directory: ./frontend
         run: |
           docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --build
-
-      - name: Verify backend DB env
-        run: |
-          docker exec komissx_backend printenv DB_USERNAME
-          docker exec komissx_backend printenv DB_DATABASE
 
       - name: Docker ps
         run: |
