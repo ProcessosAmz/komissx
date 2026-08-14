@@ -15,6 +15,7 @@ import { RedisModule } from '@/integrations/redis/index.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
+      isGlobal: true,
       envFilePath: ['.env.development.local', '.env.development', '.env'],
     }),
     TypeOrmModule.forRoot({

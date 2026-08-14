@@ -44,6 +44,14 @@ jobs:
           DB_USERNAME=${{ secrets.DB_USERNAME }}
           DB_DATABASE=${{ secrets.DB_DATABASE }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_BIND_ADDRESS=${{ vars.DB_BIND_ADDRESS || '127.0.0.1' }}
+          DB_EXPOSED_PORT=${{ vars.DB_EXPOSED_PORT || '5432' }}
+          REDIS_BIND_ADDRESS=${{ vars.REDIS_BIND_ADDRESS || '127.0.0.1' }}
+          REDIS_EXPOSED_PORT=${{ vars.REDIS_EXPOSED_PORT || '6379' }}
+          BACKEND_BIND_ADDRESS=${{ vars.BACKEND_BIND_ADDRESS || '0.0.0.0' }}
+          BACKEND_EXPOSED_PORT=${{ vars.BACKEND_EXPOSED_PORT || '3000' }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_EXPIRES_IN=8h
           REDIS_HOST=redis
           REDIS_PORT=6379
           REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
@@ -57,6 +65,8 @@ jobs:
         run: |
           $envContent = @"
           VITE_API_URL=${{ secrets.VITE_API_URL }}
+          FRONTEND_BIND_ADDRESS=${{ vars.FRONTEND_BIND_ADDRESS || '0.0.0.0' }}
+          FRONTEND_EXPOSED_PORT=${{ vars.FRONTEND_EXPOSED_PORT || '8080' }}
           "@
           $normalized = ($envContent -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join "`n"
           [System.IO.File]::WriteAllText("$PWD\.env", $normalized + "`n")
@@ -98,9 +108,9 @@ jobs:
       - name: Backend logs
         working-directory: ./backend
         run: |
-          docker compose -f docker/docker-compose.prod.yml logs --tail=50 backend
+          docker compose --env-file .env -f docker/docker-compose.prod.yml logs --tail=50 backend
 
       - name: Frontend logs
         working-directory: ./frontend
         run: |
-          docker compose -f docker/docker-compose.prod.yml logs --tail=50 frontend
+          docker compose --env-file .env -f docker/docker-compose.prod.yml logs --tail=50 frontend

@@ -10,12 +10,11 @@ export type AuthErrorCode =
   (typeof AUTH_ERROR_CODES)[keyof typeof AUTH_ERROR_CODES];
 
 export interface AuthenticatedUser {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: Role;
   active: boolean;
-  telas_fechamento: string[];
 }
 
 export interface SessionResponse {

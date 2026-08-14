@@ -4,21 +4,16 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Users } from '@/module/users/entities/users.entity';
 import { CreateUserDto } from '@/module/users/dto';
 import { getErrorMessage } from '@/utils/error.utils';
-import { UsersRepository } from '../repository/index.repository';
+import { UsersRepository } from '@/module/users/repository/index.repository';
 
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(
-    @InjectRepository(Users)
-    private readonly usersRepository: UsersRepository,
-  ) {}
+  constructor(private readonly usersRepository: UsersRepository) {}
 
   async create(body: CreateUserDto) {
     this.logger.log(`Attempting to create user: ${body.email}`);
