@@ -3,7 +3,10 @@ import { Empresas } from "@/module/empresas/entities/empresas.entity";
 import { Cidade, Estado, Pais } from "@/module/localidade/entities";
 import { Permission } from "@/module/permissions/entities/permission.entity";
 import { Role } from "@/module/roles/entities/role.entity";
+import { RolePermission } from "@/module/roles/entities/rolePermission.entity";
 import { Unidades } from "@/module/unidades/entities/unidades.entity";
+import { UserPermission } from "@/module/users/entities/userPermission.entity";
+import { UserRole } from "@/module/users/entities/userRole.entity";
 import { Users } from "@/module/users/entities/users.entity";
 import { config } from "dotenv";
 import { DataSource } from "typeorm";
@@ -27,6 +30,9 @@ export default new DataSource({
     Role,
     Permission,
     Commission,
+    UserPermission,
+    UserRole,
+    RolePermission,
   ],
   migrations: ["src/migrations/*.ts"],
 });
