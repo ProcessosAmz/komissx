@@ -157,4 +157,16 @@ export class UsersService {
 
     return roots;
   }
+
+  async findByEmail(email: string): Promise<Users | null> {
+    return await this.usersRepository.findOne({
+      where: { email },
+    });
+  }
+
+  async findById(id: string): Promise<Users | null> {
+    return await this.usersRepository.findOne({
+      where: { id },
+    });
+  }
 }

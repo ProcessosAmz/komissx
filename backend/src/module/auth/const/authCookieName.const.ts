@@ -1,0 +1,1 @@
+export const AUTH_COOKIE_NAME = 'komissx_access_token';
