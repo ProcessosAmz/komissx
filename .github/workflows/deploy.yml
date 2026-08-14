@@ -44,9 +44,9 @@ jobs:
           DB_USERNAME=${{ secrets.DB_USERNAME }}
           DB_DATABASE=${{ secrets.DB_DATABASE }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_BIND_ADDRESS=${{ vars.DB_BIND_ADDRESS || '127.0.0.1' }}
+          DB_BIND_ADDRESS=${{ vars.DB_BIND_ADDRESS || '0.0.0.0' }}
           DB_EXPOSED_PORT=${{ vars.DB_EXPOSED_PORT || '5432' }}
-          REDIS_BIND_ADDRESS=${{ vars.REDIS_BIND_ADDRESS || '127.0.0.1' }}
+          REDIS_BIND_ADDRESS=${{ vars.REDIS_BIND_ADDRESS || '0.0.0.0' }}
           REDIS_EXPOSED_PORT=${{ vars.REDIS_EXPOSED_PORT || '6379' }}
           BACKEND_BIND_ADDRESS=${{ vars.BACKEND_BIND_ADDRESS || '0.0.0.0' }}
           BACKEND_EXPOSED_PORT=${{ vars.BACKEND_EXPOSED_PORT || '3000' }}
