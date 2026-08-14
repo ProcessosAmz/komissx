@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger.config';
 
@@ -16,6 +17,8 @@ async function bootstrap() {
   if (corsOrigins.length === 0) {
     logger.warn('CORS_ORIGINS vazio — nenhuma origem liberada');
   }
+
+  app.use(cookieParser());
 
   app.enableCors({
     origin: corsOrigins,
