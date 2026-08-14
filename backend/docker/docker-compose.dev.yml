@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE}
     ports:
-      - "127.0.0.1:5433:5432"
+      - "${DB_BIND_ADDRESS:-127.0.0.1}:${DB_EXPOSED_PORT:-5433}:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     healthcheck:
@@ -22,7 +22,7 @@ services:
     container_name: komissx_redis_dev
     restart: unless-stopped
     ports:
-      - "127.0.0.1:6380:6379"
+      - "${REDIS_BIND_ADDRESS:-127.0.0.1}:${REDIS_EXPOSED_PORT:-6380}:6379"
     volumes:
       - redis_data_dev:/data
     command: ["redis-server", "--appendonly", "yes"]

@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "${DB_BIND_ADDRESS:-127.0.0.1}:${DB_EXPOSED_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -54,7 +54,7 @@ services:
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     ports:
-      - "3000:3000"
+      - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:${BACKEND_EXPOSED_PORT:-3000}:3000"
     depends_on:
       postgres:
         condition: service_healthy

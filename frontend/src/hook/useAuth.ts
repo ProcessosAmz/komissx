@@ -34,21 +34,11 @@ export const useAuth = () => {
     [user],
   );
 
-  const canAccessClosingScreen = useCallback(
-    (screen: string): boolean => {
-      if (!user) return false;
-      if (user.role === "ADMIN") return true;
-      return user.telas_fechamento.includes(screen);
-    },
-    [user],
-  );
-
   return {
     user: user ?? null,
     isAuthenticated: Boolean(user),
     isPending,
     logout,
     canAccessModule,
-    canAccessClosingScreen,
   };
 };
