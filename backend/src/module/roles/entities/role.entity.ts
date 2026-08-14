@@ -1,3 +1,4 @@
+import { Users } from "@/module/users/entities/users.entity";
 import {
   Column,
   CreateDateColumn,
@@ -5,23 +6,22 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-} from 'typeorm';
-import { Users } from '@/module/users/entities/users.entity';
+} from "typeorm";
 
-@Entity('roles')
+@Entity("roles")
 export class Role {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
   name: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: "created_at" })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: "updated_at" })
   updatedAt: Date;
-  
+
   @OneToMany(() => Users, (user) => user.role)
   users: Users[];
 }
