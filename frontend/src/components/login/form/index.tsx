@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useLogin } from "@/hook/useLogin";
+import { useLogin } from "@/hooks/useLogin";
 
 const inputStyles =
   "h-12 w-full rounded-[14px] border border-white/[0.08] bg-[#080e1c]/[0.78] px-4 text-base leading-[1.4] text-white shadow-none transition-colors placeholder:text-[#6f7b92] hover:border-white/[0.14] focus-visible:border-[#4f73ff] focus-visible:ring-1 focus-visible:ring-[#4f73ff] focus-visible:shadow-[0_0_24px_rgba(79,115,255,0.2)] disabled:cursor-not-allowed disabled:opacity-50 sm:h-14 sm:px-6 sm:text-lg";

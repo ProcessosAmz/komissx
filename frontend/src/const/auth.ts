@@ -48,3 +48,4 @@ export const SESSION_STALE_TIME_IN_MS = 5 * 60 * 1000;
 
 export const LOGIN_ROUTE = "/auth/login";
 export const POST_LOGIN_ROUTE = "/admin";
+export const FORBIDDEN_ROUTE = "/sem-permissao";

@@ -3,7 +3,7 @@ import { Filtro } from "./filtro";
 import { contarNos, encontrarNo, mapUserApiToHierarquia } from "@/utils/hierarquia";
 import { ArvoreHierarquica } from "./arvore";
 import { DetalheColaborador } from "./detalhe";
-import { useUsers } from "@/hook/useUsers";
+import { useUsers } from "@/hooks/useUsers";
 import type { FiltroUsuarios } from "@/types/filtro";
 
 export function ModuloHierarquia() {

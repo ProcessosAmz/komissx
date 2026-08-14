@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createUserSchema, type CreateUserFormData } from "@/utils/validators/user";
-import { useCreateUser } from "@/hook/useCreateUser";
+import { useCreateUser } from "@/hooks/useCreateUser";
 
 const SUPERVISOR_ROLE_ID = 1;
 

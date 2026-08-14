@@ -1,4 +1,4 @@
-import { Logo } from "@/components/common/Logo";
+import { Logo } from "@/components/common/logo";
 import { LoginForm } from "@/components/login/form";
 
 export default function Login() {

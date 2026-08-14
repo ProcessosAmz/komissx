@@ -17,12 +17,16 @@ export const useAuth = () => {
     queryKey: AUTH_SESSION_QUERY_KEY,
     queryFn: AuthService.me,
     staleTime: SESSION_STALE_TIME_IN_MS,
+    retry: false,
   });
 
   const logout = useCallback(async () => {
     try {
       await AuthService.logout();
+    } catch {
+      return;
     } finally {
+      queryClient.clear();
       queryClient.setQueryData(AUTH_SESSION_QUERY_KEY, null);
       window.location.assign(LOGIN_ROUTE);
     }

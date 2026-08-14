@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useEmpresas } from "@/hook/useEmpresa";
-import { useEstados } from "@/hook/useEstados";
-import { useUnidades } from "@/hook/useUnidade";
+import { useEmpresas } from "@/hooks/useEmpresa";
+import { useEstados } from "@/hooks/useEstados";
+import { useUnidades } from "@/hooks/useUnidade";
 import { FilterSelect } from "@/components/painel-configuracoes/modulos/negocio-view/hierarquia/filtro/select";
 import type { FiltroUsuarios } from "@/types/filtro";
 
