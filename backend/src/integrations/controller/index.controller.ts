@@ -1,7 +1,10 @@
-import { Controller, Post, Body, Logger, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Logger, HttpCode, Get } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { HubsoftService } from '@/integrations/service/hubsoft.service';
 import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
+import { BuscarOrdensServicoDto } from '@/integrations/dto/buscarOrdensServico.dto';
 
+@ApiTags('integrations')
 @Controller('integrations')
 export class IntegrationsController {
   private readonly logger = new Logger(IntegrationsController.name);
@@ -24,5 +27,24 @@ export class IntegrationsController {
 
     this.logger.log('Ticket created successfully');
     return response;
+  }
+
+  @Get('ordens-servico')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Busca OS finalizadas de instalação desde a última quinta',
+  })
+  @ApiBody({ type: BuscarOrdensServicoDto })
+  @ApiResponse({ status: 200, description: 'Lista de ordens de serviço' })
+  async buscarOrdensServico(@Body() body: BuscarOrdensServicoDto) {
+    const ordens = await this.hubsoftService.buscarOrdensServicoFinalizadas(
+      body.host,
+    );
+
+    return {
+      host: body.host,
+      total: ordens.length,
+      ordens,
+    };
   }
 }

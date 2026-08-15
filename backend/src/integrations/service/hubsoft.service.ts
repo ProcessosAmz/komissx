@@ -14,6 +14,10 @@ import { getErrorMessage } from '@/utils/error.utils';
 import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
 import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
 import { HubsoftGetAtendimentosRepository } from '@/integrations/repository/hubsoft/hubsoftGetAtendimentos.repository';
+import {
+  HubsoftGetOrdensServicoRepository,
+  HubsoftOrdemServicoListaItem,
+} from '@/integrations/repository/hubsoft/hubsoftGetOrdensServico.repository';
 import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
 import { RedisService } from '@/integrations/redis/service/index.service';
 import {
@@ -22,6 +26,7 @@ import {
   claimWebhookTicket,
   releaseWebhookTicket,
 } from '@/integrations/service/helper';
+import { OrdemServicoListaItem, toOrdemServicoListaItem } from '../types/OrderServicoLista.type';
 
 @Injectable()
 export class HubsoftService {
@@ -33,6 +38,7 @@ export class HubsoftService {
     private readonly hubsoftGetByIdClienteRepository: HubsoftGetByIdClienteRepository,
     private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
     private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
+    private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
     private readonly hubsoftLogger: HubsoftLogger,
     private readonly redisService: RedisService,
   ) {}
@@ -296,6 +302,14 @@ export class HubsoftService {
       });
       this.logAndRethrow('Erro ao criar atendimento no Hubsoft', error);
     }
+  }
+
+  async buscarOrdensServicoFinalizadas(
+    host: Host,
+  ): Promise<OrdemServicoListaItem[]> {
+    const token = await this.garantirTokenValido(host);
+    const ordens = await this.hubsoftGetOrdensServicoRepository.execute(host, token);
+    return ordens.map((ordem) => toOrdemServicoListaItem(ordem, host));
   }
 
   private logAndRethrow(context: string, error: unknown): never {

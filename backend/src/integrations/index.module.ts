@@ -6,6 +6,7 @@ import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubso
 import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
 import { HubsoftGetAtendimentosRepository } from '@/integrations/repository/hubsoft/hubsoftGetAtendimentos.repository';
 import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
+import { HubsoftGetOrdensServicoRepository } from '@/integrations/repository/hubsoft/hubsoftGetOrdensServico.repository';
 
 @Module({
   imports: [HttpModule],
@@ -15,6 +16,7 @@ import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
     HubsoftGetByIdClienteRepository,
     HubsoftCreateAtendimentoRepository,
     HubsoftGetAtendimentosRepository,
+    HubsoftGetOrdensServicoRepository,
     HubsoftLogger,
   ],
   exports: [HubsoftService],
