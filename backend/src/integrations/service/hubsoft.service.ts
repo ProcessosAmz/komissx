@@ -11,13 +11,6 @@ import {
   CreateTicketResult,
 } from '@/integrations/types/OrdemServicoWebhook.type';
 import { getErrorMessage } from '@/utils/error.utils';
-import { HubsoftGetByIdClienteRepository } from '@/integrations/repository/hubsoft/hubsoftGetByIdCliente.repository';
-import { HubsoftCreateAtendimentoRepository } from '@/integrations/repository/hubsoft/hubsoftCreateAtendimento.repository';
-import { HubsoftGetAtendimentosRepository } from '@/integrations/repository/hubsoft/hubsoftGetAtendimentos.repository';
-import {
-  HubsoftGetOrdensServicoRepository,
-  HubsoftOrdemServicoListaItem,
-} from '@/integrations/repository/hubsoft/hubsoftGetOrdensServico.repository';
 import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
 import { RedisService } from '@/integrations/redis/service/index.service';
 import {
@@ -25,8 +18,19 @@ import {
   isOrdemDeInstalacao,
   claimWebhookTicket,
   releaseWebhookTicket,
+  isOsInstalacaoConcluida,
 } from '@/integrations/service/helper';
-import { OrdemServicoListaItem, toOrdemServicoListaItem } from '../types/OrderServicoLista.type';
+import {
+  OrdemServicoListaItem,
+  toOrdemServicoListaItem,
+} from '../types/OrderServicoLista.type';
+import {
+  HubsoftCreateAtendimentoRepository,
+  HubsoftGetAtendimentoByIdRepository,
+  HubsoftGetAtendimentosRepository,
+  HubsoftGetByIdClienteRepository,
+  HubsoftGetOrdensServicoRepository,
+} from '@/integrations/repository/hubsoft';
 
 @Injectable()
 export class HubsoftService {
@@ -39,6 +43,7 @@ export class HubsoftService {
     private readonly hubsoftCreateAtendimentoRepository: HubsoftCreateAtendimentoRepository,
     private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
     private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
+    private readonly hubsoftGetAtendimentoByIdRepository: HubsoftGetAtendimentoByIdRepository,
     private readonly hubsoftLogger: HubsoftLogger,
     private readonly redisService: RedisService,
   ) {}
@@ -91,27 +96,6 @@ export class HubsoftService {
       return accessToken;
     } catch (error) {
       this.logAndRethrow(`Erro ao logar no Hubsoft (${host})`, error);
-    }
-  }
-
-  async buscarVendedores(host: Host): Promise<unknown> {
-    const config = getHubsoftConfig(host);
-    const token = await this.garantirTokenValido(host);
-
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get<unknown>(
-          `${config.url}/rota/para/buscar/vendedores`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        ),
-      );
-      return response.data;
-    } catch (error) {
-      this.logAndRethrow('Erro ao buscar vendedores', error);
     }
   }
 
@@ -308,8 +292,51 @@ export class HubsoftService {
     host: Host,
   ): Promise<OrdemServicoListaItem[]> {
     const token = await this.garantirTokenValido(host);
-    const ordens = await this.hubsoftGetOrdensServicoRepository.execute(host, token);
-    return ordens.map((ordem) => toOrdemServicoListaItem(ordem, host));
+    const ordens = await this.hubsoftGetOrdensServicoRepository.execute(
+      host,
+      token,
+    );
+
+    const ordensConcluidas = ordens.filter((ordem) =>
+      isOsInstalacaoConcluida(ordem),
+    );
+
+    const ordensFiltradas = await Promise.all(
+      ordensConcluidas.map(async (ordem) => {
+        const idAtendimento = ordem.atendimento?.id_atendimento;
+
+        if (!idAtendimento) {
+          return null;
+        }
+
+        const atendimento =
+          await this.hubsoftGetAtendimentoByIdRepository.execute(
+            host,
+            idAtendimento,
+            token,
+          );
+
+        if (atendimento?.id_motivo_fechamento_atendimento) {
+          return null;
+        }
+
+        const idClienteServico =
+          atendimento?.id_cliente_servico ??
+          ordem.dados_servico?.id_cliente_servico ??
+          ordem.id_cliente_servico ??
+          ordem.dados_cliente.id_cliente_servico;
+
+        if (!idClienteServico) {
+          return null;
+        }
+
+        return toOrdemServicoListaItem(ordem, host, idClienteServico);
+      }),
+    );
+
+    return ordensFiltradas.filter(
+      (ordem): ordem is OrdemServicoListaItem => ordem !== null,
+    );
   }
 
   private logAndRethrow(context: string, error: unknown): never {

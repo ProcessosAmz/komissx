@@ -6,8 +6,25 @@ import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig
 import {
   HubsoftAtendimento,
   HubsoftAtendimentoTodosQuery,
-  HubsoftAtendimentoTodosResponse,
 } from '@/integrations/types/OrdemServicoWebhook.type';
+
+type HubsoftAtendimentosTodosResponse = {
+  atendimentos?: HubsoftAtendimento[] | { data?: HubsoftAtendimento[] };
+};
+
+const toAtendimentos = (
+  raw: HubsoftAtendimentosTodosResponse['atendimentos'],
+): HubsoftAtendimento[] => {
+  if (Array.isArray(raw)) {
+    return raw;
+  }
+
+  if (raw && Array.isArray(raw.data)) {
+    return raw.data;
+  }
+
+  return [];
+};
 
 @Injectable()
 export class HubsoftGetAtendimentosRepository {
@@ -31,7 +48,7 @@ export class HubsoftGetAtendimentosRepository {
     }
 
     const response = await firstValueFrom(
-      this.httpService.get<HubsoftAtendimentoTodosResponse>(
+      this.httpService.get<HubsoftAtendimentosTodosResponse>(
         `${config.url}/api/v1/integracao/atendimento/todos`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -40,6 +57,6 @@ export class HubsoftGetAtendimentosRepository {
       ),
     );
 
-    return response.data.atendimentos ?? [];
+    return toAtendimentos(response.data.atendimentos);
   }
 }

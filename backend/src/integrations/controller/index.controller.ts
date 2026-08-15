@@ -32,7 +32,8 @@ export class IntegrationsController {
   @Get('ordens-servico')
   @HttpCode(200)
   @ApiOperation({
-    summary: 'Busca OS finalizadas de instalação desde a última quinta',
+    summary:
+      'OS de instalação concluída com sucesso ainda sem motivo de auditoria',
   })
   @ApiBody({ type: BuscarOrdensServicoDto })
   @ApiResponse({ status: 200, description: 'Lista de ordens de serviço' })

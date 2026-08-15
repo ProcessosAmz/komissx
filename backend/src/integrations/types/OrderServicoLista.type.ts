@@ -3,8 +3,11 @@ import { HubsoftOrdemServicoListaItem } from '@/integrations/repository/hubsoft/
 
 export type OrdemServicoListaItem = {
   id: number;
+  idAtendimento: number;
+  idClienteServico: number;
   codigoCliente: number;
   numeroOrdemServico: string;
+  motivoFechamento: string;
   usuarioFechamento: string;
   usuarioFechamentoLimpo: string;
   tipoOrdemServico: string;
@@ -16,6 +19,7 @@ export type OrdemServicoListaItem = {
 export function toOrdemServicoListaItem(
   ordem: HubsoftOrdemServicoListaItem,
   host: Host,
+  idClienteServico: number,
 ): OrdemServicoListaItem {
   const usuarioFechamento = ordem.usuario_fechamento?.name ?? '';
   const partesNome = usuarioFechamento.trim().split(/\s+/);
@@ -23,8 +27,12 @@ export function toOrdemServicoListaItem(
 
   return {
     id: ordem.id_ordem_servico,
+    idAtendimento: ordem.atendimento.id_atendimento,
+    idClienteServico,
     codigoCliente: ordem.dados_cliente.codigo_cliente,
     numeroOrdemServico: ordem.numero,
+    motivoFechamento:
+      ordem.motivo_fechamento?.[0]?.descricao ?? ordem.status_fechamento ?? '',
     usuarioFechamento,
     usuarioFechamentoLimpo,
     tipoOrdemServico: ordem.tipo_ordem_servico.descricao,
