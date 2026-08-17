@@ -323,9 +323,6 @@ export class HubsoftService {
     host: Host,
   ): Promise<OrdemServicoListaItem[]> {
     if (host !== Host.MANIA) {
-      this.logger.log(
-        `[lista] host=${host} IGNORADO — validando apenas Mania por enquanto`,
-      );
       await this.hubsoftLogger.filaQualidade({
         action: 'host_ignorado',
         message: `Host ${host} ignorado — validando apenas Mania por enquanto`,
@@ -339,10 +336,6 @@ export class HubsoftService {
     const dataFim = formatDateYmd(new Date());
     const atendimentoPadrao = atendimentoPadraoPorHost[host];
     const idFilaListaEspera = atendimentoPadrao.id_usuario_responsavel;
-
-    this.logger.log(
-      `[lista] INICIO host=${host} periodo=${dataInicio}..${dataFim} tipo=${atendimentoPadrao.id_tipo_atendimento} filaEspera=${idFilaListaEspera}`,
-    );
 
     const auditorias =
       await this.hubsoftGetAtendimentosRepository.executeTodasPaginas(
@@ -364,10 +357,6 @@ export class HubsoftService {
       ).values(),
     ];
 
-    this.logger.log(
-      `[lista] auditorias 475 encontradas=${auditoriasUnicas.length}`,
-    );
-
     const detalhes = await Promise.all(
       auditoriasUnicas.map(async (auditoriaLista) => {
         const detalhe = await this.hubsoftGetAtendimentoByIdRepository.execute(
@@ -382,7 +371,6 @@ export class HubsoftService {
 
     const auditoriasPorServico = new Map<number, AuditoriaComercial[]>();
     const auditoriasPorCliente = new Map<number, AuditoriaComercial[]>();
-    let auditoriasNaListaEspera = 0;
 
     const adicionar = (
       mapa: Map<number, AuditoriaComercial[]>,
@@ -458,7 +446,6 @@ export class HubsoftService {
         continue;
       }
 
-      auditoriasNaListaEspera += 1;
       const item: AuditoriaComercial = { lista: auditoriaLista, detalhe };
 
       if (idClienteServico) {
@@ -470,10 +457,6 @@ export class HubsoftService {
       }
     }
 
-    this.logger.log(
-      `[lista] auditorias na LISTA DE ESPERA=${auditoriasNaListaEspera}`,
-    );
-
     const ordens = await this.hubsoftGetOrdensServicoRepository.execute(
       host,
       token,
@@ -481,10 +464,6 @@ export class HubsoftService {
 
     const ordensConcluidas = ordens.filter((ordem) =>
       isOsInstalacaoConcluida(ordem),
-    );
-
-    this.logger.log(
-      `[lista] OS instalacao=${ordens.length} concluidas=${ordensConcluidas.length}`,
     );
 
     let osSemAuditoria = 0;
@@ -580,10 +559,6 @@ export class HubsoftService {
       }
     }
 
-    this.logger.log(
-      `[lista] match OS+475=${resultado.length} osSemAuditoria=${osSemAuditoria}`,
-    );
-
     const idFilaQualidade = idUsuarioFilaQualidadePorHost[host];
     const idsAtualizados = new Set<number>();
     const idsAtendimento = [
@@ -591,9 +566,6 @@ export class HubsoftService {
     ];
 
     if (!idFilaQualidade) {
-      this.logger.warn(
-        `[lista] PUT qualidade IGNORADO host=${host} motivo=fila_nao_configurada`,
-      );
       await this.hubsoftLogger.filaQualidade({
         action: 'fila_nao_configurada',
         message: `PUT qualidade ignorado host=${host} — fila qualidade nao configurada`,
@@ -620,9 +592,6 @@ export class HubsoftService {
             token,
           );
           idsAtualizados.add(idAtendimento);
-          this.logger.log(
-            `[lista] PUT qualidade OK idAtendimento=${idAtendimento}`,
-          );
           await this.hubsoftLogger.filaQualidade({
             action: 'qualidade_atualizado',
             message: `Atendimento ${idAtendimento} movido para FILA QUALIDADE AUDITORIA`,
@@ -637,10 +606,6 @@ export class HubsoftService {
             },
           });
         } catch (error) {
-          this.logger.error(
-            `[lista] PUT qualidade ERRO idAtendimento=${idAtendimento} message=${getErrorMessage(error)}`,
-            error instanceof Error ? error.stack : undefined,
-          );
           await this.hubsoftLogger.filaQualidade({
             action: 'qualidade_erro',
             message: `PUT qualidade ERRO idAtendimento=${idAtendimento} message=${getErrorMessage(error)}`,
