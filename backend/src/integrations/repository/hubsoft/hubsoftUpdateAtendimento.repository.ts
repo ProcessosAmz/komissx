@@ -45,10 +45,6 @@ export class HubsoftUpdateAtendimentoRepository {
 
     const url = `${config.url}/api/v1/integracao/atendimento/${idAtendimento}`;
 
-    this.logger.log(
-      `[debug-lista] PUT Hubsoft url=${url} body=${JSON.stringify(body)}`,
-    );
-
     try {
       const response = await firstValueFrom(
         this.httpService.put<HubsoftEditarAtendimentoResponse>(
@@ -63,10 +59,6 @@ export class HubsoftUpdateAtendimentoRepository {
         ),
       );
 
-      this.logger.log(
-        `[debug-lista] PUT Hubsoft HTTP=${response.status} payload=${JSON.stringify(response.data)}`,
-      );
-
       if (response.data.status === 'error') {
         const detalhe = response.data.errors?.join('; ') ?? response.data.msg;
         this.logger.error(
@@ -77,7 +69,7 @@ export class HubsoftUpdateAtendimentoRepository {
     } catch (error) {
       if (error instanceof AxiosError) {
         this.logger.error(
-          `[debug-lista] PUT Hubsoft AxiosError id=${idAtendimento} http=${error.response?.status ?? 'sem_status'} data=${JSON.stringify(error.response?.data ?? null)} message=${error.message}`,
+          `PUT Hubsoft erro id=${idAtendimento} http=${error.response?.status ?? 'sem_status'} message=${error.message}`,
         );
       }
 

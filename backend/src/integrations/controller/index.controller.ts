@@ -14,14 +14,9 @@ export class IntegrationsController {
   @Post('ticket')
   @HttpCode(200)
   async createTicket(@Body() body: OrdemServicoWebhook) {
-    this.logger.log(
-      `Received webhook for order ${body?.body?.numero_ordem_servico}`,
-    );
-
     const response = await this.hubsoftService.createTicket(body);
 
     if (!response) {
-      this.logger.log('Ordem ignorada (host inválido ou não é instalação)');
       return { message: 'Ordem ignorada' };
     }
 
@@ -40,10 +35,6 @@ export class IntegrationsController {
   async buscarOrdensServico(@Body() body: BuscarOrdensServicoDto) {
     const ordens = await this.hubsoftService.moverAuditoriasParaFilaQualidade(
       body.host,
-    );
-
-    this.logger.log(
-      `GET ordens-servico host=${body.host} total=${ordens.length}`,
     );
 
     return {

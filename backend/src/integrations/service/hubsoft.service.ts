@@ -92,7 +92,6 @@ export class HubsoftService {
 
   private async logarHubsoft(host: Host): Promise<string> {
     const config = getHubsoftConfig(host);
-    this.logger.log(`Logando no Hubsoft (${host})...`);
 
     if (!config.url) {
       throw new Error(`HUB_URL não configurada para o host ${host}`);
@@ -116,8 +115,6 @@ export class HubsoftService {
         ),
       );
 
-      this.logger.log(`Logado com sucesso no Hubsoft (${host})`);
-
       const accessToken = response.data.access_token;
       this.tokens[host] = {
         accessToken,
@@ -137,24 +134,10 @@ export class HubsoftService {
     const host = resolveOrdemServicoHost(numeroOrdem);
 
     if (!host) {
-      await this.hubsoftLogger.createTicket({
-        action: 'host_invalido',
-        message: `Prefixo desconhecido em numero_ordem_servico: ${numeroOrdem.slice(0, 4)}`,
-        host: null,
-        isInstalacao: false,
-        payload: payload.body,
-      });
       return null;
     }
 
     if (host !== Host.MANIA) {
-      await this.hubsoftLogger.createTicket({
-        action: 'host_ignorado',
-        message: `Host ${host} ignorado — validando apenas Mania por enquanto`,
-        host,
-        isInstalacao: false,
-        payload: payload.body,
-      });
       return null;
     }
 
@@ -164,13 +147,6 @@ export class HubsoftService {
     );
 
     if (!instalacao) {
-      await this.hubsoftLogger.createTicket({
-        action: 'tipo_ignorado',
-        message: `Tipo de ordem ${payload.body.id_tipo_ordem_servico} não é instalação para o host ${host}`,
-        host,
-        isInstalacao: false,
-        payload: payload.body,
-      });
       return null;
     }
 
@@ -182,13 +158,6 @@ export class HubsoftService {
     );
 
     if (!claimed) {
-      await this.hubsoftLogger.createTicket({
-        action: 'duplicado_ignorado',
-        message: `Webhook já processado para host=${host} ordem=${ordemServicoId}`,
-        host,
-        isInstalacao: instalacao,
-        payload: payload.body,
-      });
       return {
         message: 'Webhook já processado',
         duplicate: true,
@@ -199,14 +168,6 @@ export class HubsoftService {
       const token = await this.garantirTokenValido(host);
       const atendimentoPadrao = atendimentoPadraoPorHost[host];
 
-      await this.hubsoftLogger.createTicket({
-        action: 'buscar_cliente',
-        message: 'Ordem de instalação válida. Buscando cliente...',
-        host,
-        isInstalacao: instalacao,
-        payload: payload.body,
-      });
-
       const cliente = await this.hubsoftGetByIdClienteRepository.execute(
         host,
         payload.body.id_cliente_servico,
@@ -216,7 +177,7 @@ export class HubsoftService {
       if (!cliente) {
         await releaseWebhookTicket(this.redisService, host, ordemServicoId);
         await this.hubsoftLogger.createTicket({
-          action: 'cliente_nao_encontrado',
+          action: 'create_error',
           message: `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
           host,
           isInstalacao: instalacao,
@@ -229,15 +190,6 @@ export class HubsoftService {
       const nome = cliente.nome;
       const telefone = cliente.telefone;
       const email = cliente.email;
-
-      await this.hubsoftLogger.createTicket({
-        action: 'cliente_encontrado',
-        message: `Cliente encontrado: ${nome} | ${telefone} | ${email}`,
-        host,
-        isInstalacao: instalacao,
-        payload: payload.body,
-        cliente,
-      });
 
       const hoje = new Date().toISOString().slice(0, 10);
       const atendimentosExistentes =
@@ -257,14 +209,6 @@ export class HubsoftService {
         );
 
       if (atendimentosExistentes.length > 0) {
-        await this.hubsoftLogger.createTicket({
-          action: 'atendimento_ja_existe',
-          message: `Cliente ${payload.body.id_cliente_servico} já possui atendimento de auditoria aberto`,
-          host,
-          isInstalacao: instalacao,
-          payload: payload.body,
-          cliente,
-        });
         return {
           message: 'Atendimento de auditoria já existe para o cliente',
           duplicate: true,
@@ -305,9 +249,6 @@ export class HubsoftService {
       };
     } catch (error) {
       await releaseWebhookTicket(this.redisService, host, ordemServicoId);
-      this.logger.error(
-        `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
-      );
       await this.hubsoftLogger.createTicket({
         action: 'create_error',
         message: `Erro ao criar atendimento no Hubsoft: ${getErrorMessage(error)}`,
@@ -323,11 +264,6 @@ export class HubsoftService {
     host: Host,
   ): Promise<OrdemServicoListaItem[]> {
     if (host !== Host.MANIA) {
-      await this.hubsoftLogger.filaQualidade({
-        action: 'host_ignorado',
-        message: `Host ${host} ignorado — validando apenas Mania por enquanto`,
-        host,
-      });
       return [];
     }
 
@@ -384,17 +320,6 @@ export class HubsoftService {
 
     for (const { auditoriaLista, detalhe } of detalhes) {
       if (!detalhe) {
-        await this.hubsoftLogger.filaQualidade({
-          action: 'auditoria_ignorada',
-          message: `Auditoria ${auditoriaLista.id_atendimento} ignorada motivo=sem_detalhe`,
-          host,
-          entityId: auditoriaLista.id_atendimento,
-          data: {
-            host,
-            idAtendimento: auditoriaLista.id_atendimento,
-            motivo: 'sem_detalhe',
-          },
-        });
         continue;
       }
 
@@ -423,26 +348,6 @@ export class HubsoftService {
         toId(auditoriaLista.cliente?.codigo_cliente);
 
       if (!matchTipo || !matchData || !matchListaEspera) {
-        const motivo = !matchTipo
-          ? 'tipo_atendimento'
-          : !matchData
-            ? 'data_cadastro'
-            : 'nao_lista_espera';
-
-        await this.hubsoftLogger.filaQualidade({
-          action: 'auditoria_ignorada',
-          message: `Auditoria ${auditoriaLista.id_atendimento} ignorada motivo=${motivo}`,
-          host,
-          entityId: auditoriaLista.id_atendimento,
-          data: {
-            host,
-            idAtendimento: auditoriaLista.id_atendimento,
-            protocolo: detalhe.protocolo ?? auditoriaLista.protocolo,
-            idTipoAtendimento: tipo ?? undefined,
-            idUsuarioResponsavel: detalhe.id_usuario_responsavel ?? null,
-            motivo,
-          },
-        });
         continue;
       }
 
@@ -466,7 +371,6 @@ export class HubsoftService {
       isOsInstalacaoConcluida(ordem),
     );
 
-    let osSemAuditoria = 0;
     const resultado: OrdemServicoListaItem[] = [];
 
     for (const ordem of ordensConcluidas) {
@@ -483,23 +387,6 @@ export class HubsoftService {
         (codigoCliente ? auditoriasPorCliente.get(codigoCliente) : undefined);
 
       if (!auditoriasDoServico) {
-        osSemAuditoria += 1;
-        await this.hubsoftLogger.filaQualidade({
-          action: 'os_ignorada',
-          message: `OS ${ordem.numero} ignorada — sem COMERCIAL AUDITORIA DE VENDA na lista de espera`,
-          host,
-          entityId: ordem.id_ordem_servico,
-          data: {
-            host,
-            idOrdemServico: ordem.id_ordem_servico,
-            numeroOrdemServico: ordem.numero,
-            idClienteServico: idClienteServico ?? undefined,
-            codigoCliente: codigoCliente ?? undefined,
-            status: ordem.status,
-            statusFechamento: ordem.status_fechamento ?? undefined,
-            motivo: 'sem_auditoria_lista_espera',
-          },
-        });
         continue;
       }
 
@@ -510,19 +397,6 @@ export class HubsoftService {
           resolverIdClienteServicoAtendimento(auditoria.detalhe);
 
         if (!idServicoItem) {
-          await this.hubsoftLogger.filaQualidade({
-            action: 'os_ignorada',
-            message: `OS ${ordem.numero} ignorada — sem id_cliente_servico`,
-            host,
-            entityId: ordem.id_ordem_servico,
-            data: {
-              host,
-              idOrdemServico: ordem.id_ordem_servico,
-              numeroOrdemServico: ordem.numero,
-              idAtendimento: auditoria.detalhe.id_atendimento,
-              motivo: 'sem_id_cliente_servico',
-            },
-          });
           continue;
         }
 
@@ -565,23 +439,11 @@ export class HubsoftService {
       ...new Set(resultado.map((ordem) => ordem.idAtendimento)),
     ];
 
-    if (!idFilaQualidade) {
-      await this.hubsoftLogger.filaQualidade({
-        action: 'fila_nao_configurada',
-        message: `PUT qualidade ignorado host=${host} — fila qualidade nao configurada`,
-        host,
-      });
-    }
-
     if (idFilaQualidade) {
       const bodyPut = {
         fechar_atendimento: false,
         id_usuario_responsavel: idFilaQualidade,
       };
-
-      this.logger.log(
-        `[lista] PUT qualidade iniciando total=${idsAtendimento.length} fila=${idFilaQualidade}`,
-      );
 
       for (const idAtendimento of idsAtendimento) {
         try {
@@ -633,10 +495,6 @@ export class HubsoftService {
         idUsuarioResponsavel: idFilaQualidade,
       };
     });
-
-    this.logger.log(
-      `[lista] FIM host=${host} total=${resultadoAtualizado.length} movidosQualidade=${idsAtualizados.size}/${idsAtendimento.length}`,
-    );
 
     return resultadoAtualizado.sort((esquerda, direita) =>
       direita.dataCadastro.localeCompare(esquerda.dataCadastro),

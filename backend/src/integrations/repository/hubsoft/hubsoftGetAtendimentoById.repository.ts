@@ -119,15 +119,7 @@ export class HubsoftGetAtendimentoByIdRepository {
         ),
       );
 
-      const atendimento = response.data.atendimento ?? null;
-
-      if (atendimento) {
-        this.logger.log(
-          `[debug-lista] getById host=${host} id=${idAtendimento} keys=${JSON.stringify(Object.keys(atendimento))} tipo=${resolverIdTipoAtendimentoDetalhe(atendimento) ?? 'null'} statusId=${atendimento.id_atendimento_status ?? 'null'} idClienteServico=${resolverIdClienteServicoAtendimento(atendimento) ?? 'null'} codigoCliente=${resolverCodigoClienteAtendimento(atendimento) ?? 'null'} idUsuarioResponsavel=${atendimento.id_usuario_responsavel ?? 'null'} usuarios=${JSON.stringify(idsUsuariosResponsaveis(atendimento.usuarios_responsaveis))} dataCadastro=${atendimento.data_cadastro ?? 'null'}`,
-        );
-      }
-
-      return atendimento;
+      return response.data.atendimento ?? null;
     } catch (error) {
       this.logger.error(
         `Erro ao buscar atendimento ${idAtendimento} no Hubsoft: ${error}`,
