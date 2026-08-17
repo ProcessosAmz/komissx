@@ -53,6 +53,10 @@ export type HubsoftAtendimento = {
   descricao_abertura: string;
   descricao_fechamento: string | null;
   tipo_atendimento: string;
+  id_tipo_atendimento?: number | null;
+  id_atendimento_status?: number | null;
+  id_usuario_responsavel?: number | null;
+  usuarios_responsaveis?: { id: number; name?: string }[];
   usuario_abertura: string;
   usuario_responsavel: string;
   usuario_fechamento: string | null;
