@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Logger, HttpCode, Get } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, Get } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { HubsoftService } from '@/integrations/service/hubsoft.service';
 import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
@@ -7,8 +7,6 @@ import { BuscarOrdensServicoDto } from '@/integrations/dto/buscarOrdensServico.d
 @ApiTags('integrations')
 @Controller('integrations')
 export class IntegrationsController {
-  private readonly logger = new Logger(IntegrationsController.name);
-
   constructor(private readonly hubsoftService: HubsoftService) {}
 
   @Post('ticket')
@@ -20,7 +18,6 @@ export class IntegrationsController {
       return { message: 'Ordem ignorada' };
     }
 
-    this.logger.log('Ticket created successfully');
     return response;
   }
 

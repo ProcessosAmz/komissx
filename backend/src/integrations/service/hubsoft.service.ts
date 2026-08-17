@@ -446,6 +446,10 @@ export class HubsoftService {
       };
 
       for (const idAtendimento of idsAtendimento) {
+        const ordemAtualizada = resultado.find(
+          (ordem) => ordem.idAtendimento === idAtendimento,
+        );
+
         try {
           await this.hubsoftUpdateAtendimentoRepository.execute(
             host,
@@ -454,6 +458,9 @@ export class HubsoftService {
             token,
           );
           idsAtualizados.add(idAtendimento);
+          this.logger.log(
+            `Atendimento atualizado para fila qualidade codigo_cliente: ${ordemAtualizada?.codigoCliente}, idAtendimento: ${idAtendimento}, Host: ${host}`,
+          );
           await this.hubsoftLogger.filaQualidade({
             action: 'qualidade_atualizado',
             message: `Atendimento ${idAtendimento} movido para FILA QUALIDADE AUDITORIA`,
@@ -462,12 +469,16 @@ export class HubsoftService {
             data: {
               host,
               idAtendimento,
+              codigoCliente: ordemAtualizada?.codigoCliente,
               idFila: idFilaQualidade,
               nomeFila: 'FILA QUALIDADE AUDITORIA',
               idUsuarioResponsavel: idFilaQualidade,
             },
           });
         } catch (error) {
+          this.logger.error(
+            `Erro ao atualizar fila qualidade codigo_cliente: ${ordemAtualizada?.codigoCliente}, idAtendimento: ${idAtendimento}, Host: ${host} message=${getErrorMessage(error)}`,
+          );
           await this.hubsoftLogger.filaQualidade({
             action: 'qualidade_erro',
             message: `PUT qualidade ERRO idAtendimento=${idAtendimento} message=${getErrorMessage(error)}`,
@@ -476,6 +487,7 @@ export class HubsoftService {
             data: {
               host,
               idAtendimento,
+              codigoCliente: ordemAtualizada?.codigoCliente,
               motivo: getErrorMessage(error),
             },
           });
