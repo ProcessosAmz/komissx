@@ -6,13 +6,14 @@ import { ClienteServicoContato } from '@/integrations/repository/hubsoft/hubsoft
 import { HubsoftAtendimento } from '@/integrations/types/OrdemServicoWebhook.type';
 import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
 import { CreateTicketLogData } from '@/integrations/logger/type/createTicket.type';
+import { FilaQualidadeLogData } from '@/integrations/logger/type/filaQualidade.type';
 
 @Injectable()
 export class HubsoftLogger {
   private readonly moduleName = 'hubsoft';
   private readonly logsDirectory = path.join(process.cwd(), 'src', 'integrations', 'logs')
 
-  constructor(private readonly fileLoggerService: FileLoggerService) {}
+  constructor(private readonly fileLoggerService: FileLoggerService) { }
 
   createTicket(params: {
     action: string;
@@ -37,20 +38,20 @@ export class HubsoftLogger {
       },
       cliente: params.cliente
         ? {
-            nome: params.cliente.nome,
-            telefone: params.cliente.telefone,
-            email: params.cliente.email,
-          }
+          nome: params.cliente.nome,
+          telefone: params.cliente.telefone,
+          email: params.cliente.email,
+        }
         : null,
       atendimento: params.atendimento
         ? {
-            id_atendimento: params.atendimento.id_atendimento,
-            protocolo: params.atendimento.protocolo,
-            status: params.atendimento.status,
-            tipo_atendimento: params.atendimento.tipo_atendimento,
-            codigo_cliente: params.atendimento.cliente.codigo_cliente,
-            nome_cliente: params.atendimento.cliente.nome_razaosocial,
-          }
+          id_atendimento: params.atendimento.id_atendimento,
+          protocolo: params.atendimento.protocolo,
+          status: params.atendimento.status,
+          tipo_atendimento: params.atendimento.tipo_atendimento,
+          codigo_cliente: params.atendimento.cliente.codigo_cliente,
+          nome_cliente: params.atendimento.cliente.nome_razaosocial,
+        }
         : null,
     };
 
@@ -62,6 +63,24 @@ export class HubsoftLogger {
       entityId: params.atendimento?.id_atendimento,
       message: params.message,
       data,
+    });
+  }
+
+  filaQualidade(params: {
+    action: string;
+    message: string;
+    host: Host | null;
+    entityId?: number;
+    data?: FilaQualidadeLogData;
+  }) {
+    return this.fileLoggerService.log({
+      logsDirectory: this.logsDirectory,
+      module: this.moduleName,
+      action: params.action,
+      entity: 'atendimento',
+      entityId: params.entityId,
+      message: params.message,
+      data: params.data ?? { host: params.host },
     });
   }
 }
