@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { Host } from '@/common/enums/host.enum';
-import { AtendimentoPadrao } from '@/integrations/constants/hubsoft/atendimetnoPadrao.constants';
+import { AtendimentoPadrao } from '@/integrations/constants/hubsoft/atendimentoPadrao.constants';
 import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
 import { HubsoftAtendimento, HubsoftCriarAtendimentoResponse } from '@/integrations/types/OrdemServicoWebhook.type';
 
