@@ -41,7 +41,7 @@ async function bootstrap() {
 
   const hostName = process.env.HOST_NAME ?? 'localhost';
   const port = process.env.PORT_NEST ?? '3000';
-  const version = process.env.APP_VERSION ?? 'dev';
+  const version = process.env.APP_VERSION ?? '0.0.0';
 
   await app.listen(port);
 
