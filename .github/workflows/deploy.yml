@@ -38,7 +38,9 @@ jobs:
           MANIA_METABASE_INSTALACAO_TECNICO=${{ secrets.MANIA_METABASE_INSTALACAO_TECNICO }}
           MANIA_BOT_TOKEN=${{ secrets.MANIA_BOT_TOKEN }}
           METABASE_INSTALACAO_TECNICO=${{ secrets.METABASE_INSTALACAO_TECNICO }}
+          HOST_NAME=${{ vars.HOST_NAME }}
           PORT_NEST=${{ secrets.PORT_NEST }}
+          APP_VERSION=1.0.${{ github.run_number }}
           DB_HOST=postgres
           DB_PORT=5432
           DB_USERNAME=${{ secrets.DB_USERNAME }}
