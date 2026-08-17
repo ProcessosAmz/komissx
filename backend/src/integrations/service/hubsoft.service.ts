@@ -581,7 +581,7 @@ export class HubsoftService {
     }
 
     this.logger.log(
-      `[lista] match OS+475=${resultado.length} osSemAuditoria=${osSemAuditoria} codigos=${JSON.stringify(resultado.map((ordem) => ordem.codigoCliente))}`,
+      `[lista] match OS+475=${resultado.length} osSemAuditoria=${osSemAuditoria}`,
     );
 
     const idFilaQualidade = idUsuarioFilaQualidadePorHost[host];
@@ -608,7 +608,7 @@ export class HubsoftService {
       };
 
       this.logger.log(
-        `[lista] PUT qualidade iniciando total=${idsAtendimento.length} fila=${idFilaQualidade} ids=${JSON.stringify(idsAtendimento)}`,
+        `[lista] PUT qualidade iniciando total=${idsAtendimento.length} fila=${idFilaQualidade}`,
       );
 
       for (const idAtendimento of idsAtendimento) {

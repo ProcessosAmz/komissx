@@ -156,10 +156,6 @@ export class HubsoftGetAtendimentosRepository {
           (atendimento) => !idsDaJanela.has(atendimento.id_atendimento),
         );
 
-        this.logger.log(
-          `[debug-lista] paginado host=${host} janela=${janela.inicio}..${janela.fim} pagina=${paginaAtual} lote=${atendimentos.length} novos=${idsNovos.length}`,
-        );
-
         if (idsNovos.length === 0) {
           break;
         }
@@ -178,10 +174,6 @@ export class HubsoftGetAtendimentosRepository {
     }
 
     const filtrados = this.filtrarTipo(coletados, tipo_atendimento);
-
-    this.logger.log(
-      `[debug-lista] paginado host=${host} totalBruto=${coletados.length} aposTipo${tipo_atendimento ?? ''}=${filtrados.length} ids=${JSON.stringify(filtrados.map((atendimento) => atendimento.id_atendimento))}`,
-    );
 
     return filtrados;
   }
