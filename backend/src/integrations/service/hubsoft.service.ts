@@ -35,6 +35,7 @@ import {
   HubsoftCreateAtendimentoRepository,
   HubsoftGetAtendimentoByIdRepository,
   HubsoftGetAtendimentosRepository,
+  HubsoftGetAtendimentosCreateTicketRepository,
   HubsoftGetByIdClienteRepository,
   HubsoftGetOrdensServicoRepository,
   HubsoftUpdateAtendimentoRepository,
@@ -75,9 +76,10 @@ export class HubsoftService {
     private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
     private readonly hubsoftGetAtendimentoByIdRepository: HubsoftGetAtendimentoByIdRepository,
     private readonly hubsoftUpdateAtendimentoRepository: HubsoftUpdateAtendimentoRepository,
+    private readonly hubsoftGetAtendimentosCreateTicketRepository: HubsoftGetAtendimentosCreateTicketRepository,
     private readonly hubsoftLogger: HubsoftLogger,
     private readonly redisService: RedisService,
-  ) {}
+  ) { }
 
   private async garantirTokenValido(host: Host): Promise<string> {
     const agora = Date.now();
@@ -179,21 +181,22 @@ export class HubsoftService {
     try {
       const token = await this.garantirTokenValido(host);
       const atendimentoPadrao = atendimentoPadraoPorHost[host];
+      const idClienteServico = payload.body.id_cliente_servico;
 
       const cliente = await this.hubsoftGetByIdClienteRepository.execute(
         host,
-        payload.body.id_cliente_servico,
+        idClienteServico,
         token,
       );
 
       if (!cliente) {
         await releaseWebhookTicket(this.redisService, host, ordemServicoId);
         this.logger.log(
-          `Ticket erro — OS ${numeroOrdem} — cliente não encontrado id_cliente_servico ${payload.body.id_cliente_servico} (${host})`,
+          `Ticket erro — OS ${numeroOrdem} — cliente não encontrado id_cliente_servico ${idClienteServico} (${host})`,
         );
         await this.hubsoftLogger.createTicket({
           action: 'create_error',
-          message: `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
+          message: `Cliente não encontrado para id_cliente_servico=${idClienteServico}`,
           host,
           isInstalacao: instalacao,
           payload: payload.body,
@@ -208,7 +211,7 @@ export class HubsoftService {
 
       const hoje = new Date().toISOString().slice(0, 10);
       const atendimentosExistentes =
-        await this.hubsoftGetAtendimentosRepository.execute(
+        await this.hubsoftGetAtendimentosCreateTicketRepository.execute(
           host,
           {
             pagina: 1,
@@ -217,13 +220,17 @@ export class HubsoftService {
             data_fim: hoje,
             tipo_atendimento: String(atendimentoPadrao.id_tipo_atendimento),
             status_atendimento: String(atendimentoPadrao.id_atendimento_status),
-            id_servico: payload.body.id_cliente_servico,
+            id_servico: idClienteServico,
             tipo_data: 'data_cadastro',
           },
           token,
         );
+      const jaExisteNesteCliente = atendimentosExistentes.some(
+        (atendimento) =>
+          Number(atendimento.servico?.id_cliente_servico) === idClienteServico,
+      );
 
-      if (atendimentosExistentes.length > 0) {
+      if (jaExisteNesteCliente) {
         this.logger.log(
           `Ticket duplicado — OS ${numeroOrdem} — atendimento 475 já existe para o cliente (${host})`,
         );
@@ -234,7 +241,7 @@ export class HubsoftService {
       }
 
       const requestBody = {
-        id_cliente_servico: payload.body.id_cliente_servico,
+        id_cliente_servico: idClienteServico,
         id_usuario_abertura: payload.body.id_usuario_abertura,
         ...atendimentoPadrao,
         nome,
