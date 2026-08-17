@@ -42,6 +42,8 @@ async function bootstrap() {
   const port = process.env.PORT_NEST ?? 3000;
   await app.listen(port);
 
-  logger.log(`Swagger em: http://localhost:${port}/api`);
+  logger.log(`Worker em: http://${process.env.HOST_NAME}:${port}/worker`);
+  logger.log(`Swagger em: http://${process.env.HOST_NAME}:${port}/api`);
+  logger.log(`Versão: 1.0.0`);
 }
 bootstrap();
