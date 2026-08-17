@@ -9,6 +9,7 @@ import {
   HubsoftGetAtendimentosRepository,
   HubsoftGetOrdensServicoRepository,
   HubsoftGetAtendimentoByIdRepository,
+  HubsoftUpdateAtendimentoRepository,
 } from '@/integrations/repository/hubsoft';
 
 @Module({
@@ -21,6 +22,7 @@ import {
     HubsoftGetAtendimentosRepository,
     HubsoftGetOrdensServicoRepository,
     HubsoftGetAtendimentoByIdRepository,
+    HubsoftUpdateAtendimentoRepository,
     HubsoftLogger,
   ],
   exports: [HubsoftService],

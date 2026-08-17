@@ -38,8 +38,14 @@ export class IntegrationsController {
   @ApiBody({ type: BuscarOrdensServicoDto })
   @ApiResponse({ status: 200, description: 'Lista de ordens de serviço' })
   async buscarOrdensServico(@Body() body: BuscarOrdensServicoDto) {
-    const ordens = await this.hubsoftService.buscarOrdensServicoFinalizadas(
+    this.logger.log(`GET ordens-servico host=${body.host}`);
+
+    const ordens = await this.hubsoftService.moverAuditoriasParaFilaQualidade(
       body.host,
+    );
+
+    this.logger.log(
+      `GET ordens-servico host=${body.host} total=${ordens.length}`,
     );
 
     return {
