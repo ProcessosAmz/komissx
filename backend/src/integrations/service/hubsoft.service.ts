@@ -135,14 +135,14 @@ export class HubsoftService {
 
     if (!host) {
       this.logger.log(
-        `createTicket ignorado motivo=host_invalido numero=${numeroOrdem}`,
+        `Ticket ignorado — OS ${numeroOrdem} — prefixo de host inválido`,
       );
       return null;
     }
 
     if (host !== Host.MANIA) {
       this.logger.log(
-        `createTicket ignorado motivo=host_nao_mania host=${host} numero=${numeroOrdem}`,
+        `Ticket ignorado — OS ${numeroOrdem} — host ${host} não é mania`,
       );
       return null;
     }
@@ -154,7 +154,7 @@ export class HubsoftService {
 
     if (!instalacao) {
       this.logger.log(
-        `createTicket ignorado motivo=nao_instalacao host=${host} tipo=${payload.body.id_tipo_ordem_servico}`,
+        `Ticket ignorado — OS ${numeroOrdem} — tipo ${payload.body.id_tipo_ordem_servico} não é instalação (${host})`,
       );
       return null;
     }
@@ -168,7 +168,7 @@ export class HubsoftService {
 
     if (!claimed) {
       this.logger.log(
-        `createTicket duplicado redis host=${host} id_ordem_servico=${ordemServicoId}`,
+        `Ticket duplicado — OS ${numeroOrdem} — webhook já processado (${host})`,
       );
       return {
         message: 'Webhook já processado',
@@ -189,7 +189,7 @@ export class HubsoftService {
       if (!cliente) {
         await releaseWebhookTicket(this.redisService, host, ordemServicoId);
         this.logger.log(
-          `createTicket erro cliente_nao_encontrado host=${host} id_cliente_servico=${payload.body.id_cliente_servico}`,
+          `Ticket erro — OS ${numeroOrdem} — cliente não encontrado id_cliente_servico ${payload.body.id_cliente_servico} (${host})`,
         );
         await this.hubsoftLogger.createTicket({
           action: 'create_error',
@@ -225,7 +225,7 @@ export class HubsoftService {
 
       if (atendimentosExistentes.length > 0) {
         this.logger.log(
-          `createTicket duplicado ja_existe_475 host=${host} id_cliente_servico=${payload.body.id_cliente_servico}`,
+          `Ticket duplicado — OS ${numeroOrdem} — atendimento 475 já existe para o cliente (${host})`,
         );
         return {
           message: 'Atendimento de auditoria já existe para o cliente',
@@ -259,7 +259,7 @@ export class HubsoftService {
       });
 
       this.logger.log(
-        `Atendimento criado com sucesso codigo_cliente: ${atendimento.cliente.codigo_cliente}, Host: ${host}`,
+        `Ticket criado — cliente ${atendimento.cliente.codigo_cliente} — OS ${numeroOrdem} (${host})`,
       );
 
       return {
@@ -282,11 +282,11 @@ export class HubsoftService {
     host: Host,
   ): Promise<OrdemServicoListaItem[]> {
     if (host !== Host.MANIA) {
-      this.logger.log(`fila qualidade ignorada host=${host}`);
+      this.logger.log(`Fila qualidade ignorada — host ${host} não é mania`);
       return [];
     }
 
-    this.logger.log(`fila qualidade inicio host=${host}`);
+    this.logger.log(`Fila qualidade — buscando OS concluídas (${host})`);
 
     const token = await this.garantirTokenValido(host);
     const dataInicio = formatDateYmd(getMostRecentThursday());
@@ -480,7 +480,7 @@ export class HubsoftService {
           );
           idsAtualizados.add(idAtendimento);
           this.logger.log(
-            `Atendimento atualizado para fila qualidade codigo_cliente: ${ordemAtualizada?.codigoCliente}, idAtendimento: ${idAtendimento}, Host: ${host}`,
+            `Fila qualidade — movido | cliente ${ordemAtualizada?.codigoCliente} | atendimento ${idAtendimento} | protocolo ${ordemAtualizada?.protocolo} | OS ${ordemAtualizada?.numeroOrdemServico} | id_cliente_servico ${ordemAtualizada?.idClienteServico} | id_ordem_servico ${ordemAtualizada?.id} (${host})`,
           );
           await this.hubsoftLogger.filaQualidade({
             action: 'qualidade_atualizado',
@@ -498,7 +498,7 @@ export class HubsoftService {
           });
         } catch (error) {
           this.logger.error(
-            `Erro ao atualizar fila qualidade codigo_cliente: ${ordemAtualizada?.codigoCliente}, idAtendimento: ${idAtendimento}, Host: ${host} message=${getErrorMessage(error)}`,
+            `Fila qualidade — erro | cliente ${ordemAtualizada?.codigoCliente} | atendimento ${idAtendimento} | protocolo ${ordemAtualizada?.protocolo} | OS ${ordemAtualizada?.numeroOrdemServico} (${host}) — ${getErrorMessage(error)}`,
           );
           await this.hubsoftLogger.filaQualidade({
             action: 'qualidade_erro',
@@ -530,7 +530,7 @@ export class HubsoftService {
     });
 
     this.logger.log(
-      `fila qualidade fim host=${host} encontrados=${resultado.length} atualizados=${idsAtualizados.size}`,
+      `Fila qualidade — ${resultado.length} encontrados, ${idsAtualizados.size} atualizados (${host}) | clientes: ${resultado.map((ordem) => ordem.codigoCliente).join(', ') || 'nenhum'} | atendimentos: ${idsAtendimento.join(', ') || 'nenhum'}`,
     );
 
     return resultadoAtualizado.sort((esquerda, direita) =>
