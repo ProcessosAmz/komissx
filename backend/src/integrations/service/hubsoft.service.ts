@@ -134,10 +134,16 @@ export class HubsoftService {
     const host = resolveOrdemServicoHost(numeroOrdem);
 
     if (!host) {
+      this.logger.log(
+        `createTicket ignorado motivo=host_invalido numero=${numeroOrdem}`,
+      );
       return null;
     }
 
     if (host !== Host.MANIA) {
+      this.logger.log(
+        `createTicket ignorado motivo=host_nao_mania host=${host} numero=${numeroOrdem}`,
+      );
       return null;
     }
 
@@ -147,6 +153,9 @@ export class HubsoftService {
     );
 
     if (!instalacao) {
+      this.logger.log(
+        `createTicket ignorado motivo=nao_instalacao host=${host} tipo=${payload.body.id_tipo_ordem_servico}`,
+      );
       return null;
     }
 
@@ -158,6 +167,9 @@ export class HubsoftService {
     );
 
     if (!claimed) {
+      this.logger.log(
+        `createTicket duplicado redis host=${host} id_ordem_servico=${ordemServicoId}`,
+      );
       return {
         message: 'Webhook já processado',
         duplicate: true,
@@ -176,6 +188,9 @@ export class HubsoftService {
 
       if (!cliente) {
         await releaseWebhookTicket(this.redisService, host, ordemServicoId);
+        this.logger.log(
+          `createTicket erro cliente_nao_encontrado host=${host} id_cliente_servico=${payload.body.id_cliente_servico}`,
+        );
         await this.hubsoftLogger.createTicket({
           action: 'create_error',
           message: `Cliente não encontrado para id_cliente_servico=${payload.body.id_cliente_servico}`,
@@ -209,6 +224,9 @@ export class HubsoftService {
         );
 
       if (atendimentosExistentes.length > 0) {
+        this.logger.log(
+          `createTicket duplicado ja_existe_475 host=${host} id_cliente_servico=${payload.body.id_cliente_servico}`,
+        );
         return {
           message: 'Atendimento de auditoria já existe para o cliente',
           duplicate: true,
@@ -264,8 +282,11 @@ export class HubsoftService {
     host: Host,
   ): Promise<OrdemServicoListaItem[]> {
     if (host !== Host.MANIA) {
+      this.logger.log(`fila qualidade ignorada host=${host}`);
       return [];
     }
+
+    this.logger.log(`fila qualidade inicio host=${host}`);
 
     const token = await this.garantirTokenValido(host);
     const dataInicio = formatDateYmd(getMostRecentThursday());
@@ -507,6 +528,10 @@ export class HubsoftService {
         idUsuarioResponsavel: idFilaQualidade,
       };
     });
+
+    this.logger.log(
+      `fila qualidade fim host=${host} encontrados=${resultado.length} atualizados=${idsAtualizados.size}`,
+    );
 
     return resultadoAtualizado.sort((esquerda, direita) =>
       direita.dataCadastro.localeCompare(esquerda.dataCadastro),
