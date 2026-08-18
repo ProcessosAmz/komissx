@@ -2,6 +2,7 @@ import { IntegrationsModule } from "@/integrations/index.module";
 import { RedisModule } from "@/integrations/redis/index.module";
 import { AuthModule } from "@/module/auth/index.module";
 import { EmpresasModule } from "@/module/empresas/index.module";
+import { HealthModule } from "@/module/health/index.module";
 import { LocalidadeModule } from "@/module/localidade/index.module";
 import { LoggerModule } from "@/module/logger/index.module";
 import { PermissionsModule } from "@/module/permissions/index.module";
@@ -39,6 +40,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
     IntegrationsModule,
     LoggerModule,
     RedisModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

@@ -1,13 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
-import { AppModule } from './app.module';
-import { setupSwagger } from './config/swagger.config';
+import { AppModule } from '@/app.module';
+import { setupSwagger } from '@/config/swagger.config';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   const app = await NestFactory.create(AppModule);
+
+  app.enableShutdownHooks();
 
   const corsOrigins = (process.env.CORS_ORIGINS ?? '')
     .split(',')
