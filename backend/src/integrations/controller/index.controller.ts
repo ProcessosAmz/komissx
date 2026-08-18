@@ -1,27 +1,26 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Query,
-  HttpCode,
-} from '@nestjs/common';
+import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Host } from '@/common/enums/host.enum';
-import { HubsoftService } from '@/integrations/service/hubsoft.service';
-import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
 import { BuscarOrdensServicoDto } from '@/integrations/dto/buscarOrdensServico.dto';
+import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.type';
 import { OrdemServicoListaItem } from '@/integrations/types/OrderServicoLista.type';
+import {
+  CreateTicketUseCase,
+  MoveAuditsToQualityQueueUseCase,
+} from '@/integrations/useCase';
 
 @ApiTags('integrations')
 @Controller('integrations')
 export class IntegrationsController {
-  constructor(private readonly hubsoftService: HubsoftService) {}
+  constructor(
+    private readonly createTicketUseCase: CreateTicketUseCase,
+    private readonly moveAuditsToQualityQueueUseCase: MoveAuditsToQualityQueueUseCase,
+  ) { }
 
   @Post('ticket')
   @HttpCode(200)
   async createTicket(@Body() body: OrdemServicoWebhook) {
-    const response = await this.hubsoftService.createTicket(body);
+    const response = await this.createTicketUseCase.execute(body);
 
     if (!response) {
       return { message: 'Ordem ignorada' };
@@ -47,8 +46,7 @@ export class IntegrationsController {
     total: number;
     ordens: OrdemServicoListaItem[];
   }> {
-    const ordens =
-      await this.hubsoftService.moverAuditoriasParaFilaQualidade(host);
+    const ordens = await this.moveAuditsToQualityQueueUseCase.execute(host);
 
     return {
       host,
