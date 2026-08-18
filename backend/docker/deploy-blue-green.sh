@@ -24,6 +24,9 @@ echo "==> Cor ativa: ${ACTIVE_COLOR:-nenhuma} | Nova cor: $NEW_COLOR"
 
 $COMPOSE up -d --wait postgres redis
 
+docker network connect --alias redis komissx komissx_redis 2>/dev/null || true
+docker network connect --alias postgres komissx komissx_postgres 2>/dev/null || true
+
 echo "==> Buildando backend-$NEW_COLOR..."
 $COMPOSE --profile "$NEW_COLOR" build "backend-$NEW_COLOR"
 
