@@ -27,6 +27,9 @@ $COMPOSE up -d --wait postgres redis
 docker network connect --alias redis komissx komissx_redis 2>/dev/null || true
 docker network connect --alias postgres komissx komissx_postgres 2>/dev/null || true
 
+echo "==> Pull Traefik (antes de soltar as portas)..."
+$COMPOSE pull traefik
+
 echo "==> Buildando backend-$NEW_COLOR..."
 $COMPOSE --profile "$NEW_COLOR" build "backend-$NEW_COLOR"
 
@@ -52,6 +55,12 @@ if docker ps -aq -f "name=^komissx_backend$" | grep -q .; then
   echo "==> Parando container legado komissx_backend (porta 3000)"
   docker stop komissx_backend || true
   docker rm -f komissx_backend || true
+fi
+
+if docker ps -aq -f "name=^komissx_frontend$" | grep -q .; then
+  echo "==> Parando container legado komissx_frontend (porta 8080)"
+  docker stop komissx_frontend || true
+  docker rm -f komissx_frontend || true
 fi
 
 $COMPOSE up -d traefik
