@@ -1,5 +1,9 @@
 FROM node:22-alpine
 
+RUN apk add --no-cache wget tzdata
+
+ENV TZ=America/Manaus
+
 WORKDIR /app
 
 COPY package*.json ./
