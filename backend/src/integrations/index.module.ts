@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { HubsoftService } from '@/integrations/service/hubsoft.service';
 import { IntegrationsController } from '@/integrations/controller/index.controller';
 import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
 import {
@@ -12,12 +11,19 @@ import {
   HubsoftGetAtendimentoByIdRepository,
   HubsoftUpdateAtendimentoRepository,
 } from '@/integrations/repository/hubsoft';
+import { HubsoftService } from '@/integrations/service/hubsoft.service';
+import {
+  CreateTicketUseCase,
+  MoveAuditsToQualityQueueUseCase,
+} from '@/integrations/useCase';
 
 @Module({
   imports: [HttpModule],
   controllers: [IntegrationsController],
   providers: [
     HubsoftService,
+    CreateTicketUseCase,
+    MoveAuditsToQualityQueueUseCase,
     HubsoftGetByIdClienteRepository,
     HubsoftCreateAtendimentoRepository,
     HubsoftGetAtendimentosRepository,
@@ -27,6 +33,10 @@ import {
     HubsoftUpdateAtendimentoRepository,
     HubsoftLogger,
   ],
-  exports: [HubsoftService],
+  exports: [
+    HubsoftService,
+    CreateTicketUseCase,
+    MoveAuditsToQualityQueueUseCase,
+  ],
 })
 export class IntegrationsModule {}
