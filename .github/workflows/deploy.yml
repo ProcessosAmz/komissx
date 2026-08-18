@@ -41,6 +41,7 @@ jobs:
           HOST_NAME=${{ vars.HOST_NAME }}
           PORT_NEST=${{ secrets.PORT_NEST }}
           APP_VERSION=1.0.${{ github.run_number }}
+          TZ=America/Manaus
           DB_HOST=postgres
           DB_PORT=5432
           DB_USERNAME=${{ secrets.DB_USERNAME }}
@@ -73,35 +74,27 @@ jobs:
           $normalized = ($envContent -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }) -join "`n"
           [System.IO.File]::WriteAllText("$PWD\.env", $normalized + "`n")
 
+      - name: Prefer Git Bash
+        run: echo "C:\Program Files\Git\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
       - name: Start infrastructure
         working-directory: ./backend
         run: |
           docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --wait postgres redis
 
-      - name: Build backend image
+      - name: Deploy backend blue-green
         working-directory: ./backend
+        shell: bash
         run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml build backend
+          chmod +x docker/deploy-blue-green.sh
+          ./docker/deploy-blue-green.sh
 
-      - name: Run migrations
-        working-directory: ./backend
-        run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml run --rm --no-deps backend npm run migration:run
-
-      - name: Verify migrations
-        working-directory: ./backend
-        run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml run --rm --no-deps backend npm run migration:show
-
-      - name: Deploy backend
-        working-directory: ./backend
-        run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --force-recreate backend
-
-      - name: Deploy frontend
+      - name: Deploy frontend blue-green
         working-directory: ./frontend
+        shell: bash
         run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --build
+          chmod +x docker/deploy-blue-green.sh
+          ./docker/deploy-blue-green.sh
 
       - name: Docker ps
         run: |
@@ -110,9 +103,11 @@ jobs:
       - name: Backend logs
         working-directory: ./backend
         run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml logs --tail=50 backend
+          $color = if (Select-String -Path docker/traefik/dynamic/backend.yml -Pattern "backend_green") { "green" } else { "blue" }
+          docker compose --env-file .env -f docker/docker-compose.prod.yml --profile $color logs --tail=50 "backend-$color"
 
       - name: Frontend logs
         working-directory: ./frontend
         run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml logs --tail=50 frontend
+          $color = if (Select-String -Path ../backend/docker/traefik/dynamic/frontend.yml -Pattern "frontend_green") { "green" } else { "blue" }
+          docker compose --env-file .env -f docker/docker-compose.prod.yml --profile $color logs --tail=50 "frontend-$color"
