@@ -39,6 +39,26 @@ export const idUsuarioListaEsperaPorHost: Partial<Record<Host, number>> = {
   [Host.MANIA]: 787,
 };
 
+export const fechamentoDesistenciaPorHost: Partial<
+  Record<
+    Host,
+    {
+      idTipoAtendimento: number;
+      idAtendimentoStatus: number;
+      idMotivoFechamento: number;
+      descricaoFechamento: string;
+    }
+  >
+> = {
+  [Host.MANIA]: {
+    idTipoAtendimento: 475,
+    idAtendimentoStatus: 0,
+    idMotivoFechamento: 0,
+    descricaoFechamento:
+      'OS de instalação finalizada com desistência. Auditoria comercial encerrada automaticamente pela API Processos.',
+  },
+};
+
 const usuarioEstaNaFila = (
   idFila: number | undefined,
   usuarios: { id: number }[] | undefined | null,
@@ -64,4 +84,4 @@ export const estaNaListaEspera = (
     idUsuarioListaEsperaPorHost[host],
     usuarios,
     idUsuarioResponsavel,
-);
+  );

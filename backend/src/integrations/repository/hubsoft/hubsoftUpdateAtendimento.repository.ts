@@ -5,9 +5,20 @@ import { firstValueFrom } from 'rxjs';
 import { Host } from '@/common/enums/host.enum';
 import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
 
+export type HubsoftParametroFechamento = {
+  id_atendimento_parametro?: number;
+  valor: string | number;
+};
+
 export type HubsoftEditarAtendimentoBody = {
   fechar_atendimento: boolean;
-  id_usuario_responsavel: number;
+  id_usuario_responsavel?: number;
+  id_tipo_atendimento?: number;
+  id_atendimento_status?: number;
+  id_motivo_fechamento_atendimento?: number;
+  descricao_fechamento?: string;
+  parametros_fechamento?: HubsoftParametroFechamento[];
+  parametros?: Record<string, string | number>;
 };
 
 type HubsoftEditarAtendimentoResponse =
@@ -47,16 +58,12 @@ export class HubsoftUpdateAtendimentoRepository {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.put<HubsoftEditarAtendimentoResponse>(
-          url,
-          body,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
+        this.httpService.put<HubsoftEditarAtendimentoResponse>(url, body, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
-        ),
+        }),
       );
 
       if (response.data.status === 'error') {

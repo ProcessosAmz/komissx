@@ -14,6 +14,7 @@ import {
 import { HubsoftService } from '@/integrations/service/hubsoft.service';
 import {
   CreateTicketUseCase,
+  ListInstallationWithdrawalAuditsUseCase,
   MoveAuditsToQualityQueueUseCase,
 } from '@/integrations/useCase';
 
@@ -24,6 +25,7 @@ import {
     HubsoftService,
     CreateTicketUseCase,
     MoveAuditsToQualityQueueUseCase,
+    ListInstallationWithdrawalAuditsUseCase,
     HubsoftGetByIdClienteRepository,
     HubsoftCreateAtendimentoRepository,
     HubsoftGetAtendimentosRepository,
@@ -37,6 +39,7 @@ import {
     HubsoftService,
     CreateTicketUseCase,
     MoveAuditsToQualityQueueUseCase,
+    ListInstallationWithdrawalAuditsUseCase,
   ],
 })
 export class IntegrationsModule {}

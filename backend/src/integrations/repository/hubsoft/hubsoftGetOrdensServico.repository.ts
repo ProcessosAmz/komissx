@@ -76,6 +76,11 @@ export type HubsoftOrdensServicoResponse = {
   ordens_servico: HubsoftOrdemServicoListaItem[];
 };
 
+export type HubsoftGetOrdensServicoOpcoes = {
+  filtrarTipo?: (ordem: HubsoftOrdemServicoListaItem) => boolean;
+  tipoData?: string;
+};
+
 @Injectable()
 export class HubsoftGetOrdensServicoRepository {
   private readonly logger = new Logger(HubsoftGetOrdensServicoRepository.name);
@@ -85,6 +90,7 @@ export class HubsoftGetOrdensServicoRepository {
   async execute(
     host: Host,
     token: string,
+    opcoes?: HubsoftGetOrdensServicoOpcoes,
   ): Promise<HubsoftOrdemServicoListaItem[]> {
     const config = getHubsoftConfig(host);
 
@@ -98,6 +104,13 @@ export class HubsoftGetOrdensServicoRepository {
 
     const dataInicio = formatDateYmd(getMostRecentThursday());
     const dataFim = formatDateYmd(new Date());
+    const filtrarTipo =
+      opcoes?.filtrarTipo ??
+      ((ordem: HubsoftOrdemServicoListaItem) =>
+        isOrdemDeInstalacao(
+          host,
+          ordem.tipo_ordem_servico.id_tipo_ordem_servico,
+        ));
     const ordens: HubsoftOrdemServicoListaItem[] = [];
     let pagina = 0;
     let ultimaPagina = 0;
@@ -113,18 +126,16 @@ export class HubsoftGetOrdensServicoRepository {
               itens_por_pagina: 100,
               data_inicio: dataInicio,
               data_fim: dataFim,
-              tipo_data: 'data_termino_executado',
+              tipo_data: opcoes?.tipoData ?? 'data_termino_executado',
               status: 'finalizado',
             },
           },
         ),
       );
 
-      const instalacoes = (response.data.ordens_servico ?? []).filter((ordem) =>
-        isOrdemDeInstalacao(host, ordem.tipo_ordem_servico.id_tipo_ordem_servico),
-      );
+      const filtradas = (response.data.ordens_servico ?? []).filter(filtrarTipo);
 
-      ordens.push(...instalacoes);
+      ordens.push(...filtradas);
       ultimaPagina = response.data.paginacao?.ultima_pagina ?? pagina;
       pagina += 1;
     } while (pagina <= ultimaPagina);

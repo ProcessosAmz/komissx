@@ -6,6 +6,7 @@ import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.ty
 import { OrdemServicoListaItem } from '@/integrations/types/OrderServicoLista.type';
 import {
   CreateTicketUseCase,
+  ListInstallationWithdrawalAuditsUseCase,
   MoveAuditsToQualityQueueUseCase,
 } from '@/integrations/useCase';
 
@@ -15,7 +16,8 @@ export class IntegrationsController {
   constructor(
     private readonly createTicketUseCase: CreateTicketUseCase,
     private readonly moveAuditsToQualityQueueUseCase: MoveAuditsToQualityQueueUseCase,
-  ) { }
+    private readonly listInstallationWithdrawalAuditsUseCase: ListInstallationWithdrawalAuditsUseCase,
+  ) {}
 
   @Post('ticket')
   @HttpCode(200)
@@ -39,6 +41,25 @@ export class IntegrationsController {
   @ApiResponse({ status: 200, description: 'Lista de ordens de serviço' })
   async buscarOrdensServicoPost(@Body() body: BuscarOrdensServicoDto) {
     return this.listarOrdensServico(body.host);
+  }
+
+  @Post('ordens-servico-desistencia')
+  @HttpCode(200)
+  @ApiOperation({
+    summary:
+      'OS de instalação finalizada com desistência e auditoria 475 ainda aberta',
+  })
+  @ApiBody({ type: BuscarOrdensServicoDto })
+  @ApiResponse({ status: 200, description: 'Lista de ordens de serviço' })
+  async buscarOrdensServicoDesistencia(@Body() body: BuscarOrdensServicoDto) {
+    const ordens =
+      await this.listInstallationWithdrawalAuditsUseCase.execute(body.host);
+
+    return {
+      host: body.host,
+      total: ordens.length,
+      ordens,
+    };
   }
 
   private async listarOrdensServico(host: Host): Promise<{

@@ -157,14 +157,14 @@ export const montarOrdensComAuditoria = (params: {
   ordens: HubsoftOrdemServicoListaItem[];
   atendimentoPadrao: AtendimentoPadrao;
   auditoriasIndexadas: AuditoriasIndexadas;
+  filtrarOrdem?: (ordem: HubsoftOrdemServicoListaItem) => boolean;
 }): OrdemServicoListaItem[] => {
   const idFilaListaEspera = params.atendimentoPadrao.id_usuario_responsavel;
+  const filtrarOrdem = params.filtrarOrdem ?? isOsInstalacaoConcluida;
   const resultado: OrdemServicoListaItem[] = [];
-  const ordensConcluidas = params.ordens.filter((ordem) =>
-    isOsInstalacaoConcluida(ordem),
-  );
+  const ordensFiltradas = params.ordens.filter(filtrarOrdem);
 
-  for (const ordem of ordensConcluidas) {
+  for (const ordem of ordensFiltradas) {
     const idClienteServico =
       toId(ordem.id_cliente_servico) ??
       toId(ordem.dados_servico?.id_cliente_servico) ??
