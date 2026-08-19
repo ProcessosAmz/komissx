@@ -1,23 +1,28 @@
-import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
-import { AppModule } from '@/app.module';
-import { setupSwagger } from '@/config/swagger.config';
+import { NestFactory } from "@nestjs/core";
+import { Logger, ValidationPipe } from "@nestjs/common";
+import cookieParser from "cookie-parser";
+import { json, urlencoded } from "express";
+import { toNodeHandler } from "better-auth/node";
+import { AppModule } from "@/app.module";
+import { setupSwagger } from "@/config/swagger.config";
+import { auth } from "@/module/auth/better-auth";
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
+  const logger = new Logger("Bootstrap");
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+  });
 
   app.enableShutdownHooks();
 
-  const corsOrigins = (process.env.CORS_ORIGINS ?? '')
-    .split(',')
+  const corsOrigins = (process.env.CORS_ORIGINS ?? "")
+    .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
 
   if (corsOrigins.length === 0) {
-    logger.warn('CORS_ORIGINS vazio — nenhuma origem liberada');
+    logger.warn("CORS_ORIGINS vazio — nenhuma origem liberada");
   }
 
   app.use(cookieParser());
@@ -25,11 +30,16 @@ async function bootstrap() {
   app.enableCors({
     origin: corsOrigins,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   });
 
-  app.setGlobalPrefix('api');
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.all("/api/auth/{*any}", toNodeHandler(auth));
+  expressApp.use(json());
+  expressApp.use(urlencoded({ extended: true }));
+
+  app.setGlobalPrefix("api");
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -41,9 +51,9 @@ async function bootstrap() {
 
   setupSwagger(app);
 
-  const hostName = process.env.HOST_NAME ?? 'localhost';
-  const port = process.env.PORT_NEST ?? '3000';
-  const version = process.env.APP_VERSION ?? '0.0.0';
+  const hostName = process.env.HOST_NAME ?? "localhost";
+  const port = process.env.PORT_NEST ?? "3000";
+  const version = process.env.APP_VERSION ?? "0.0.0";
 
   await app.listen(port);
 
