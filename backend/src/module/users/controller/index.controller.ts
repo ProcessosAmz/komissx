@@ -1,12 +1,23 @@
-import { Controller, Post, Body } from "@nestjs/common";
-import { ApiOperation, ApiBody, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { CreateUserDto } from "@/module/users/dto";
-import { CreateUserUseCase } from "@/module/users/useCase";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { CreateUserDto, FilterUsersDto } from "@/module/users/dto";
+import { CreateUserUseCase, ListUsersUseCase } from "@/module/users/useCase";
 
 @ApiTags("users")
 @Controller("users")
 export class UsersController {
-  constructor(private readonly createUserUseCase: CreateUserUseCase) {}
+  constructor(
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly listUsersUseCase: ListUsersUseCase,
+  ) {}
+
+  @Get()
+  @ApiOperation({ summary: "List users as hierarchy tree" })
+  @ApiResponse({ status: 200, description: "Users listed successfully" })
+  @ApiResponse({ status: 500, description: "Internal server error" })
+  findAll(@Query() filters: FilterUsersDto) {
+    return this.listUsersUseCase.execute(filters);
+  }
 
   @Post()
   @ApiOperation({ summary: "Create a new user" })

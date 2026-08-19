@@ -1,26 +1,48 @@
-import { Injectable } from '@nestjs/common';
-import { CreateRoleDto } from '../dto/create.role.dto';
-import { UpdateRoleDto } from '../dto/update.role.dto';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { Role } from "@/module/roles/entities/role.entity";
+import { getErrorMessage } from "@/utils/error.utils";
 
 @Injectable()
 export class RolesService {
-  create(createRoleDto: CreateRoleDto) {
-    return 'This action adds a new role';
-  }
+  private readonly logger = new Logger(RolesService.name);
 
-  findAll() {
-    return `This action returns all roles`;
-  }
+  constructor(
+    @InjectRepository(Role)
+    private readonly rolesRepository: Repository<Role>,
+  ) {}
 
-  findOne(id: number) {
-    return `This action returns a #${id} role`;
-  }
+  async findAll() {
+    this.logger.log("Listing all roles");
 
-  update(id: number, updateRoleDto: UpdateRoleDto) {
-    return `This action updates a #${id} role`;
-  }
+    try {
+      const roles = await this.rolesRepository.find({
+        order: { name: "ASC" },
+        select: ["id", "name"],
+      });
 
-  remove(id: number) {
-    return `This action removes a #${id} role`;
+      if (roles.length === 0) {
+        return { data: [], message: "Nenhum cargo encontrado" };
+      }
+
+      return {
+        data: roles,
+        message: "Cargos listados com sucesso",
+      };
+    } catch (error) {
+      const message = getErrorMessage(error);
+
+      this.logger.error(
+        `Failed to list roles: ${message}`,
+        (error as Error)?.stack,
+      );
+
+      throw new InternalServerErrorException("Erro ao listar cargos");
+    }
   }
 }
