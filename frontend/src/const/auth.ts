@@ -42,7 +42,6 @@ export const AUTH_ERROR_MESSAGES = {
   UNEXPECTED: "Não foi possível autenticar agora. Tente novamente.",
 } as const;
 
-export const AUTH_PATH = "/auth";
 export const AUTH_SESSION_QUERY_KEY = ["auth", "session"] as const;
 export const SESSION_STALE_TIME_IN_MS = 5 * 60 * 1000;
 
