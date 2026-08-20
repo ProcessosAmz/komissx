@@ -8,6 +8,7 @@ export type Cargo =
   | "COMERCIAL EXTERNO"
   | "REGIONAL INTERNO"
   | "REGIONAL EXTERNO"
+  | "REGIONAL EXTERNO PA"
   | "TECNICO"
   | "AUTONOMO";
 

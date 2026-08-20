@@ -11,8 +11,9 @@ const CARGO_ORDEM: Record<Cargo, number> = {
   "COMERCIAL EXTERNO": 6,
   "REGIONAL INTERNO": 7,
   "REGIONAL EXTERNO": 8,
-  TECNICO: 9,
-  AUTONOMO: 10,
+  "REGIONAL EXTERNO PA": 9,
+  TECNICO: 10,
+  AUTONOMO: 11,
 };
 
 export function getIniciais(nome: string) {
@@ -44,6 +45,8 @@ export function cargoBadgeClass(cargo: Cargo) {
       return "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
     case "REGIONAL EXTERNO":
       return "bg-rose-500/20 text-rose-300 border-rose-500/30";
+    case "REGIONAL EXTERNO PA":
+      return "bg-orange-500/20 text-orange-300 border-orange-500/30";
     default:
       return "bg-transparent text-slate-500 border-slate-700/40";
   }
@@ -88,6 +91,8 @@ function mapCargo(roleName: string): Cargo {
       return "COMERCIAL EXTERNO";
     case normalized.includes("REGIONAL INTERNO"):
       return "REGIONAL INTERNO";
+    case normalized.includes("REGIONAL EXTERNO PA"):
+      return "REGIONAL EXTERNO PA";
     case normalized.includes("REGIONAL EXTERNO"):
       return "REGIONAL EXTERNO";
     case normalized === "INTERNO":
