@@ -1,11 +1,17 @@
 http:
   routers:
+    frontend-api:
+      rule: "PathPrefix(`/api`)"
+      entryPoints:
+        - frontend
+      service: backend
+      priority: 100
     frontend:
       rule: "PathPrefix(`/`)"
       entryPoints:
         - frontend
       service: frontend
-
+      priority: 1
   services:
     frontend:
       loadBalancer:
@@ -14,4 +20,4 @@ http:
           interval: "5s"
           timeout: "3s"
         servers:
-          - url: "http://komissx_frontend_blue:80"
+          - url: "http://komissx_frontend_green:80"
