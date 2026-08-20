@@ -5,7 +5,7 @@ import {
 } from "@nestjs/common";
 import { FilterUsersDto } from "@/module/users/dto";
 import { UsersRepository } from "@/module/users/repository/index.repository";
-import { applyFilters, buildTree, toListItem } from "@/module/users/useCase/helper";
+import { applyFilters, buildTree, toListItem } from "@/module/users/useCase/helper/listUser.helper";
 import { getErrorMessage } from "@/utils/error.utils";
 
 @Injectable()
