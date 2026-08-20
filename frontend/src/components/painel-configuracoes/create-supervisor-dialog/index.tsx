@@ -12,18 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createUserSchema, type CreateUserFormData } from "@/utils/validators/user";
 import { useCreateUser } from "@/hooks/useCreateUser";
-
-const SUPERVISOR_ROLE_ID = 1;
-
-const EMPRESAS = [
-  { id: 1, label: "AMAZONET" },
-  { id: 2, label: "MANIA" },
-];
-
-const REGIONAIS = [
-  { id: 1, label: "MANAUS" },
-  { id: 2, label: "SANTARÉM" },
-];
+import { useEmpresas } from "@/hooks/useEmpresa";
+import { useUnidades } from "@/hooks/useUnidade";
+import { useRoles } from "@/hooks/useRoles";
+import { useUsers } from "@/hooks/useUsers";
+import { flattenUsers } from "@/utils/hierarquia";
 
 const inputClassName =
   "h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs text-slate-100";
@@ -33,8 +26,20 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+function isSupervisorRole(roleName: string) {
+  return roleName.toUpperCase().includes("SUPERVISOR");
+}
+
+function isLiderRole(roleName: string) {
+  const normalized = roleName.toUpperCase();
+  return normalized.includes("LIDER") || normalized.includes("LÍDER");
+}
+
 export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
   const createUser = useCreateUser();
+  const { data: empresasResponse } = useEmpresas();
+  const { data: rolesResponse } = useRoles();
+  const { data: usersResponse } = useUsers();
 
   const {
     register,
@@ -49,23 +54,38 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
       name: "",
       email: "",
       password: "",
-      hubsoftId: undefined as unknown as number,
-      roleId: SUPERVISOR_ROLE_ID,
-      operadoraId: 1,
-      regionalId: 1,
+      roleId: undefined as unknown as string,
+      empresaId: undefined as unknown as string,
+      unidadeId: undefined as unknown as string,
       supervisorId: null,
       participaFechamento: false,
       active: true,
     },
   });
 
+  const empresaId = watch("empresaId");
+  const roleId = watch("roleId");
   const participaFechamento = watch("participaFechamento");
+  const { data: unidadesResponse } = useUnidades({ empresaId });
+
+  const empresas = empresasResponse?.data ?? [];
+  const unidades = unidadesResponse?.data ?? [];
+  const roles = rolesResponse?.data ?? [];
+  const selectedRole = roles.find((role) => role.id === roleId);
+  const selectedRoleName = selectedRole?.name ?? "";
+  const creatingSupervisor = isSupervisorRole(selectedRoleName);
+  const creatingLider = isLiderRole(selectedRoleName);
+
+  const colaboradores = flattenUsers(usersResponse?.data ?? []);
+  const supervisores = colaboradores.filter((user) =>
+    isSupervisorRole(user.roleName),
+  );
+  const lideres = colaboradores.filter((user) => isLiderRole(user.roleName));
 
   const onSubmit = async (data: CreateUserFormData) => {
     await createUser.mutateAsync({
       ...data,
-      roleId: SUPERVISOR_ROLE_ID,
-      supervisorId: null,
+      supervisorId: creatingSupervisor ? null : data.supervisorId,
       active: true,
     });
     reset();
@@ -76,9 +96,9 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-[#090d16] border-slate-800 text-slate-100 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Novo supervisor</DialogTitle>
+          <DialogTitle>Novo colaborador</DialogTitle>
           <DialogDescription className="text-slate-400">
-            Preencha os dados para criar o usuário com cargo SUPERVISOR.
+            Supervisor fica sem pai. Líder aponta para o supervisor. Os demais apontam para o líder.
           </DialogDescription>
         </DialogHeader>
 
@@ -88,10 +108,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Nome
               </label>
-              <Input
-                className={inputClassName}
-                {...register("name")}
-              />
+              <Input className={inputClassName} {...register("name")} />
               {errors.name && (
                 <p className="text-[11px] text-red-400">{errors.name.message}</p>
               )}
@@ -101,11 +118,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Email
               </label>
-              <Input
-                type="email"
-                className={inputClassName}
-                {...register("email")}
-              />
+              <Input type="email" className={inputClassName} {...register("email")} />
               {errors.email && (
                 <p className="text-[11px] text-red-400">{errors.email.message}</p>
               )}
@@ -115,11 +128,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Senha
               </label>
-              <Input
-                type="password"
-                className={inputClassName}
-                {...register("password")}
-              />
+              <Input type="password" className={inputClassName} {...register("password")} />
               {errors.password && (
                 <p className="text-[11px] text-red-400">{errors.password.message}</p>
               )}
@@ -129,22 +138,27 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Cargo
               </label>
-              <Input
-                value="SUPERVISOR"
-                disabled
-                className="h-9 rounded-xl border-slate-800 bg-[#03050a] text-xs opacity-70"
-              />
+              <select
+                className="w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold"
+                {...register("roleId")}
+              >
+                <option value="">Selecione</option>
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+              {errors.roleId && (
+                <p className="text-[11px] text-red-400">{errors.roleId.message}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 ID Hubsoft
               </label>
-              <Input
-                type="number"
-                className={inputClassName}
-                {...register("hubsoftId")}
-              />
+              <Input type="number" className={inputClassName} {...register("hubsoftId")} />
               {errors.hubsoftId && (
                 <p className="text-[11px] text-red-400">{errors.hubsoftId.message}</p>
               )}
@@ -152,47 +166,74 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                Operadora
+                Empresa
               </label>
               <select
                 className="w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold"
-                {...register("operadoraId")}
+                {...register("empresaId")}
+                onChange={(event) => {
+                  setValue("empresaId", event.target.value);
+                  setValue("unidadeId", undefined as unknown as string);
+                }}
               >
-                {EMPRESAS.map((empresa) => (
+                <option value="">Selecione</option>
+                {empresas.map((empresa) => (
                   <option key={empresa.id} value={empresa.id}>
-                    {empresa.label}
+                    {empresa.name}
                   </option>
                 ))}
               </select>
-              {errors.operadoraId && (
-                <p className="text-[11px] text-red-400">{errors.operadoraId.message}</p>
+              {errors.empresaId && (
+                <p className="text-[11px] text-red-400">{errors.empresaId.message}</p>
               )}
             </div>
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                Regional
+                Unidade
               </label>
               <select
                 className="w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold"
-                {...register("regionalId")}
+                disabled={!empresaId}
+                {...register("unidadeId")}
               >
-                {REGIONAIS.map((regional) => (
-                  <option key={regional.id} value={regional.id}>
-                    {regional.label}
+                <option value="">Selecione</option>
+                {unidades.map((unidade) => (
+                  <option key={unidade.id} value={unidade.id}>
+                    {unidade.name}
                   </option>
                 ))}
               </select>
-              {errors.regionalId && (
-                <p className="text-[11px] text-red-400">{errors.regionalId.message}</p>
+              {errors.unidadeId && (
+                <p className="text-[11px] text-red-400">{errors.unidadeId.message}</p>
               )}
             </div>
+
+            {!creatingSupervisor ? (
+              <div className="space-y-1.5 sm:col-span-2">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  {creatingLider ? "Supervisor" : "Líder"}
+                </label>
+                <select
+                  className="w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold"
+                  {...register("supervisorId")}
+                >
+                  <option value="">Selecione</option>
+                  {(creatingLider ? supervisores : lideres).map((colaborador) => (
+                    <option key={colaborador.id} value={colaborador.id}>
+                      {colaborador.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.supervisorId && (
+                  <p className="text-[11px] text-red-400">{errors.supervisorId.message}</p>
+                )}
+              </div>
+            ) : null}
           </div>
 
           <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#05080f] px-3 py-2.5">
-            <span className="text-xs text-slate-300">
-              Participa fechamento mensal
-            </span>
+            <span className="text-xs text-slate-300">Participa fechamento mensal</span>
             <button
               type="button"
               className={`relative h-5 w-9 rounded-full transition-colors ${
@@ -213,15 +254,10 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
             </button>
           </div>
 
-          <input type="hidden" {...register("roleId")} />
           <input type="hidden" {...register("active")} />
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
             <Button
@@ -229,7 +265,7 @@ export function NovoSupervisorDialog({ open, onOpenChange }: Props) {
               disabled={isSubmitting || createUser.isPending}
               className="bg-indigo-600 hover:bg-indigo-500"
             >
-              {createUser.isPending ? "Criando..." : "Criar supervisor"}
+              {createUser.isPending ? "Criando..." : "Criar colaborador"}
             </Button>
           </DialogFooter>
         </form>

@@ -30,7 +30,7 @@ export function TreeNodeItem({
       <button
         type="button"
         onClick={() => onSelect(no.id)}
-        className={`w-[95%] max-w-full flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-colors ${
+        className={`w-[95%] max-w-full flex items-center gap-2 rounded-xl border px-2.5 py-1 text-left transition-colors ${
           selecionado
             ? "border-indigo-500 bg-indigo-500/10"
             : "border-slate-800 bg-[#05080f] hover:border-slate-700"
@@ -76,7 +76,7 @@ export function TreeNodeItem({
       </button>
 
       {temFilhos && aberto ? (
-        <div className="mt-1.5 space-y-1.5">
+        <div className="mt-0.5 space-y-0.5">
           {no.children!.map((filho: HierarquiaNode) => (
             <TreeNodeItem
               key={filho.id}

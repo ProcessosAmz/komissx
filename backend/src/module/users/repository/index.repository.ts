@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Users } from '@/module/users/entities/users.entity';
-import { CreateUserDto } from '@/module/users/dto/createUser.dto';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { CreateUserDto } from "@/module/users/dto/createUser.dto";
+import { Users } from "@/module/users/entities/users.entity";
 
 @Injectable()
 export class UsersRepository {
@@ -30,7 +30,21 @@ export class UsersRepository {
   async findByIdWithRole(id: string): Promise<Users | null> {
     return await this.ormRepository.findOne({
       where: { id },
-      relations: ['role'],
+      relations: ["role"],
+    });
+  }
+
+  async findAll(): Promise<Users[]> {
+    return this.ormRepository.find({
+      where: { active: true },
+      relations: {
+        role: true,
+        empresa: true,
+        unidade: {
+          estado: true,
+        },
+      },
+      order: { name: "ASC" },
     });
   }
 }

@@ -4,11 +4,27 @@ export const createUserSchema = z.object({
   name: z.string().min(1, "Informe o nome."),
   email: z.string().email("E-mail inválido."),
   password: z.string().min(6, "A senha deve ter ao menos 6 caracteres."),
-  hubsoftId: z.coerce.number().int().positive("Informe o ID Hubsoft."),
-  roleId: z.string().uuid("Informe o ID do cargo."),
-  empresaId: z.string().uuid("Informe o ID da empresa."),
-  regionalId: z.string().uuid("Informe o ID da regional."),
-  supervisorId: z.string().uuid("Informe o ID do supervisor.").nullable().optional(),
+  hubsoftId: z
+    .union([z.string(), z.number()])
+    .optional()
+    .transform((value) => {
+      if (value === undefined || value === "" || Number.isNaN(Number(value))) {
+        return undefined;
+      }
+
+      return Number(value);
+    })
+    .refine(
+      (value) => value === undefined || (Number.isInteger(value) && value > 0),
+      "Informe o ID Hubsoft.",
+    ),
+  roleId: z.string().uuid("Informe o cargo."),
+  empresaId: z.string().uuid("Informe a empresa."),
+  unidadeId: z.string().uuid("Informe a unidade."),
+  supervisorId: z.preprocess(
+    (value) => (value === "" || value === undefined ? null : value),
+    z.string().uuid("Informe o líder ou supervisor.").nullable(),
+  ),
   participaFechamento: z.boolean().optional().default(false),
   active: z.boolean().optional().default(true),
 });

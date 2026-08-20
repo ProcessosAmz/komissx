@@ -4,12 +4,17 @@ import { BetterAuthRepository } from "@/module/auth/repository/betterAuth.reposi
 import { UsersController } from "@/module/users/controller/index.controller";
 import { Users, UserRole, UserPermission } from "@/module/users/entities";
 import { UsersRepository } from "@/module/users/repository/index.repository";
-import { CreateUserUseCase } from "@/module/users/useCase";
+import { CreateUserUseCase, ListUsersUseCase } from "@/module/users/useCase";
 
 @Module({
   imports: [TypeOrmModule.forFeature([Users, UserRole, UserPermission])],
   controllers: [UsersController],
-  providers: [CreateUserUseCase, UsersRepository, BetterAuthRepository],
+  providers: [
+    CreateUserUseCase,
+    ListUsersUseCase,
+    UsersRepository,
+    BetterAuthRepository,
+  ],
   exports: [TypeOrmModule, UsersRepository],
 })
 export class UsersModule {}
