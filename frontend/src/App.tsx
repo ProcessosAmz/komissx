@@ -5,6 +5,7 @@ import { DefaultLayout } from "@/layouts/DefaultLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import Academy from "@/pages/Academy";
 import Dashboard from "@/pages/Dashboard";
+import Equipes from "@/pages/Equipes";
 import Forbidden from "@/pages/forbidden/index.tsx";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found/index.tsx";
@@ -64,7 +65,10 @@ export default function App() {
             </Route>
 
             <Route element={<PermissionRoute modulo="configuracoes" />}>
-              <Route path="configuracoes" element={<PainelConfiguracoes />} />
+              <Route path="configuracoes" element={<PainelConfiguracoes />}>
+                <Route index element={<Equipes />} />
+                <Route path="equipes" element={<Equipes />} />
+              </Route>
             </Route>
           </Route>
         </Route>

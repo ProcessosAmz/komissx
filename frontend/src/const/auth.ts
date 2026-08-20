@@ -4,10 +4,16 @@ export const ROLES = [
   "ADMIN",
   "GERENTE",
   "SUPERVISORA",
+  "SUPERVISOR",
   "LIDER",
   "TECNICO",
   "ESTUDANTE",
   "OPERADOR",
+  "BACKOFFICE",
+  "COMERCIAL INTERNO",
+  "COMERCIAL EXTERNO",
+  "REGIONAL INTERNO",
+  "REGIONAL EXTERNO",
 ] as const;
 
 export const AUTH_MODULES = [
@@ -19,9 +25,9 @@ export const AUTH_MODULES = [
 ] as const;
 
 export const MODULE_ROLES: Record<AuthModule, readonly Role[]> = {
-  academy: ["ADMIN", "GERENTE", "SUPERVISORA", "LIDER", "TECNICO", "ESTUDANTE"],
-  producao: ["ADMIN", "GERENTE", "SUPERVISORA", "LIDER", "TECNICO", "OPERADOR"],
-  fechamento: ["ADMIN", "GERENTE", "SUPERVISORA", "OPERADOR"],
+  academy: ["ADMIN", "GERENTE", "SUPERVISORA", "SUPERVISOR", "LIDER", "TECNICO", "ESTUDANTE"],
+  producao: ["ADMIN", "GERENTE", "SUPERVISORA", "SUPERVISOR", "LIDER", "TECNICO", "OPERADOR", "BACKOFFICE", "COMERCIAL INTERNO", "COMERCIAL EXTERNO", "REGIONAL INTERNO", "REGIONAL EXTERNO"],
+  fechamento: ["ADMIN", "GERENTE", "SUPERVISORA", "SUPERVISOR", "OPERADOR"],
   configuracoes: ["ADMIN", "GERENTE"],
   administracao: ["ADMIN"],
 };

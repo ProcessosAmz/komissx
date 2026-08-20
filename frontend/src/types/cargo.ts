@@ -1,4 +1,13 @@
-export type Cargo = "SUPERVISOR" | "LIDER" | "TECNICO" | "AUTONOMO";
+export type Cargo =
+  | "SUPERVISOR"
+  | "LIDER"
+  | "BACKOFFICE"
+  | "COMERCIAL INTERNO"
+  | "COMERCIAL EXTERNO"
+  | "REGIONAL INTERNO"
+  | "REGIONAL EXTERNO"
+  | "TECNICO"
+  | "AUTONOMO";
 
 export type HierarquiaNode = {
   id: string;
