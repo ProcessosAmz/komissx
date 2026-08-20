@@ -101,8 +101,32 @@ function ordenarPorCargo(nos: HierarquiaNode[]): HierarquiaNode[] {
   });
 }
 
-export function mapUserApiToHierarquia(nodes: UserApiNode[]): HierarquiaNode[] {
-  const mapped = nodes.map((node) => ({
+function isSupervisorRole(roleName: string) {
+  return roleName.toUpperCase().includes("SUPERVISOR");
+}
+
+function isExcludedRole(roleName: string) {
+  const normalized = roleName.toUpperCase();
+  return normalized === "ADMIN" || normalized === "GERENTE";
+}
+
+function mapNodes(
+  nodes: UserApiNode[],
+  onlySupervisors: boolean,
+): HierarquiaNode[] {
+  const filteredNodes = nodes.filter((node) => {
+    if (isExcludedRole(node.roleName)) {
+      return false;
+    }
+
+    if (onlySupervisors) {
+      return isSupervisorRole(node.roleName);
+    }
+
+    return true;
+  });
+
+  const mapped = filteredNodes.map((node) => ({
     id: node.id,
     nome: node.name,
     email: node.email,
@@ -111,10 +135,12 @@ export function mapUserApiToHierarquia(nodes: UserApiNode[]): HierarquiaNode[] {
     regional: node.unidadeName,
     idHubsoft: node.hubsoftId ? String(node.hubsoftId) : "",
     participaFechamento: node.participaFechamento,
-    children: node.children
-      ? mapUserApiToHierarquia(node.children)
-      : undefined,
+    children: node.children ? mapNodes(node.children, false) : undefined,
   }));
 
   return ordenarPorCargo(mapped);
+}
+
+export function mapUserApiToHierarquia(nodes: UserApiNode[]): HierarquiaNode[] {
+  return mapNodes(nodes, true);
 }

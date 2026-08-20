@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { FilterUsersDto } from "@/module/users/dto/filterUsers.dto";
 import { CreateUserDto } from "@/module/users/dto/createUser.dto";
 import { Users } from "@/module/users/entities/users.entity";
 
@@ -35,39 +34,17 @@ export class UsersRepository {
     });
   }
 
-  async findAll(filters: FilterUsersDto): Promise<Users[]> {
-    const queryBuilder = this.ormRepository
-      .createQueryBuilder("users")
-      .leftJoinAndSelect("users.role", "role")
-      .leftJoinAndSelect("users.empresa", "empresa")
-      .leftJoinAndSelect("users.unidade", "unidade")
-      .leftJoinAndSelect("unidade.estado", "estado")
-      .where("users.active = :active", { active: true });
-
-    if (filters.empresaId) {
-      queryBuilder.andWhere("users.empresaId = :empresaId", {
-        empresaId: filters.empresaId,
-      });
-    }
-
-    if (filters.unidadeId) {
-      queryBuilder.andWhere("users.unidadeId = :unidadeId", {
-        unidadeId: filters.unidadeId,
-      });
-    }
-
-    if (filters.estadoId) {
-      queryBuilder.andWhere("unidade.estadoId = :estadoId", {
-        estadoId: filters.estadoId,
-      });
-    }
-
-    if (filters.search) {
-      queryBuilder.andWhere("users.name ILIKE :search", {
-        search: `%${filters.search}%`,
-      });
-    }
-
-    return queryBuilder.orderBy("users.name", "ASC").getMany();
+  async findAll(): Promise<Users[]> {
+    return this.ormRepository.find({
+      where: { active: true },
+      relations: {
+        role: true,
+        empresa: true,
+        unidade: {
+          estado: true,
+        },
+      },
+      order: { name: "ASC" },
+    });
   }
 }

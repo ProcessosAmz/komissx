@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { RolesService } from "@/service/rolesService";
 
-export function useRoles() {
+export function useRoles(input: { search?: string } = {}) {
   return useQuery({
-    queryKey: ["roles"],
-    queryFn: () => RolesService.findAll(),
+    queryKey: ["roles", input],
+    queryFn: () => RolesService.findAll(input),
   });
 }

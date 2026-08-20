@@ -14,6 +14,7 @@ export class UsersController {
   @Get()
   @ApiOperation({ summary: "List users as hierarchy tree" })
   @ApiResponse({ status: 200, description: "Users listed successfully" })
+  @ApiResponse({ status: 401, description: "Sessão inválida" })
   @ApiResponse({ status: 500, description: "Internal server error" })
   findAll(@Query() filters: FilterUsersDto) {
     return this.listUsersUseCase.execute(filters);
@@ -39,6 +40,7 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 201, description: "User created successfully" })
+  @ApiResponse({ status: 401, description: "Sessão inválida" })
   @ApiResponse({ status: 409, description: "Email already registered" })
   @ApiResponse({ status: 500, description: "Internal server error" })
   create(@Body() createUserDto: CreateUserDto) {
