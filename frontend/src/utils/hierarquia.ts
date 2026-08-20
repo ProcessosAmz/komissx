@@ -5,12 +5,14 @@ const CARGO_ORDEM: Record<Cargo, number> = {
   SUPERVISOR: 0,
   LIDER: 1,
   BACKOFFICE: 2,
-  "COMERCIAL INTERNO": 3,
-  "COMERCIAL EXTERNO": 4,
-  "REGIONAL INTERNO": 5,
-  "REGIONAL EXTERNO": 6,
-  TECNICO: 7,
-  AUTONOMO: 8,
+  RECEPCAO: 3,
+  INTERNO: 4,
+  "COMERCIAL INTERNO": 5,
+  "COMERCIAL EXTERNO": 6,
+  "REGIONAL INTERNO": 7,
+  "REGIONAL EXTERNO": 8,
+  TECNICO: 9,
+  AUTONOMO: 10,
 };
 
 export function getIniciais(nome: string) {
@@ -23,28 +25,28 @@ export function getIniciais(nome: string) {
 }
 
 export function cargoBadgeClass(cargo: Cargo) {
-  if (cargo === "SUPERVISOR") {
-    return "bg-indigo-600/20 text-indigo-300 border-indigo-500/30";
+  switch (cargo) {
+    case "SUPERVISOR":
+      return "bg-indigo-600/20 text-indigo-300 border-indigo-500/30";
+    case "LIDER":
+      return "bg-slate-700/60 text-slate-300 border-slate-600/50";
+    case "RECEPCAO":
+      return "bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/30";
+    case "INTERNO":
+      return "bg-sky-500/20 text-sky-300 border-sky-500/30";
+    case "COMERCIAL INTERNO":
+      return "bg-cyan-500/20 text-cyan-300 border-cyan-500/30";
+    case "COMERCIAL EXTERNO":
+      return "bg-amber-500/20 text-amber-300 border-amber-500/30";
+    case "BACKOFFICE":
+      return "bg-violet-500/20 text-violet-300 border-violet-500/30";
+    case "REGIONAL INTERNO":
+      return "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
+    case "REGIONAL EXTERNO":
+      return "bg-rose-500/20 text-rose-300 border-rose-500/30";
+    default:
+      return "bg-transparent text-slate-500 border-slate-700/40";
   }
-  if (cargo === "LIDER") {
-    return "bg-slate-700/60 text-slate-300 border-slate-600/50";
-  }
-  if (cargo === "COMERCIAL INTERNO") {
-    return "bg-cyan-500/20 text-cyan-300 border-cyan-500/30";
-  }
-  if (cargo === "COMERCIAL EXTERNO") {
-    return "bg-amber-500/20 text-amber-300 border-amber-500/30";
-  }
-  if (cargo === "BACKOFFICE") {
-    return "bg-violet-500/20 text-violet-300 border-violet-500/30";
-  }
-  if (cargo === "REGIONAL INTERNO") {
-    return "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
-  }
-  if (cargo === "REGIONAL EXTERNO") {
-    return "bg-rose-500/20 text-rose-300 border-rose-500/30";
-  }
-  return "bg-transparent text-slate-500 border-slate-700/40";
 }
 
 export function contarNos(nos: HierarquiaNode[]): number {
@@ -69,16 +71,33 @@ export function encontrarNo(
 function mapCargo(roleName: string): Cargo {
   const normalized = roleName.toUpperCase();
 
-  if (normalized.includes("SUPERVISOR")) return "SUPERVISOR";
-  if (normalized.includes("LIDER") || normalized.includes("LÍDER")) return "LIDER";
-  if (normalized.includes("BACKOFFICE")) return "BACKOFFICE";
-  if (normalized.includes("COMERCIAL INTERNO")) return "COMERCIAL INTERNO";
-  if (normalized.includes("COMERCIAL EXTERNO")) return "COMERCIAL EXTERNO";
-  if (normalized.includes("REGIONAL INTERNO")) return "REGIONAL INTERNO";
-  if (normalized.includes("REGIONAL EXTERNO")) return "REGIONAL EXTERNO";
-  if (normalized.includes("AUTONOMO") || normalized.includes("AUTÔNOMO")) return "AUTONOMO";
-
-  return "TECNICO";
+  switch (true) {
+    case normalized.includes("SUPERVISOR"):
+      return "SUPERVISOR";
+    case normalized.includes("LIDER"):
+    case normalized.includes("LÍDER"):
+      return "LIDER";
+    case normalized.includes("BACKOFFICE"):
+      return "BACKOFFICE";
+    case normalized.includes("RECEPCAO"):
+    case normalized.includes("RECEPÇÃO"):
+      return "RECEPCAO";
+    case normalized.includes("COMERCIAL INTERNO"):
+      return "COMERCIAL INTERNO";
+    case normalized.includes("COMERCIAL EXTERNO"):
+      return "COMERCIAL EXTERNO";
+    case normalized.includes("REGIONAL INTERNO"):
+      return "REGIONAL INTERNO";
+    case normalized.includes("REGIONAL EXTERNO"):
+      return "REGIONAL EXTERNO";
+    case normalized === "INTERNO":
+      return "INTERNO";
+    case normalized.includes("AUTONOMO"):
+    case normalized.includes("AUTÔNOMO"):
+      return "AUTONOMO";
+    default:
+      return "TECNICO";
+  }
 }
 
 export function flattenUsers(nodes: UserApiNode[]): UserApiNode[] {
@@ -106,8 +125,13 @@ function isSupervisorRole(roleName: string) {
 }
 
 function isExcludedRole(roleName: string) {
-  const normalized = roleName.toUpperCase();
-  return normalized === "ADMIN" || normalized === "GERENTE";
+  switch (roleName.toUpperCase()) {
+    case "ADMIN":
+    case "GERENTE":
+      return true;
+    default:
+      return false;
+  }
 }
 
 function mapNodes(

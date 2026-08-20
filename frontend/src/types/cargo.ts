@@ -2,6 +2,8 @@ export type Cargo =
   | "SUPERVISOR"
   | "LIDER"
   | "BACKOFFICE"
+  | "RECEPCAO"
+  | "INTERNO"
   | "COMERCIAL INTERNO"
   | "COMERCIAL EXTERNO"
   | "REGIONAL INTERNO"
