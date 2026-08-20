@@ -1,24 +1,24 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Host } from '@/common/enums/host.enum';
-import { atendimentoPadraoPorHost } from '@/integrations/constants/hubsoft/atendimentoPadrao.constants';
-import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
+import { Host } from "@/common/enums/host.enum";
+import { atendimentoPadraoPorHost } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
+import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
 import {
   HubsoftGetAtendimentoByIdRepository,
   HubsoftGetAtendimentosRepository,
   HubsoftGetOrdensServicoRepository,
   HubsoftUpdateAtendimentoRepository,
-} from '@/integrations/repository/hubsoft';
+} from "@/integrations/repository/hubsoft";
 import {
   formatDateYmd,
   getMostRecentThursday,
-} from '@/integrations/service/helper';
-import { HubsoftService } from '@/integrations/service/hubsoft.service';
-import { OrdemServicoListaItem } from '@/integrations/types/OrderServicoLista.type';
+} from "@/integrations/service/helper";
+import { HubsoftService } from "@/integrations/service/hubsoft.service";
+import { OrdemServicoListaItem } from "@/integrations/types/OrderServicoLista.type";
 import {
   buscarAuditoriasNaListaEspera,
   montarOrdensComAuditoria,
   moverParaFilaQualidade,
-} from '@/integrations/useCase/helper';
+} from "@/integrations/useCase/helper";
+import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
 export class MoveAuditsToQualityQueueUseCase {
@@ -34,10 +34,11 @@ export class MoveAuditsToQualityQueueUseCase {
   ) {}
 
   async execute(host: Host): Promise<OrdemServicoListaItem[]> {
-    if (host !== Host.MANIA) {
-      this.logger.log(`Fila qualidade ignorada — host ${host} não é mania`);
-      return [];
-    }
+    //agora é multi-host, então não faz sentido limitar a fila de qualidade apenas para mania
+    // if (host !== Host.MANIA) {
+    //   this.logger.log(`Fila qualidade ignorada — host ${host} não é mania`);
+    //   return [];
+    // }
 
     this.logger.log(`Fila qualidade — buscando OS concluídas (${host})`);
 

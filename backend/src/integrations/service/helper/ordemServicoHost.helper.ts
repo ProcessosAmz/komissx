@@ -1,8 +1,8 @@
-import { Host } from 'src/common/enums/host.enum';
+import { Host } from "src/common/enums/host.enum";
 import {
   OrdemServicoHostPrefixo,
   OrdemServicoHostPrefixoKey,
-} from 'src/common/enums/OrdemServicoHostPrefix.type';
+} from "src/common/enums/OrdemServicoHostPrefix.type";
 
 export function resolveOrdemServicoHost(
   numeroOrdemServico: string,

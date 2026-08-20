@@ -1,14 +1,19 @@
-import { Controller, Post, Body, HttpCode } from "@nestjs/common";
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { Host } from "@/common/enums/host.enum";
-import { Public } from "@/module/auth/decorator/public.decorator";
-import { BuscarOrdensServicoDto } from "@/integrations/dto/buscarOrdensServico.dto";
 import { OrdemServicoWebhook } from "@/integrations/types/OrdemServicoWebhook.type";
-import { OrdemServicoListaItem } from "@/integrations/types/OrderServicoLista.type";
 import {
   CreateTicketUseCase,
   MoveAuditsToQualityQueueUseCase,
 } from "@/integrations/useCase";
+import { Public } from "@/module/auth/decorator/public.decorator";
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Param,
+  ParseEnumPipe,
+  Post,
+} from "@nestjs/common";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 
 @Public()
 @ApiTags("integrations")
@@ -19,10 +24,16 @@ export class IntegrationsController {
     private readonly moveAuditsToQualityQueueUseCase: MoveAuditsToQualityQueueUseCase,
   ) {}
 
-  @Post("ticket")
+  @Post(":host/ticket")
   @HttpCode(200)
-  async createTicket(@Body() body: OrdemServicoWebhook) {
-    const response = await this.createTicketUseCase.execute(body);
+  async createTicket(
+    @Param("host", new ParseEnumPipe(Host)) host: Host,
+    @Body() body: OrdemServicoWebhook,
+  ) {
+    const response = await this.createTicketUseCase.execute({
+      host,
+      payload: body,
+    });
 
     if (!response) {
       return { message: "Ordem ignorada" };
@@ -31,23 +42,33 @@ export class IntegrationsController {
     return response;
   }
 
-  @Post("ordens-servico")
+  @Post(":host/ticket/teste")
+  @HttpCode(200)
+  async testarRota(@Param("host", new ParseEnumPipe(Host)) host: Host) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return {
+      message: "show papai",
+      host,
+    };
+  }
+
+  @Post(":host/ordens-servico")
   @HttpCode(200)
   @ApiOperation({
     summary:
       "OS de instalação concluída com sucesso ainda sem motivo de auditoria",
   })
-  @ApiBody({ type: BuscarOrdensServicoDto })
-  @ApiResponse({ status: 200, description: "Lista de ordens de serviço" })
-  async buscarOrdensServicoPost(@Body() body: BuscarOrdensServicoDto) {
-    return this.listarOrdensServico(body.host);
+  @ApiResponse({
+    status: 200,
+    description: "Lista de ordens de serviço",
+  })
+  async buscarOrdensServicoPost(
+    @Param("host", new ParseEnumPipe(Host)) host: Host,
+  ) {
+    return this.listarOrdensServico(host);
   }
 
-  private async listarOrdensServico(host: Host): Promise<{
-    host: Host;
-    total: number;
-    ordens: OrdemServicoListaItem[];
-  }> {
+  private async listarOrdensServico(host: Host) {
     const ordens = await this.moveAuditsToQualityQueueUseCase.execute(host);
 
     return {
