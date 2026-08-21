@@ -34,12 +34,6 @@ export class MoveAuditsToQualityQueueUseCase {
   ) {}
 
   async execute(host: Host): Promise<OrdemServicoListaItem[]> {
-    //agora é multi-host, então não faz sentido limitar a fila de qualidade apenas para mania
-    // if (host !== Host.MANIA) {
-    //   this.logger.log(`Fila qualidade ignorada — host ${host} não é mania`);
-    //   return [];
-    // }
-
     this.logger.log(`Fila qualidade — buscando OS concluídas (${host})`);
 
     const token = await this.hubsoftService.garantirTokenValido(host);

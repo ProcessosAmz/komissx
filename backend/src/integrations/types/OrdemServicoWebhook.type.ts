@@ -79,15 +79,15 @@ export type HubsoftAtendimento = {
 
 export type HubsoftCriarAtendimentoResponse =
   | {
-    status: 'success';
-    msg: string;
-    atendimento: HubsoftAtendimento;
-  }
+      status: "success";
+      msg: string;
+      atendimento: HubsoftAtendimento;
+    }
   | {
-    status: 'error';
-    msg: string;
-    errors: string[];
-  };
+      status: "error";
+      msg: string;
+      errors: string[];
+    };
 
 export type HubsoftAtendimentoTodosQuery = {
   pagina: number;
@@ -97,7 +97,7 @@ export type HubsoftAtendimentoTodosQuery = {
   tipo_atendimento?: string;
   status_atendimento?: string;
   id_servico?: number;
-  tipo_data?: 'data_cadastro' | 'data_fechamento';
+  tipo_data?: "data_cadastro" | "data_fechamento";
 };
 
 export type HubsoftAtendimentoTodosResponse = {
