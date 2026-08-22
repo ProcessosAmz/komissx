@@ -9,6 +9,7 @@ type Props = {
     value?: string;
     options: SelectOption[];
     disabled?: boolean;
+    emptyLabel?: string;
     onChange: (value: string | undefined) => void;
 };
 
@@ -20,6 +21,7 @@ export function FilterSelect({
     value,
     options,
     disabled = false,
+    emptyLabel = "TODAS",
     onChange,
 }: Props) {
     return (
@@ -33,7 +35,7 @@ export function FilterSelect({
                 disabled={disabled}
                 onChange={(event) => onChange(event.target.value || undefined)}
             >
-                <option value="">TODAS</option>
+                <option value="">{emptyLabel}</option>
                 {options.map((option) => (
                     <option key={option.id} value={option.id}>
                         {option.name}

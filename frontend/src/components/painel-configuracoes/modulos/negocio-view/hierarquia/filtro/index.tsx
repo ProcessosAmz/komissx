@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useEmpresas } from "@/hooks/useEmpresa";
 import { useEstados } from "@/hooks/useEstados";
+import { useRoles } from "@/hooks/useRoles";
 import { useUnidades } from "@/hooks/useUnidade";
 import { FilterSelect } from "@/components/painel-configuracoes/modulos/negocio-view/hierarquia/filtro/select";
 import type { FiltroUsuarios } from "@/types/filtro";
@@ -12,10 +13,27 @@ type FiltroProps = {
   onChange: (value: FiltroUsuarios) => void;
 };
 
+const PARTICIPA_FECHAMENTO_OPTIONS = [
+  { id: "true", name: "SIM" },
+  { id: "false", name: "NÃO" },
+];
+
+function parseParticipaFechamento(value?: string): boolean | undefined {
+  switch (value) {
+    case "true":
+      return true;
+    case "false":
+      return false;
+    default:
+      return undefined;
+  }
+}
+
 export function Filtro({ value, onChange }: FiltroProps) {
   const [searchInput, setSearchInput] = useState(value.search ?? "");
   const { data: empresasResponse } = useEmpresas();
   const { data: estadosResponse } = useEstados();
+  const { data: rolesResponse } = useRoles();
   const { data: unidadesResponse } = useUnidades({
     empresaId: value.empresaId,
     estadoId: value.estadoId,
@@ -36,12 +54,17 @@ export function Filtro({ value, onChange }: FiltroProps) {
   const empresas = empresasResponse?.data ?? [];
   const estados = estadosResponse?.data ?? [];
   const unidades = unidadesResponse?.data ?? [];
-  const canSelectUnidade = Boolean(value.empresaId) && Boolean(value.estadoId);
+  const cargos = rolesResponse?.data ?? [];
+  const canSelectUnidade = Boolean(value.empresaId);
+  const participaFechamentoValue =
+    value.participaFechamento === undefined
+      ? undefined
+      : String(value.participaFechamento);
 
   return (
     <Card className="bg-[#090d16] border-slate-800 rounded-2xl">
       <CardContent className="flex flex-col gap-4 p-4">
-        <div className="flex gap-4 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 w-full">
           <FilterSelect
             label="Empresa"
             value={value.empresaId}
@@ -66,6 +89,27 @@ export function Filtro({ value, onChange }: FiltroProps) {
             options={unidades}
             disabled={!canSelectUnidade}
             onChange={(unidadeId) => onChange({ ...value, unidadeId })}
+          />
+
+          <FilterSelect
+            label="Cargo"
+            value={value.roleId}
+            options={cargos}
+            emptyLabel="TODOS"
+            onChange={(roleId) => onChange({ ...value, roleId })}
+          />
+
+          <FilterSelect
+            label="Participa fechamento"
+            value={participaFechamentoValue}
+            options={PARTICIPA_FECHAMENTO_OPTIONS}
+            emptyLabel="TODOS"
+            onChange={(selected) =>
+              onChange({
+                ...value,
+                participaFechamento: parseParticipaFechamento(selected),
+              })
+            }
           />
         </div>
 

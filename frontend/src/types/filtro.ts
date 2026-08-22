@@ -17,6 +17,8 @@ export type OpcaoFiltroApi = {
     empresaId?: string;
     unidadeId?: string;
     estadoId?: string;
+    roleId?: string;
+    participaFechamento?: boolean;
     search?: string;
   };
   
