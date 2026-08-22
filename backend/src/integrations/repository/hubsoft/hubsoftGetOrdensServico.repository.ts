@@ -59,6 +59,7 @@ export type HubsoftOrdemServicoListaItem = {
   status_fechamento?: string | null;
   motivo_fechamento?: HubsoftOrdemServicoMotivoFechamento[] | null;
   atendimento: HubsoftOrdemServicoAtendimento;
+  usuario_abertura: HubsoftOrdemServicoUsuario | null;
   usuario_fechamento: HubsoftOrdemServicoUsuario | null;
 };
 
