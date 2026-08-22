@@ -4,12 +4,13 @@ import { getErrorMessage } from '@/utils/error.utils';
 
 export function logTicketIgnorado(
   logger: Logger,
-  idClienteServico: number,
-  numeroOrdem: string,
+  idClienteServico: number | undefined,
+  numeroOrdem: string | undefined,
   host: Host | null,
+  motivo: string,
 ): void {
   logger.log(
-    `Ticket Ignorado - ${idClienteServico}, ${numeroOrdem} -- Host: ${host ?? 'desconhecido'}`,
+    `Ticket ignorado — ${motivo} — cliente ${idClienteServico ?? 'n/a'}, OS ${numeroOrdem ?? 'n/a'} (${host ?? 'desconhecido'})`,
   );
 }
 

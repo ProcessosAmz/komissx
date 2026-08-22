@@ -54,12 +54,13 @@ export class CreateTicketUseCase {
     //@Raposito
     //camadinha de segurança para evitar que tickets sejam criados em hosts errados (quase impossivel de acontecer, mas é bom ter)
     if (hostDetectado && hostDetectado !== host) {
-      this.logger.warn(
-        `Host inconsistente — OS ${numeroOrdem} pertence a ${hostDetectado}, ` +
-          `mas foi recebida pelo endpoint ${host}`,
+      logTicketIgnorado(
+        this.logger,
+        idClienteServico,
+        numeroOrdem,
+        host,
+        `host inconsistente: OS pertence a ${hostDetectado}, recebida em ${host}`,
       );
-
-      logTicketIgnorado(this.logger, idClienteServico, numeroOrdem, host);
 
       return null;
     }
@@ -70,8 +71,12 @@ export class CreateTicketUseCase {
     const usuarioTeste = 2166;
 
     if (host === Host.AMAZONET && idUsuarioAbertura !== usuarioTeste) {
-      this.logger.log(
-        `OS ignorada — usuário ${idUsuarioAbertura} não é o usuário de teste ${usuarioTeste} (${host})`,
+      logTicketIgnorado(
+        this.logger,
+        idClienteServico,
+        numeroOrdem,
+        host,
+        `usuário ${idUsuarioAbertura ?? "n/a"} não é o usuário de teste ${usuarioTeste}`,
       );
 
       return null;
@@ -83,7 +88,13 @@ export class CreateTicketUseCase {
     );
 
     if (!instalacao) {
-      logTicketIgnorado(this.logger, idClienteServico, numeroOrdem, host);
+      logTicketIgnorado(
+        this.logger,
+        idClienteServico,
+        numeroOrdem,
+        host,
+        `tipo ${payload.body.id_tipo_ordem_servico ?? "n/a"} não é instalação`,
+      );
       return null;
     }
 
