@@ -61,6 +61,7 @@ export class CreateUserUseCase {
 
             return {
                 data: {
+                    id: user.id,
                     name: user.name,
                     email: user.email,
                 },

@@ -71,6 +71,27 @@ export function encontrarNo(
   return null;
 }
 
+export function encontrarCaminho(
+  nos: HierarquiaNode[],
+  id: string,
+  caminho: string[] = [],
+): string[] | null {
+  for (const no of nos) {
+    const caminhoAtual = [...caminho, no.id];
+
+    if (no.id === id) {
+      return caminhoAtual;
+    }
+
+    const caminhoFilho = encontrarCaminho(no.children ?? [], id, caminhoAtual);
+    if (caminhoFilho) {
+      return caminhoFilho;
+    }
+  }
+
+  return null;
+}
+
 function mapCargo(roleName: string): Cargo {
   const normalized = roleName.toUpperCase();
 

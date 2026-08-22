@@ -6,6 +6,7 @@ type ArvoreHierarquicaProps = {
   nos: HierarquiaNode[];
   totalRegistros: number;
   selecionadoId: string;
+  destaqueId: string;
   abertos: Record<string, boolean>;
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
@@ -15,6 +16,7 @@ export function ArvoreHierarquica({
   nos,
   totalRegistros,
   selecionadoId,
+  destaqueId,
   abertos,
   onToggle,
   onSelect,
@@ -38,6 +40,7 @@ export function ArvoreHierarquica({
               no={no}
               profundidade={0}
               selecionadoId={selecionadoId}
+              destaqueId={destaqueId}
               abertos={abertos}
               onToggle={onToggle}
               onSelect={onSelect}

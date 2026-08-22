@@ -2,10 +2,10 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Props {
-  onNovoSupervisor?: () => void;
+  onNovoUsuario?: () => void;
 }
 
-export function Header({ onNovoSupervisor }: Props) {
+export function Header({ onNovoUsuario }: Props) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
       <div>
@@ -21,10 +21,10 @@ export function Header({ onNovoSupervisor }: Props) {
       <Button
         type="button"
         className="h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold gap-2"
-        onClick={onNovoSupervisor}
+        onClick={onNovoUsuario}
       >
         <Plus className="h-4 w-4" />
-        Novo supervisor
+        Novo usuário
       </Button>
     </div>
   );

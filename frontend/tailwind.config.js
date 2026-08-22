@@ -58,7 +58,22 @@ export default {
             border: "oklch(var(--sidebar-border) / <alpha-value>)",
             ring: "oklch(var(--sidebar-ring) / <alpha-value>)",
           },
-      }
+      },
+      keyframes: {
+        "border-blink": {
+          "0%, 100%": {
+            borderColor: "rgb(129 140 248)",
+            boxShadow: "0 0 0 0 rgba(99, 102, 241, 0)",
+          },
+          "50%": {
+            borderColor: "rgb(224 231 255)",
+            boxShadow: "0 0 0 4px rgba(99, 102, 241, 0.4)",
+          },
+        },
+      },
+      animation: {
+        "border-blink": "border-blink 0.55s ease-in-out 5",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

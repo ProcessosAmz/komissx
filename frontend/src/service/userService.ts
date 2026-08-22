@@ -8,7 +8,7 @@ export class UsersService {
   static async create(payload: CreateUserFormData) {
     const response = await API.post(this.path, payload);
     return response.data as {
-      data: { name: string; email: string };
+      data: { id: string; name: string; email: string };
       message: string;
     };
   }

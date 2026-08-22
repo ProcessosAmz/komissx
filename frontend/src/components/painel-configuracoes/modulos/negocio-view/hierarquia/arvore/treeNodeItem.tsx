@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ type TreeNodeItemProps = {
   no: HierarquiaNode;
   profundidade: number;
   selecionadoId: string;
+  destaqueId: string;
   abertos: Record<string, boolean>;
   onToggle: (id: string) => void;
   onSelect: (id: string) => void;
@@ -17,23 +19,37 @@ export function TreeNodeItem({
   no,
   profundidade,
   selecionadoId,
+  destaqueId,
   abertos,
   onToggle,
   onSelect,
 }: TreeNodeItemProps) {
+  const itemRef = useRef<HTMLButtonElement>(null);
   const temFilhos = (no.children?.length ?? 0) > 0;
   const aberto = abertos[no.id] ?? profundidade < 2;
   const selecionado = selecionadoId === no.id;
+  const destaque = destaqueId === no.id;
+
+  useEffect(() => {
+    if (!destaque) {
+      return;
+    }
+
+    itemRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [destaque]);
 
   return (
     <div className="w-full">
       <button
+        ref={itemRef}
         type="button"
         onClick={() => onSelect(no.id)}
         className={`w-[95%] max-w-full flex items-center gap-2 rounded-xl border px-2.5 py-1 text-left transition-colors ${
-          selecionado
-            ? "border-indigo-500 bg-indigo-500/10"
-            : "border-slate-800 bg-[#05080f] hover:border-slate-700"
+          destaque
+            ? "border-indigo-400 bg-indigo-500/15 animate-border-blink"
+            : selecionado
+              ? "border-indigo-500 bg-indigo-500/10"
+              : "border-slate-800 bg-[#05080f] hover:border-slate-700"
         }`}
         style={{ marginLeft: profundidade * 16 }}
       >
@@ -83,6 +99,7 @@ export function TreeNodeItem({
               no={filho}
               profundidade={profundidade + 1}
               selecionadoId={selecionadoId}
+              destaqueId={destaqueId}
               abertos={abertos}
               onToggle={onToggle}
               onSelect={onSelect}
