@@ -1,32 +1,32 @@
-import { Logger } from '@nestjs/common';
-import { Host } from '@/common/enums/host.enum';
+import { Host } from "@/common/enums/host.enum";
 import {
   AtendimentoPadrao,
   estaNaListaEspera,
   idUsuarioFilaQualidadePorHost,
-} from '@/integrations/constants/hubsoft/atendimentoPadrao.constants';
-import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
+} from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
+import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
 import {
   HubsoftGetAtendimentoByIdRepository,
   HubsoftGetAtendimentosRepository,
   HubsoftOrdemServicoListaItem,
   HubsoftUpdateAtendimentoRepository,
-} from '@/integrations/repository/hubsoft';
+} from "@/integrations/repository/hubsoft";
 import {
   HubsoftAtendimentoDetalhe,
   idsUsuariosResponsaveis,
   resolverCodigoClienteAtendimento,
   resolverIdClienteServicoAtendimento,
   resolverIdTipoAtendimentoDetalhe,
-} from '@/integrations/repository/hubsoft/hubsoftGetAtendimentoById.repository';
-import { formatDateYmd } from '@/integrations/service/helper/ordemServicoPeriodo.helper';
-import { isOsInstalacaoConcluida } from '@/integrations/service/helper/ordemServicoMotivoFechamento.helper';
-import { HubsoftAtendimento } from '@/integrations/types/OrdemServicoWebhook.type';
+} from "@/integrations/repository/hubsoft/hubsoftGetAtendimentoById.repository";
+import { isOsInstalacaoConcluida } from "@/integrations/service/helper/ordemServicoMotivoFechamento.helper";
+import { formatDateYmd } from "@/integrations/service/helper/ordemServicoPeriodo.helper";
+import { HubsoftAtendimento } from "@/integrations/types/OrdemServicoWebhook.type";
 import {
   OrdemServicoListaItem,
   toOrdemServicoListaItem,
-} from '@/integrations/types/OrderServicoLista.type';
-import { getErrorMessage } from '@/utils/error.utils';
+} from "@/integrations/types/OrderServicoLista.type";
+import { getErrorMessage } from "@/utils/error.utils";
+import { Logger } from "@nestjs/common";
 
 export type AuditoriaComercial = {
   lista: HubsoftAtendimento;
@@ -49,7 +49,7 @@ export const toId = (valor: unknown): number | null => {
 };
 
 export const isAtendimentoFinalizado = (message: string): boolean =>
-  message.toLowerCase().includes('já finalizado');
+  message.toLowerCase().includes("já finalizado");
 
 export const adicionarAuditoria = (
   mapa: Map<number, AuditoriaComercial[]>,
@@ -79,7 +79,7 @@ export const buscarAuditoriasNaListaEspera = async (params: {
         data_inicio: params.dataInicio,
         data_fim: dataFim,
         tipo_atendimento: String(params.atendimentoPadrao.id_tipo_atendimento),
-        tipo_data: 'data_cadastro',
+        tipo_data: "data_cadastro",
       },
       params.token,
     );
@@ -118,7 +118,7 @@ export const buscarAuditoriasNaListaEspera = async (params: {
     const dataCadastro = (
       detalhe.data_cadastro ??
       auditoriaLista.data_cadastro ??
-      ''
+      ""
     ).slice(0, 10);
     const matchData = !dataCadastro || dataCadastro >= params.dataInicio;
     const idsPivot = idsUsuariosResponsaveis(detalhe.usuarios_responsaveis);
@@ -210,7 +210,7 @@ export const montarOrdensComAuditoria = (params: {
             auditoria.detalhe.id_usuario_responsavel ?? null,
           idFila:
             usuarioFila?.id ?? usuarioFila?.id_usuario ?? idFilaListaEspera,
-          nomeFila: usuarioFila?.name ?? 'LISTA DE ESPERA',
+          nomeFila: usuarioFila?.name ?? "LISTA DE ESPERA",
           dataCadastro:
             auditoria.detalhe.data_cadastro ?? auditoria.lista.data_cadastro,
         }),
@@ -258,7 +258,7 @@ export const moverParaFilaQualidade = async (params: {
           `Fila qualidade — movido | cliente ${ordemAtualizada?.codigoCliente} | atendimento ${idAtendimento} | protocolo ${ordemAtualizada?.protocolo} | OS ${ordemAtualizada?.numeroOrdemServico} | id_cliente_servico ${ordemAtualizada?.idClienteServico} | id_ordem_servico ${ordemAtualizada?.id} (${params.host})`,
         );
         await params.hubsoftLogger.filaQualidade({
-          action: 'qualidade_atualizado',
+          action: "qualidade_atualizado",
           message: `Atendimento ${idAtendimento} movido para FILA QUALIDADE AUDITORIA`,
           host: params.host,
           entityId: idAtendimento,
@@ -267,7 +267,7 @@ export const moverParaFilaQualidade = async (params: {
             idAtendimento,
             codigoCliente: ordemAtualizada?.codigoCliente,
             idFila: idFilaQualidade,
-            nomeFila: 'FILA QUALIDADE AUDITORIA',
+            nomeFila: "FILA QUALIDADE AUDITORIA",
             idUsuarioResponsavel: idFilaQualidade,
           },
         });
@@ -285,7 +285,7 @@ export const moverParaFilaQualidade = async (params: {
           `Fila qualidade — erro | cliente ${ordemAtualizada?.codigoCliente} | atendimento ${idAtendimento} | protocolo ${ordemAtualizada?.protocolo} | OS ${ordemAtualizada?.numeroOrdemServico} (${params.host}) — ${message}`,
         );
         await params.hubsoftLogger.filaQualidade({
-          action: 'qualidade_erro',
+          action: "qualidade_erro",
           message: `PUT qualidade ERRO idAtendimento=${idAtendimento} message=${message}`,
           host: params.host,
           entityId: idAtendimento,
@@ -308,13 +308,13 @@ export const moverParaFilaQualidade = async (params: {
     return {
       ...ordem,
       idFila: idFilaQualidade,
-      nomeFila: 'FILA QUALIDADE AUDITORIA',
+      nomeFila: "FILA QUALIDADE AUDITORIA",
       idUsuarioResponsavel: idFilaQualidade,
     };
   });
 
   params.logger.log(
-    `Fila qualidade — ${params.resultado.length} encontrados, ${idsAtualizados.size} atualizados (${params.host}) | clientes: ${params.resultado.map((ordem) => ordem.codigoCliente).join(', ') || 'nenhum'} | atendimentos: ${idsAtendimento.join(', ') || 'nenhum'}`,
+    `Fila qualidade — ${params.resultado.length} encontrados, ${idsAtualizados.size} atualizados (${params.host}) | clientes: ${params.resultado.map((ordem) => ordem.codigoCliente).join(", ") || "nenhum"} | atendimentos: ${idsAtendimento.join(", ") || "nenhum"}`,
   );
 
   return resultadoAtualizado.sort((esquerda, direita) =>
