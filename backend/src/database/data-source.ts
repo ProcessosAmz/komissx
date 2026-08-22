@@ -1,3 +1,5 @@
+import { BetterAuthAccount } from "@/module/auth/entities/betterAuthAccount.entity";
+import { BetterAuthUser } from "@/module/auth/entities/betterAuthUser.entity";
 import { Commission } from "@/module/commissions/entities/commission.entity";
 import { Empresas } from "@/module/empresas/entities/empresas.entity";
 import { Cidade, Estado, Pais } from "@/module/localidade/entities";
@@ -33,6 +35,8 @@ export default new DataSource({
     UserPermission,
     UserRole,
     RolePermission,
+    BetterAuthUser,
+    BetterAuthAccount,
   ],
   migrations: ["src/migrations/*.ts"],
 });

@@ -30,3 +30,22 @@ export const createUserSchema = z.object({
 });
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>;
+
+export const updateUserSchema = createUserSchema.omit({ password: true }).extend({
+  password: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value || value.trim().length === 0) {
+        return undefined;
+      }
+
+      return value;
+    })
+    .refine(
+      (value) => value === undefined || value.length >= 6,
+      "A senha deve ter ao menos 6 caracteres.",
+    ),
+});
+
+export type UpdateUserFormData = z.infer<typeof updateUserSchema>;

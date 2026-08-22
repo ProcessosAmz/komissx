@@ -3,6 +3,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { CreateUserDto } from "@/module/users/dto/createUser.dto";
 import { Users } from "@/module/users/entities/users.entity";
+import { UpdateUserData } from "@/module/users/types/user";
 
 @Injectable()
 export class UsersRepository {
@@ -45,6 +46,19 @@ export class UsersRepository {
         },
       },
       order: { name: "ASC" },
+    });
+  }
+
+  async countBySupervisorId(supervisorId: string): Promise<number> {
+    return this.ormRepository.count({
+      where: { supervisorId },
+    });
+  }
+
+  async update(user: Users, data: UpdateUserData): Promise<Users> {
+    return this.ormRepository.save({
+      ...user,
+      ...data,
     });
   }
 }

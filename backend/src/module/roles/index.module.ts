@@ -9,6 +9,6 @@ import { FilterRolesUseCase } from "@/module/roles/useCase";
   imports: [TypeOrmModule.forFeature([Role])],
   controllers: [RolesController],
   providers: [FilterRolesUseCase, RolesRepository],
-  exports: [TypeOrmModule],
+  exports: [TypeOrmModule, RolesRepository],
 })
 export class RolesModule {}

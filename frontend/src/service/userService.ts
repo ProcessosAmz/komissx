@@ -1,5 +1,5 @@
 import { API } from "@/lib/axios";
-import type { CreateUserFormData } from "@/utils/validators/user";
+import type { CreateUserFormData, UpdateUserFormData } from "@/utils/validators/user";
 import type { FiltroUsuarios, UserApiNode } from "@/types/filtro";
 
 export class UsersService {
@@ -7,6 +7,14 @@ export class UsersService {
 
   static async create(payload: CreateUserFormData) {
     const response = await API.post(this.path, payload);
+    return response.data as {
+      data: { id: string; name: string; email: string };
+      message: string;
+    };
+  }
+
+  static async update(userId: string, payload: UpdateUserFormData) {
+    const response = await API.patch(`${this.path}/${userId}`, payload);
     return response.data as {
       data: { id: string; name: string; email: string };
       message: string;

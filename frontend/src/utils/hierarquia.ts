@@ -146,8 +146,20 @@ function ordenarPorCargo(nos: HierarquiaNode[]): HierarquiaNode[] {
   });
 }
 
-function isSupervisorRole(roleName: string) {
+export function isSupervisorRole(roleName: string) {
   return roleName.toUpperCase().includes("SUPERVISOR");
+}
+
+export function isLiderRole(roleName: string) {
+  const normalized = roleName.toUpperCase();
+  return normalized.includes("LIDER") || normalized.includes("LÍDER");
+}
+
+export function coletarIdsDescendentes(no: HierarquiaNode): string[] {
+  return (no.children ?? []).flatMap((filho) => [
+    filho.id,
+    ...coletarIdsDescendentes(filho),
+  ]);
 }
 
 function isExcludedRole(roleName: string) {
@@ -181,6 +193,12 @@ function mapNodes(
     nome: node.name,
     email: node.email,
     cargo: mapCargo(node.roleName),
+    roleId: node.roleId,
+    empresaId: node.empresaId,
+    empresaName: node.empresaName,
+    unidadeId: node.unidadeId,
+    unidadeName: node.unidadeName,
+    supervisorId: node.supervisorId,
     operadora: node.empresaName,
     regional: node.unidadeName,
     idHubsoft: node.hubsoftId ? String(node.hubsoftId) : "",

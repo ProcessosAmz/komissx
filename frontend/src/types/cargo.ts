@@ -17,6 +17,12 @@ export type HierarquiaNode = {
   nome: string;
   email: string;
   cargo: Cargo;
+  roleId: string;
+  empresaId: string;
+  empresaName: string;
+  unidadeId: string;
+  unidadeName: string;
+  supervisorId: string | null;
   operadora: string;
   regional: string;
   idHubsoft: string;

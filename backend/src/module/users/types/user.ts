@@ -29,3 +29,16 @@ export type CreateUserData = {
   participaFechamento: boolean;
   active: boolean;
 };
+
+export type UpdateUserData = {
+  name: string;
+  email: string;
+  password?: string;
+  hubsoftId: number | null;
+  roleId: string;
+  empresaId: string;
+  unidadeId: string;
+  supervisorId: string | null;
+  participaFechamento: boolean;
+  active: boolean;
+};

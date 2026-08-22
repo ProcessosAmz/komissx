@@ -16,4 +16,11 @@ export class RolesRepository {
       select: ["id", "name"],
     });
   }
+
+  async findById(id: string): Promise<Role | null> {
+    return this.ormRepository.findOne({
+      where: { id },
+      select: ["id", "name"],
+    });
+  }
 }

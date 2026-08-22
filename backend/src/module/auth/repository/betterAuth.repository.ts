@@ -1,6 +1,10 @@
 import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import { createLocalAccountIssuer } from "better-auth/db";
 import { auth } from "@/module/auth/better-auth";
+import { BetterAuthAccount } from "@/module/auth/entities/betterAuthAccount.entity";
+import { BetterAuthUser } from "@/module/auth/entities/betterAuthUser.entity";
 
 export type CreateCredentialUserInput = {
   id: string;
@@ -11,10 +15,25 @@ export type CreateCredentialUserInput = {
   passwordHash: string;
 };
 
+export type UpdateCredentialUserInput = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  active: boolean;
+};
+
 const CREDENTIAL_PROVIDER_ID = "credential";
 
 @Injectable()
 export class BetterAuthRepository {
+  constructor(
+    @InjectRepository(BetterAuthUser)
+    private readonly authUserRepository: Repository<BetterAuthUser>,
+    @InjectRepository(BetterAuthAccount)
+    private readonly authAccountRepository: Repository<BetterAuthAccount>,
+  ) {}
+
   async hashPassword(password: string): Promise<string> {
     const context = await auth.$context;
     return context.password.hash(password);
@@ -44,5 +63,33 @@ export class BetterAuthRepository {
       issuer: createLocalAccountIssuer(CREDENTIAL_PROVIDER_ID),
       password: input.passwordHash,
     });
+  }
+
+  async updateCredentialUser(
+    input: UpdateCredentialUserInput,
+  ): Promise<void> {
+    await this.authUserRepository.update(
+      { id: input.id },
+      {
+        name: input.name,
+        email: input.email,
+        role: input.role,
+        active: input.active,
+        updatedAt: new Date(),
+      },
+    );
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.authAccountRepository.update(
+      {
+        userId,
+        providerId: CREDENTIAL_PROVIDER_ID,
+      },
+      {
+        password: passwordHash,
+        updatedAt: new Date(),
+      },
+    );
   }
 }
