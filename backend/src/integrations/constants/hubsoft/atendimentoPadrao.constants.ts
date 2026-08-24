@@ -41,6 +41,11 @@ export const idUsuarioListaEsperaPorHost: Partial<Record<Host, number>> = {
   [Host.MANIA]: 787,
 };
 
+export const idTipoAtendimentoMudancaEnderecoPorHost: Record<Host, number> = {
+  [Host.AMAZONET]: 157,
+  [Host.MANIA]: 65,
+};
+
 export const idStatusAguardandoAnalisePorHost: Record<Host, number> = {
   [Host.MANIA]: 12,
   [Host.AMAZONET]: 2,
