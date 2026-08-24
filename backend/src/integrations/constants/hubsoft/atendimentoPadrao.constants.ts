@@ -47,8 +47,8 @@ export const idStatusAguardandoAnalisePorHost: Record<Host, number> = {
 };
 
 export const idStatusReanalisePorHost: Record<Host, number> = {
-  [Host.MANIA]: 147,
-  [Host.AMAZONET]: 195,
+  [Host.MANIA]: 195,
+  [Host.AMAZONET]: 147,
 };
 
 const usuarioEstaNaFila = (
