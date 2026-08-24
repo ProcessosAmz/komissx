@@ -42,7 +42,7 @@ export class BetterAuthRepository {
   async createCredentialUser(
     input: CreateCredentialUserInput,
   ): Promise<void> {
-    const context = await auth.$context;r
+    const context = await auth.$context;
 
     await context.internalAdapter.createUser(
       {
