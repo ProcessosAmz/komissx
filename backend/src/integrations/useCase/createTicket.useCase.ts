@@ -49,13 +49,9 @@ export class CreateTicketUseCase {
     const idClienteServico = payload.body.id_cliente_servico;
     const hostDetectado = resolveOrdemServicoHost(numeroOrdem);
     const idUsuarioAbertura = payload.body.id_usuario_abertura;
-    const usuarioIngrid = 2166;
-    const ehIngrid = idUsuarioAbertura === usuarioIngrid;
 
     this.logger.log(
-      ehIngrid
-        ? `Ticket — INGRID ${usuarioIngrid} — OS ${numeroOrdem} — cliente ${idClienteServico} (${host})`
-        : `Ticket — usuário ${idUsuarioAbertura ?? "n/a"} — OS ${numeroOrdem} — cliente ${idClienteServico} (${host})`,
+      `Ticket — usuário ${idUsuarioAbertura ?? "n/a"} — OS ${numeroOrdem} — cliente ${idClienteServico} (${host})`,
     );
 
     if (hostDetectado && hostDetectado !== host) {
@@ -65,18 +61,6 @@ export class CreateTicketUseCase {
         numeroOrdem,
         host,
         `host inconsistente: OS pertence a ${hostDetectado}, recebida em ${host}`,
-      );
-
-      return null;
-    }
-
-    if (host === Host.AMAZONET && idUsuarioAbertura !== usuarioIngrid) {
-      logTicketIgnorado(
-        this.logger,
-        idClienteServico,
-        numeroOrdem,
-        host,
-        `usuário ${idUsuarioAbertura ?? "n/a"} não é o usuário de teste ${usuarioIngrid}`,
       );
 
       return null;
