@@ -1,7 +1,6 @@
 import { Host } from "@/common/enums/host.enum";
 import { atendimentoPadraoPorHost } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
 import {
-  HubsoftGetAtendimentoByIdRepository,
   HubsoftGetAtendimentosRepository,
   HubsoftGetOrdensServicoRepository,
 } from "@/integrations/repository/hubsoft";
@@ -25,7 +24,6 @@ export class MoveAuditsToQualityQueueUseCase {
   constructor(
     private readonly hubsoftService: HubsoftService,
     private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
-    private readonly hubsoftGetAtendimentoByIdRepository: HubsoftGetAtendimentoByIdRepository,
     private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
     private readonly dispatchQualityQueueUseCase: DispatchQualityQueueUseCase,
   ) {}
@@ -42,8 +40,6 @@ export class MoveAuditsToQualityQueueUseCase {
       dataInicio,
       atendimentoPadrao,
       hubsoftGetAtendimentosRepository: this.hubsoftGetAtendimentosRepository,
-      hubsoftGetAtendimentoByIdRepository:
-        this.hubsoftGetAtendimentoByIdRepository,
     });
     const ordens = await this.hubsoftGetOrdensServicoRepository.execute(
       host,

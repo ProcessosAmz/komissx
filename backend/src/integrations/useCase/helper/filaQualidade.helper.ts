@@ -6,17 +6,9 @@ import {
   idTipoAtendimentoMudancaEnderecoPorHost,
 } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
 import {
-  HubsoftGetAtendimentoByIdRepository,
   HubsoftGetAtendimentosRepository,
   HubsoftOrdemServicoListaItem,
 } from "@/integrations/repository/hubsoft";
-import {
-  HubsoftAtendimentoDetalhe,
-  idsUsuariosResponsaveis,
-  resolverCodigoClienteAtendimento,
-  resolverIdClienteServicoAtendimento,
-  resolverIdTipoAtendimentoDetalhe,
-} from "@/integrations/repository/hubsoft/hubsoftGetAtendimentoById.repository";
 import { isOsElegivelParaFila } from "@/integrations/service/helper/ordemServicoMotivoFechamento.helper";
 import { formatDateYmd } from "@/integrations/service/helper/ordemServicoPeriodo.helper";
 import { resolverCategoriaOrdemServico } from "@/integrations/service/helper/ordemServicoTipo.helper";
@@ -26,10 +18,7 @@ import {
   toOrdemServicoListaItem,
 } from "@/integrations/types/OrderServicoLista.type";
 
-export type AuditoriaComercial = {
-  lista: HubsoftAtendimento;
-  detalhe: HubsoftAtendimentoDetalhe;
-};
+export type AuditoriaComercial = HubsoftAtendimento;
 
 export type AuditoriasIndexadas = {
   auditoriasPorServico: Map<number, AuditoriaComercial[]>;
@@ -59,13 +48,30 @@ export const adicionarAuditoria = (
   mapa.set(chave, existentes);
 };
 
+const resolverTipoLista = (auditoria: HubsoftAtendimento): number | null => {
+  const direto = toId(auditoria.id_tipo_atendimento);
+
+  if (direto) {
+    return direto;
+  }
+
+  const tipo = auditoria.tipo_atendimento;
+
+  if (tipo && typeof tipo === "object" && "id_tipo_atendimento" in tipo) {
+    return toId(
+      (tipo as { id_tipo_atendimento: number }).id_tipo_atendimento,
+    );
+  }
+
+  return null;
+};
+
 export const buscarAuditoriasNaListaEspera = async (params: {
   host: Host;
   token: string;
   dataInicio: string;
   atendimentoPadrao: AtendimentoPadrao;
   hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository;
-  hubsoftGetAtendimentoByIdRepository: HubsoftGetAtendimentoByIdRepository;
 }): Promise<AuditoriasIndexadas> => {
   const dataFim = formatDateYmd(new Date());
   const auditorias =
@@ -88,56 +94,33 @@ export const buscarAuditoriasNaListaEspera = async (params: {
     ).values(),
   ];
 
-  const detalhes = await Promise.all(
-    auditoriasUnicas.map(async (auditoriaLista) => {
-      const detalhe = await params.hubsoftGetAtendimentoByIdRepository.execute(
-        params.host,
-        auditoriaLista.id_atendimento,
-        params.token,
-      );
-
-      return { auditoriaLista, detalhe };
-    }),
-  );
-
   const auditoriasPorServico = new Map<number, AuditoriaComercial[]>();
   const auditoriasPorCliente = new Map<number, AuditoriaComercial[]>();
 
-  for (const { auditoriaLista, detalhe } of detalhes) {
-    if (!detalhe || detalhe.data_fechamento) {
+  for (const auditoria of auditoriasUnicas) {
+    if (auditoria.data_fechamento) {
       continue;
     }
 
-    const tipo =
-      resolverIdTipoAtendimentoDetalhe(detalhe) ??
-      toId(auditoriaLista.id_tipo_atendimento);
+    const tipo = resolverTipoLista(auditoria);
     const matchTipo =
       tipo == null || tipo === params.atendimentoPadrao.id_tipo_atendimento;
-    const dataCadastro = (
-      detalhe.data_cadastro ??
-      auditoriaLista.data_cadastro ??
-      ""
-    ).slice(0, 10);
+    const dataCadastro = (auditoria.data_cadastro ?? "").slice(0, 10);
     const matchData = !dataCadastro || dataCadastro >= params.dataInicio;
 
     if (!matchTipo || !matchData) {
       continue;
     }
 
-    const item: AuditoriaComercial = { lista: auditoriaLista, detalhe };
-    const idClienteServico =
-      resolverIdClienteServicoAtendimento(detalhe) ??
-      toId(auditoriaLista.servico?.id_cliente_servico);
-    const codigoCliente =
-      resolverCodigoClienteAtendimento(detalhe) ??
-      toId(auditoriaLista.cliente?.codigo_cliente);
+    const idClienteServico = toId(auditoria.servico?.id_cliente_servico);
+    const codigoCliente = toId(auditoria.cliente?.codigo_cliente);
 
     if (idClienteServico) {
-      adicionarAuditoria(auditoriasPorServico, idClienteServico, item);
+      adicionarAuditoria(auditoriasPorServico, idClienteServico, auditoria);
     }
 
     if (codigoCliente) {
-      adicionarAuditoria(auditoriasPorCliente, codigoCliente, item);
+      adicionarAuditoria(auditoriasPorCliente, codigoCliente, auditoria);
     }
   }
 
@@ -158,9 +141,7 @@ const montarItemDaOs = (params: {
     return null;
   }
 
-  if (
-    tipoAtendimento === params.atendimentoPadrao.id_tipo_atendimento
-  ) {
+  if (tipoAtendimento === params.atendimentoPadrao.id_tipo_atendimento) {
     return null;
   }
 
@@ -252,21 +233,16 @@ export const montarOrdensComAuditoria = (params: {
     }
 
     for (const auditoria of auditoriasDoServico) {
-      const tipoAtendimento =
-        resolverIdTipoAtendimentoDetalhe(auditoria.detalhe) ??
-        toId(auditoria.lista.id_tipo_atendimento);
+      const tipoAtendimento = resolverTipoLista(auditoria);
 
       if (tipoAtendimento !== params.atendimentoPadrao.id_tipo_atendimento) {
         continue;
       }
 
-      const idsPivot = idsUsuariosResponsaveis(
-        auditoria.detalhe.usuarios_responsaveis,
-      );
       const naListaEspera = estaNaListaEspera(
         params.host,
-        idsPivot.map((idUsuario) => ({ id: idUsuario })),
-        auditoria.detalhe.id_usuario_responsavel,
+        auditoria.usuarios_responsaveis,
+        auditoria.id_usuario_responsavel,
       );
 
       if (!naListaEspera) {
@@ -274,27 +250,21 @@ export const montarOrdensComAuditoria = (params: {
       }
 
       const idFilaListaEspera = params.atendimentoPadrao.id_usuario_responsavel;
-      const usuarioFila = (auditoria.detalhe.usuarios_responsaveis ?? []).find(
-        (usuario) =>
-          usuario.id === idFilaListaEspera ||
-          usuario.id_usuario === idFilaListaEspera,
+      const usuarioFila = (auditoria.usuarios_responsaveis ?? []).find(
+        (usuario) => usuario.id === idFilaListaEspera,
       );
 
       resultado.push(
         toOrdemServicoListaItem(ordem, params.host, idClienteServico, {
-          idAtendimento: auditoria.detalhe.id_atendimento,
-          protocolo: auditoria.detalhe.protocolo ?? auditoria.lista.protocolo,
+          idAtendimento: auditoria.id_atendimento,
+          protocolo: auditoria.protocolo,
           idTipoAtendimento:
-            resolverIdTipoAtendimentoDetalhe(auditoria.detalhe) ??
-            params.atendimentoPadrao.id_tipo_atendimento,
-          idAtendimentoStatus: auditoria.detalhe.id_atendimento_status ?? null,
-          idUsuarioResponsavel:
-            auditoria.detalhe.id_usuario_responsavel ?? null,
-          idFila:
-            usuarioFila?.id ?? usuarioFila?.id_usuario ?? idFilaListaEspera,
+            tipoAtendimento ?? params.atendimentoPadrao.id_tipo_atendimento,
+          idAtendimentoStatus: auditoria.id_atendimento_status ?? null,
+          idUsuarioResponsavel: auditoria.id_usuario_responsavel ?? null,
+          idFila: usuarioFila?.id ?? idFilaListaEspera,
           nomeFila: usuarioFila?.name ?? "LISTA DE ESPERA",
-          dataCadastro:
-            auditoria.detalhe.data_cadastro ?? auditoria.lista.data_cadastro,
+          dataCadastro: auditoria.data_cadastro,
           categoriaOrdemServico: categoria,
           idTipoOrdemServico: ordem.tipo_ordem_servico.id_tipo_ordem_servico,
         }),
