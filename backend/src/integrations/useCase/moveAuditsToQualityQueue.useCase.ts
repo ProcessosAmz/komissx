@@ -28,8 +28,8 @@ export class MoveAuditsToQualityQueueUseCase {
     private readonly hubsoftService: HubsoftService,
     private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
     private readonly hubsoftGetAtendimentoByIdRepository: HubsoftGetAtendimentoByIdRepository,
-    private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
     private readonly hubsoftUpdateAtendimentoRepository: HubsoftUpdateAtendimentoRepository,
+    private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
     private readonly hubsoftLogger: HubsoftLogger,
   ) {}
 
@@ -53,26 +53,9 @@ export class MoveAuditsToQualityQueueUseCase {
       token,
     );
 
-    const usuarioTeste = 2166;
-    const ordensFiltradas =
-      host === Host.AMAZONET
-        ? ordens.filter((ordem) => {
-            const idUsuarioAbertura = ordem.usuario_abertura?.id;
-
-            if (idUsuarioAbertura !== usuarioTeste) {
-              this.logger.log(
-                `Fila qualidade — OS ignorada — usuário ${idUsuarioAbertura ?? "n/a"} não é o usuário de teste ${usuarioTeste} (${host})`,
-              );
-              return false;
-            }
-
-            return true;
-          })
-        : ordens;
-
     const resultado = montarOrdensComAuditoria({
       host,
-      ordens: ordensFiltradas,
+      ordens,
       atendimentoPadrao,
       auditoriasIndexadas,
     });
