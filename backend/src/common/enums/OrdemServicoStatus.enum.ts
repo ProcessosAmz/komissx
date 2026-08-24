@@ -1,9 +1,11 @@
 import { Host } from "./host.enum";
 
 export enum OrdemServicoStatus {
-    INSTALACAO = "instalacao",
-    REMOCAO = "remocao",
-    MANUTENCAO = "manutencao",
+  INSTALACAO = "instalacao",
+  MUDANCA_ENDERECO = "mudanca_endereco",
+  NAO_CONFORMIDADE = "nao_conformidade",
+  REMOCAO = "remocao",
+  MANUTENCAO = "manutencao",
 }
 
 export const OrdemServicoTipoId = {
@@ -19,6 +21,14 @@ export const OrdemServicoTipoId = {
       505,
       508,
     ],
+    MUDANCA_ENDERECO: [
+      471,
+      478,
+      489,
+    ],
+    NAO_CONFORMIDADE: [
+      427,
+    ],
   },
 
   [Host.AMAZONET]: {
@@ -31,6 +41,14 @@ export const OrdemServicoTipoId = {
       833,
       819,
       804,
+    ],
+    MUDANCA_ENDERECO: [
+      808,
+      815,
+      829,
+    ],
+    NAO_CONFORMIDADE: [
+      529,
     ],
   },
 } as const;

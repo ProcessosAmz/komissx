@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { Host } from '@/common/enums/host.enum';
 import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig.constants';
-import { isOrdemDeInstalacao } from '@/integrations/service/helper/ordemServicoTipo.helper';
+import { isOrdemRelevanteParaFilaQualidade } from '@/integrations/service/helper/ordemServicoTipo.helper';
 import {
   formatDateYmd,
   getMostRecentThursday,
@@ -121,11 +121,14 @@ export class HubsoftGetOrdensServicoRepository {
         ),
       );
 
-      const instalacoes = (response.data.ordens_servico ?? []).filter((ordem) =>
-        isOrdemDeInstalacao(host, ordem.tipo_ordem_servico.id_tipo_ordem_servico),
+      const ordensRelevantes = (response.data.ordens_servico ?? []).filter((ordem) =>
+        isOrdemRelevanteParaFilaQualidade(
+          host,
+          ordem.tipo_ordem_servico.id_tipo_ordem_servico,
+        ),
       );
 
-      ordens.push(...instalacoes);
+      ordens.push(...ordensRelevantes);
       ultimaPagina = response.data.paginacao?.ultima_pagina ?? pagina;
       pagina += 1;
     } while (pagina <= ultimaPagina);

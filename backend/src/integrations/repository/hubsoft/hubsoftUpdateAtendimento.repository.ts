@@ -7,7 +7,8 @@ import { getHubsoftConfig } from '@/integrations/constants/hubsoft/hubsoftConfig
 
 export type HubsoftEditarAtendimentoBody = {
   fechar_atendimento: boolean;
-  id_usuario_responsavel: number;
+  id_usuario_responsavel?: number;
+  id_atendimento_status?: number;
 };
 
 type HubsoftEditarAtendimentoResponse =

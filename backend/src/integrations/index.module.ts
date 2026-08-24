@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { HttpModule } from '@nestjs/axios';
-import { IntegrationsController } from '@/integrations/controller/index.controller';
-import { HubsoftLogger } from '@/integrations/logger/hubsoft.logger';
+import { Module } from "@nestjs/common";
+import { HttpModule } from "@nestjs/axios";
+import { IntegrationsController } from "@/integrations/controller/index.controller";
+import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
 import {
   HubsoftGetByIdClienteRepository,
   HubsoftCreateAtendimentoRepository,
@@ -10,12 +10,17 @@ import {
   HubsoftGetOrdensServicoRepository,
   HubsoftGetAtendimentoByIdRepository,
   HubsoftUpdateAtendimentoRepository,
-} from '@/integrations/repository/hubsoft';
-import { HubsoftService } from '@/integrations/service/hubsoft.service';
+} from "@/integrations/repository/hubsoft";
+import { HubsoftService } from "@/integrations/service/hubsoft.service";
 import {
   CreateTicketUseCase,
   MoveAuditsToQualityQueueUseCase,
-} from '@/integrations/useCase';
+  UpdateAuditTicketUseCase,
+  MoveInstallationToQualityQueueUseCase,
+  MoveAddressChangeToQualityQueueUseCase,
+  UpdateNonComplianceUseCase,
+  DispatchQualityQueueUseCase,
+} from "@/integrations/useCase";
 
 @Module({
   imports: [HttpModule],
@@ -24,6 +29,11 @@ import {
     HubsoftService,
     CreateTicketUseCase,
     MoveAuditsToQualityQueueUseCase,
+    UpdateAuditTicketUseCase,
+    MoveInstallationToQualityQueueUseCase,
+    MoveAddressChangeToQualityQueueUseCase,
+    UpdateNonComplianceUseCase,
+    DispatchQualityQueueUseCase,
     HubsoftGetByIdClienteRepository,
     HubsoftCreateAtendimentoRepository,
     HubsoftGetAtendimentosRepository,

@@ -1,11 +1,9 @@
 import { Host } from "@/common/enums/host.enum";
 import { atendimentoPadraoPorHost } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
-import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
 import {
   HubsoftGetAtendimentoByIdRepository,
   HubsoftGetAtendimentosRepository,
   HubsoftGetOrdensServicoRepository,
-  HubsoftUpdateAtendimentoRepository,
 } from "@/integrations/repository/hubsoft";
 import {
   formatDateYmd,
@@ -13,10 +11,10 @@ import {
 } from "@/integrations/service/helper";
 import { HubsoftService } from "@/integrations/service/hubsoft.service";
 import { OrdemServicoListaItem } from "@/integrations/types/OrderServicoLista.type";
+import { DispatchQualityQueueUseCase } from "@/integrations/useCase/dispatchQualityQueue.useCase";
 import {
   buscarAuditoriasNaListaEspera,
   montarOrdensComAuditoria,
-  moverParaFilaQualidade,
 } from "@/integrations/useCase/helper";
 import { Injectable, Logger } from "@nestjs/common";
 
@@ -28,9 +26,8 @@ export class MoveAuditsToQualityQueueUseCase {
     private readonly hubsoftService: HubsoftService,
     private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
     private readonly hubsoftGetAtendimentoByIdRepository: HubsoftGetAtendimentoByIdRepository,
-    private readonly hubsoftUpdateAtendimentoRepository: HubsoftUpdateAtendimentoRepository,
     private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
-    private readonly hubsoftLogger: HubsoftLogger,
+    private readonly dispatchQualityQueueUseCase: DispatchQualityQueueUseCase,
   ) {}
 
   async execute(host: Host): Promise<OrdemServicoListaItem[]> {
@@ -60,14 +57,37 @@ export class MoveAuditsToQualityQueueUseCase {
       auditoriasIndexadas,
     });
 
-    return moverParaFilaQualidade({
-      host,
-      token,
-      resultado,
-      hubsoftUpdateAtendimentoRepository:
-        this.hubsoftUpdateAtendimentoRepository,
-      hubsoftLogger: this.hubsoftLogger,
-      logger: this.logger,
-    });
+    const idsAtendimento = [
+      ...new Set(resultado.map((ordem) => ordem.idAtendimento)),
+    ];
+    let totalAtualizados = 0;
+
+    for (const idAtendimento of idsAtendimento) {
+      const ordem = resultado.find(
+        (item) => item.idAtendimento === idAtendimento,
+      );
+
+      if (!ordem) {
+        continue;
+      }
+
+      const atualizado = await this.dispatchQualityQueueUseCase.execute({
+        host,
+        token,
+        ordem,
+      });
+
+      if (atualizado) {
+        totalAtualizados += 1;
+      }
+    }
+
+    this.logger.log(
+      `Fila qualidade — ${resultado.length} encontrados, ${totalAtualizados} atualizados (${host}) | clientes: ${resultado.map((ordem) => ordem.codigoCliente).join(", ") || "nenhum"} | atendimentos: ${idsAtendimento.join(", ") || "nenhum"}`,
+    );
+
+    return resultado.sort((esquerda, direita) =>
+      direita.dataCadastro.localeCompare(esquerda.dataCadastro),
+    );
   }
 }

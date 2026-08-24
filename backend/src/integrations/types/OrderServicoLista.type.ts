@@ -1,5 +1,6 @@
 import { Host } from '@/common/enums/host.enum';
 import { HubsoftOrdemServicoListaItem } from '@/integrations/repository/hubsoft/hubsoftGetOrdensServico.repository';
+import { CategoriaOrdemServico } from '@/integrations/service/helper/ordemServicoTipo.helper';
 
 export type AuditoriaListaEspera = {
   idAtendimento: number;
@@ -10,6 +11,8 @@ export type AuditoriaListaEspera = {
   idFila: number;
   nomeFila: string;
   dataCadastro: string;
+  categoriaOrdemServico: CategoriaOrdemServico;
+  idTipoOrdemServico: number;
 };
 
 export type OrdemServicoListaItem = {
@@ -22,6 +25,8 @@ export type OrdemServicoListaItem = {
   usuarioFechamento: string;
   usuarioFechamentoLimpo: string;
   tipoOrdemServico: string;
+  idTipoOrdemServico: number;
+  categoriaOrdemServico: CategoriaOrdemServico;
   dataTerminoExecutado: string;
   status: string;
   statusFechamento: string;
@@ -56,6 +61,8 @@ export function toOrdemServicoListaItem(
     usuarioFechamento,
     usuarioFechamentoLimpo,
     tipoOrdemServico: ordem.tipo_ordem_servico.descricao,
+    idTipoOrdemServico: auditoria.idTipoOrdemServico,
+    categoriaOrdemServico: auditoria.categoriaOrdemServico,
     dataTerminoExecutado: ordem.data_termino_executado ?? '',
     status: ordem.status,
     statusFechamento: ordem.status_fechamento ?? '',

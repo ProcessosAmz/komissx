@@ -41,6 +41,16 @@ export const idUsuarioListaEsperaPorHost: Partial<Record<Host, number>> = {
   [Host.MANIA]: 787,
 };
 
+export const idStatusAguardandoAnalisePorHost: Record<Host, number> = {
+  [Host.MANIA]: 12,
+  [Host.AMAZONET]: 2,
+};
+
+export const idStatusReanalisePorHost: Record<Host, number> = {
+  [Host.MANIA]: 147,
+  [Host.AMAZONET]: 195,
+};
+
 const usuarioEstaNaFila = (
   idFila: number | undefined,
   usuarios: { id: number }[] | undefined | null,

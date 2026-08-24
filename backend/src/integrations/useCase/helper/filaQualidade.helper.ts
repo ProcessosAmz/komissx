@@ -1,15 +1,13 @@
 import { Host } from "@/common/enums/host.enum";
+import { OrdemServicoStatus } from "@/common/enums/OrdemServicoStatus.enum";
 import {
   AtendimentoPadrao,
   estaNaListaEspera,
-  idUsuarioFilaQualidadePorHost,
 } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
-import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
 import {
   HubsoftGetAtendimentoByIdRepository,
   HubsoftGetAtendimentosRepository,
   HubsoftOrdemServicoListaItem,
-  HubsoftUpdateAtendimentoRepository,
 } from "@/integrations/repository/hubsoft";
 import {
   HubsoftAtendimentoDetalhe,
@@ -18,15 +16,14 @@ import {
   resolverIdClienteServicoAtendimento,
   resolverIdTipoAtendimentoDetalhe,
 } from "@/integrations/repository/hubsoft/hubsoftGetAtendimentoById.repository";
-import { isOsInstalacaoConcluida } from "@/integrations/service/helper/ordemServicoMotivoFechamento.helper";
+import { isOsElegivelParaFila } from "@/integrations/service/helper/ordemServicoMotivoFechamento.helper";
 import { formatDateYmd } from "@/integrations/service/helper/ordemServicoPeriodo.helper";
+import { resolverCategoriaOrdemServico } from "@/integrations/service/helper/ordemServicoTipo.helper";
 import { HubsoftAtendimento } from "@/integrations/types/OrdemServicoWebhook.type";
 import {
   OrdemServicoListaItem,
   toOrdemServicoListaItem,
 } from "@/integrations/types/OrderServicoLista.type";
-import { getErrorMessage } from "@/utils/error.utils";
-import { Logger } from "@nestjs/common";
 
 export type AuditoriaComercial = {
   lista: HubsoftAtendimento;
@@ -121,14 +118,8 @@ export const buscarAuditoriasNaListaEspera = async (params: {
       ""
     ).slice(0, 10);
     const matchData = !dataCadastro || dataCadastro >= params.dataInicio;
-    const idsPivot = idsUsuariosResponsaveis(detalhe.usuarios_responsaveis);
-    const matchListaEspera = estaNaListaEspera(
-      params.host,
-      idsPivot.map((idUsuario) => ({ id: idUsuario })),
-      detalhe.id_usuario_responsavel,
-    );
 
-    if (!matchTipo || !matchData || !matchListaEspera) {
+    if (!matchTipo || !matchData) {
       continue;
     }
 
@@ -160,11 +151,17 @@ export const montarOrdensComAuditoria = (params: {
 }): OrdemServicoListaItem[] => {
   const idFilaListaEspera = params.atendimentoPadrao.id_usuario_responsavel;
   const resultado: OrdemServicoListaItem[] = [];
-  const ordensConcluidas = params.ordens.filter((ordem) =>
-    isOsInstalacaoConcluida(ordem),
-  );
 
-  for (const ordem of ordensConcluidas) {
+  for (const ordem of params.ordens) {
+    const categoria = resolverCategoriaOrdemServico(
+      params.host,
+      ordem.tipo_ordem_servico.id_tipo_ordem_servico,
+    );
+
+    if (!categoria || !isOsElegivelParaFila(ordem, categoria)) {
+      continue;
+    }
+
     const idClienteServico =
       toId(ordem.id_cliente_servico) ??
       toId(ordem.dados_servico?.id_cliente_servico) ??
@@ -183,6 +180,22 @@ export const montarOrdensComAuditoria = (params: {
     }
 
     for (const auditoria of auditoriasDoServico) {
+      const idsPivot = idsUsuariosResponsaveis(
+        auditoria.detalhe.usuarios_responsaveis,
+      );
+      const naListaEspera = estaNaListaEspera(
+        params.host,
+        idsPivot.map((idUsuario) => ({ id: idUsuario })),
+        auditoria.detalhe.id_usuario_responsavel,
+      );
+
+      if (
+        categoria !== OrdemServicoStatus.NAO_CONFORMIDADE &&
+        !naListaEspera
+      ) {
+        continue;
+      }
+
       const idServicoItem =
         idClienteServico ??
         toId(auditoria.lista.servico?.id_cliente_servico) ??
@@ -213,111 +226,12 @@ export const montarOrdensComAuditoria = (params: {
           nomeFila: usuarioFila?.name ?? "LISTA DE ESPERA",
           dataCadastro:
             auditoria.detalhe.data_cadastro ?? auditoria.lista.data_cadastro,
+          categoriaOrdemServico: categoria,
+          idTipoOrdemServico: ordem.tipo_ordem_servico.id_tipo_ordem_servico,
         }),
       );
     }
   }
 
   return resultado;
-};
-
-export const moverParaFilaQualidade = async (params: {
-  host: Host;
-  token: string;
-  resultado: OrdemServicoListaItem[];
-  hubsoftUpdateAtendimentoRepository: HubsoftUpdateAtendimentoRepository;
-  hubsoftLogger: HubsoftLogger;
-  logger: Logger;
-}): Promise<OrdemServicoListaItem[]> => {
-  const idFilaQualidade = idUsuarioFilaQualidadePorHost[params.host];
-  const idsAtualizados = new Set<number>();
-  const idsAtendimento = [
-    ...new Set(params.resultado.map((ordem) => ordem.idAtendimento)),
-  ];
-
-  if (idFilaQualidade) {
-    const bodyPut = {
-      fechar_atendimento: false,
-      id_usuario_responsavel: idFilaQualidade,
-    };
-
-    for (const idAtendimento of idsAtendimento) {
-      const ordemAtualizada = params.resultado.find(
-        (ordem) => ordem.idAtendimento === idAtendimento,
-      );
-
-      try {
-        await params.hubsoftUpdateAtendimentoRepository.execute(
-          params.host,
-          idAtendimento,
-          bodyPut,
-          params.token,
-        );
-        idsAtualizados.add(idAtendimento);
-        params.logger.log(
-          `Fila qualidade — movido | cliente ${ordemAtualizada?.codigoCliente} | atendimento ${idAtendimento} | protocolo ${ordemAtualizada?.protocolo} | OS ${ordemAtualizada?.numeroOrdemServico} | id_cliente_servico ${ordemAtualizada?.idClienteServico} | id_ordem_servico ${ordemAtualizada?.id} (${params.host})`,
-        );
-        await params.hubsoftLogger.filaQualidade({
-          action: "qualidade_atualizado",
-          message: `Atendimento ${idAtendimento} movido para FILA QUALIDADE AUDITORIA`,
-          host: params.host,
-          entityId: idAtendimento,
-          data: {
-            host: params.host,
-            idAtendimento,
-            codigoCliente: ordemAtualizada?.codigoCliente,
-            idFila: idFilaQualidade,
-            nomeFila: "FILA QUALIDADE AUDITORIA",
-            idUsuarioResponsavel: idFilaQualidade,
-          },
-        });
-      } catch (error) {
-        const message = getErrorMessage(error);
-
-        if (isAtendimentoFinalizado(message)) {
-          params.logger.log(
-            `Fila qualidade — ignorado | cliente ${ordemAtualizada?.codigoCliente} | atendimento ${idAtendimento} | protocolo ${ordemAtualizada?.protocolo} | OS ${ordemAtualizada?.numeroOrdemServico} (${params.host}) — atendimento já finalizado`,
-          );
-          continue;
-        }
-
-        params.logger.error(
-          `Fila qualidade — erro | cliente ${ordemAtualizada?.codigoCliente} | atendimento ${idAtendimento} | protocolo ${ordemAtualizada?.protocolo} | OS ${ordemAtualizada?.numeroOrdemServico} (${params.host}) — ${message}`,
-        );
-        await params.hubsoftLogger.filaQualidade({
-          action: "qualidade_erro",
-          message: `PUT qualidade ERRO idAtendimento=${idAtendimento} message=${message}`,
-          host: params.host,
-          entityId: idAtendimento,
-          data: {
-            host: params.host,
-            idAtendimento,
-            codigoCliente: ordemAtualizada?.codigoCliente,
-            motivo: message,
-          },
-        });
-      }
-    }
-  }
-
-  const resultadoAtualizado = params.resultado.map((ordem) => {
-    if (!idsAtualizados.has(ordem.idAtendimento) || !idFilaQualidade) {
-      return ordem;
-    }
-
-    return {
-      ...ordem,
-      idFila: idFilaQualidade,
-      nomeFila: "FILA QUALIDADE AUDITORIA",
-      idUsuarioResponsavel: idFilaQualidade,
-    };
-  });
-
-  params.logger.log(
-    `Fila qualidade — ${params.resultado.length} encontrados, ${idsAtualizados.size} atualizados (${params.host}) | clientes: ${params.resultado.map((ordem) => ordem.codigoCliente).join(", ") || "nenhum"} | atendimentos: ${idsAtendimento.join(", ") || "nenhum"}`,
-  );
-
-  return resultadoAtualizado.sort((esquerda, direita) =>
-    direita.dataCadastro.localeCompare(esquerda.dataCadastro),
-  );
 };
