@@ -3,7 +3,6 @@ import { OrdemServicoStatus } from "@/common/enums/OrdemServicoStatus.enum";
 import {
   AtendimentoPadrao,
   estaNaListaEspera,
-  idTipoAtendimentoMudancaEnderecoPorHost,
 } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
 import {
   HubsoftGetAtendimentosRepository,
@@ -127,54 +126,6 @@ export const buscarAuditoriasNaListaEspera = async (params: {
   return { auditoriasPorServico, auditoriasPorCliente };
 };
 
-const montarItemDaOs = (params: {
-  host: Host;
-  ordem: HubsoftOrdemServicoListaItem;
-  atendimentoPadrao: AtendimentoPadrao;
-  categoria: OrdemServicoListaItem["categoriaOrdemServico"];
-  idClienteServico: number;
-}): OrdemServicoListaItem | null => {
-  const idAtendimento = toId(params.ordem.atendimento?.id_atendimento);
-  const tipoAtendimento = toId(params.ordem.atendimento?.id_tipo_atendimento);
-
-  if (!idAtendimento) {
-    return null;
-  }
-
-  if (tipoAtendimento === params.atendimentoPadrao.id_tipo_atendimento) {
-    return null;
-  }
-
-  const idTipoMudanca = idTipoAtendimentoMudancaEnderecoPorHost[params.host];
-
-  if (
-    params.categoria === OrdemServicoStatus.MUDANCA_ENDERECO &&
-    tipoAtendimento !== idTipoMudanca
-  ) {
-    return null;
-  }
-
-  return toOrdemServicoListaItem(
-    params.ordem,
-    params.host,
-    params.idClienteServico,
-    {
-      idAtendimento,
-      protocolo: params.ordem.atendimento.protocolo,
-      idTipoAtendimento:
-        tipoAtendimento ?? params.atendimentoPadrao.id_tipo_atendimento,
-      idAtendimentoStatus:
-        params.ordem.atendimento.id_status_atendimento ?? null,
-      idUsuarioResponsavel: null,
-      idFila: params.atendimentoPadrao.id_usuario_responsavel,
-      nomeFila: "LISTA DE ESPERA",
-      dataCadastro: params.ordem.data_cadastro,
-      categoriaOrdemServico: params.categoria,
-      idTipoOrdemServico: params.ordem.tipo_ordem_servico.id_tipo_ordem_servico,
-    },
-  );
-};
-
 export const montarOrdensComAuditoria = (params: {
   host: Host;
   ordens: HubsoftOrdemServicoListaItem[];
@@ -193,31 +144,16 @@ export const montarOrdensComAuditoria = (params: {
       continue;
     }
 
+    if (categoria !== OrdemServicoStatus.INSTALACAO) {
+      continue;
+    }
+
     const idClienteServico =
       toId(ordem.id_cliente_servico) ??
       toId(ordem.dados_servico?.id_cliente_servico) ??
       toId(ordem.dados_cliente.id_cliente_servico);
 
     if (!idClienteServico) {
-      continue;
-    }
-
-    if (
-      categoria === OrdemServicoStatus.MUDANCA_ENDERECO ||
-      categoria === OrdemServicoStatus.NAO_CONFORMIDADE
-    ) {
-      const item = montarItemDaOs({
-        host: params.host,
-        ordem,
-        atendimentoPadrao: params.atendimentoPadrao,
-        categoria,
-        idClienteServico,
-      });
-
-      if (item) {
-        resultado.push(item);
-      }
-
       continue;
     }
 
