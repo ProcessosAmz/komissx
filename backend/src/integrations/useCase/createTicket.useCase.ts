@@ -48,11 +48,16 @@ export class CreateTicketUseCase {
     const numeroOrdem = payload.body.numero_ordem_servico;
     const idClienteServico = payload.body.id_cliente_servico;
     const hostDetectado = resolveOrdemServicoHost(numeroOrdem);
-    // variavel para adicioanr o id da ingrid da amazonet, que é o usuario que vai abrir o ticket no hubsoft.
     const idUsuarioAbertura = payload.body.id_usuario_abertura;
+    const usuarioIngrid = 2166;
+    const ehIngrid = idUsuarioAbertura === usuarioIngrid;
 
-    //@Raposito
-    //camadinha de segurança para evitar que tickets sejam criados em hosts errados (quase impossivel de acontecer, mas é bom ter)
+    this.logger.log(
+      ehIngrid
+        ? `Ticket — INGRID ${usuarioIngrid} — OS ${numeroOrdem} — cliente ${idClienteServico} (${host})`
+        : `Ticket — usuário ${idUsuarioAbertura ?? "n/a"} — OS ${numeroOrdem} — cliente ${idClienteServico} (${host})`,
+    );
+
     if (hostDetectado && hostDetectado !== host) {
       logTicketIgnorado(
         this.logger,
@@ -65,18 +70,13 @@ export class CreateTicketUseCase {
       return null;
     }
 
-    // Teste temporário:
-    // somente a usuária 2166 pode gerar tickets de auditoria na Amazonet.
-    // A Mania permanece com o fluxo normal.
-    const usuarioTeste = 2166;
-
-    if (host === Host.AMAZONET && idUsuarioAbertura !== usuarioTeste) {
+    if (host === Host.AMAZONET && idUsuarioAbertura !== usuarioIngrid) {
       logTicketIgnorado(
         this.logger,
         idClienteServico,
         numeroOrdem,
         host,
-        `usuário ${idUsuarioAbertura ?? "n/a"} não é o usuário de teste ${usuarioTeste}`,
+        `usuário ${idUsuarioAbertura ?? "n/a"} não é o usuário de teste ${usuarioIngrid}`,
       );
 
       return null;
