@@ -28,6 +28,30 @@ export function ModuloHierarquia() {
   );
 
   const totalRegistros = useMemo(() => contarNos(tree), [tree]);
+  const caminhoHighlight = highlightId
+    ? encontrarCaminho(tree, highlightId)
+    : null;
+
+  if (caminhoHighlight) {
+    if (highlightId !== selecionadoId) {
+      setSelecionadoId(highlightId);
+    }
+
+    const precisaExpandir = caminhoHighlight.some(
+      (nodeId) => abertos[nodeId] !== true,
+    );
+
+    if (precisaExpandir) {
+      setAbertos((atual) => {
+        const proximos = { ...atual };
+        caminhoHighlight.forEach((nodeId) => {
+          proximos[nodeId] = true;
+        });
+        return proximos;
+      });
+    }
+  }
+
   const selecionado = encontrarNo(tree, selecionadoId);
 
   useEffect(() => {
@@ -39,15 +63,6 @@ export function ModuloHierarquia() {
     if (!caminho) {
       return;
     }
-
-    setSelecionadoId(highlightId);
-    setAbertos((atual) => {
-      const proximos = { ...atual };
-      caminho.forEach((nodeId) => {
-        proximos[nodeId] = true;
-      });
-      return proximos;
-    });
 
     const timeoutId = setTimeout(() => {
       clearHighlight();

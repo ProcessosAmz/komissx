@@ -11,7 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createUserSchema, type CreateUserFormData } from "@/utils/validators/user";
+import {
+  createUserSchema,
+  type CreateUserFormData,
+  type CreateUserFormInput,
+} from "@/utils/validators/user";
 import { useCreateUser } from "@/hooks/useCreateUser";
 import { useEmpresas } from "@/hooks/useEmpresa";
 import { useUnidades } from "@/hooks/useUnidade";
@@ -48,7 +52,7 @@ function hierarquiaHint(roleName: string, creatingSupervisor: boolean, creatingL
     case creatingLider:
       return "O líder responde a um supervisor.";
     default:
-      return "Este cargo responde a um líder.";
+      return "Este cargo responde a um líder ou diretamente a um supervisor.";
   }
 }
 
@@ -66,7 +70,7 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
     setValue,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<CreateUserFormData>({
+  } = useForm<CreateUserFormInput, unknown, CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       name: "",
@@ -94,14 +98,14 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
   const creatingSupervisor = isSupervisorRole(selectedRoleName);
   const creatingLider = isLiderRole(selectedRoleName);
   const showResponsavel = Boolean(selectedRoleName) && !creatingSupervisor;
-  const responsavelLabel = creatingLider ? "Supervisor" : "Líder";
+  const responsavelLabel = creatingLider ? "Supervisor" : "Líder ou supervisor";
 
   const colaboradores = flattenUsers(usersResponse?.data ?? []);
   const supervisores = colaboradores.filter((user) =>
     isSupervisorRole(user.roleName),
   );
   const lideres = colaboradores.filter((user) => isLiderRole(user.roleName));
-  const responsaveis = creatingLider ? supervisores : lideres;
+  const responsaveis = creatingLider ? supervisores : [...supervisores, ...lideres];
 
   useEffect(() => {
     setValue("supervisorId", null);
@@ -280,7 +284,7 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
                   <p className="text-[11px] text-amber-400">
                     {creatingLider
                       ? "Cadastre um supervisor antes de criar um líder."
-                      : "Cadastre um líder antes de criar este cargo."}
+                      : "Cadastre um líder ou um supervisor antes de criar este cargo."}
                   </p>
                 ) : null}
                 {errors.supervisorId && (

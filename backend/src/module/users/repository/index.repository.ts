@@ -51,7 +51,7 @@ export class UsersRepository {
 
   async countBySupervisorId(supervisorId: string): Promise<number> {
     return this.ormRepository.count({
-      where: { supervisorId },
+      where: { supervisorId, active: true },
     });
   }
 

@@ -29,7 +29,8 @@ export const createUserSchema = z.object({
   active: z.boolean().optional().default(true),
 });
 
-export type CreateUserFormData = z.infer<typeof createUserSchema>;
+export type CreateUserFormInput = z.input<typeof createUserSchema>;
+export type CreateUserFormData = z.output<typeof createUserSchema>;
 
 export const updateUserSchema = createUserSchema.omit({ password: true }).extend({
   password: z

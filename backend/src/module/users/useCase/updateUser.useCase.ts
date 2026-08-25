@@ -160,7 +160,7 @@ export class UpdateUserUseCase {
             throw new BadRequestException(
                 isLiderRole(nextRoleName)
                     ? "Informe o supervisor."
-                    : "Informe o líder.",
+                    : "Informe o líder ou o supervisor.",
             );
         }
 
@@ -180,8 +180,14 @@ export class UpdateUserUseCase {
             throw new BadRequestException("O líder deve responder a um supervisor.");
         }
 
-        if (!isLiderRole(nextRoleName) && !isLiderRole(parentRoleName)) {
-            throw new BadRequestException("Este cargo deve responder a um líder.");
+        if (
+            !isLiderRole(nextRoleName) &&
+            !isLiderRole(parentRoleName) &&
+            !isSupervisorRole(parentRoleName)
+        ) {
+            throw new BadRequestException(
+                "Este cargo deve responder a um líder ou a um supervisor.",
+            );
         }
 
         const createsCycle = await this.wouldCreateCycle(userId, nextSupervisorId);

@@ -86,7 +86,7 @@ export function FormularioColaborador({
   const editingSupervisor = isSupervisorRole(selectedRoleName);
   const editingLider = isLiderRole(selectedRoleName);
   const showResponsavel = Boolean(selectedRoleName) && !editingSupervisor;
-  const responsavelLabel = editingLider ? "Supervisor" : "Líder";
+  const responsavelLabel = editingLider ? "Supervisor" : "Líder ou supervisor";
 
   const blockedIds = new Set([
     selecionado.id,
@@ -99,7 +99,7 @@ export function FormularioColaborador({
     isSupervisorRole(user.roleName),
   );
   const lideres = colaboradores.filter((user) => isLiderRole(user.roleName));
-  const responsaveis = editingLider ? supervisores : lideres;
+  const responsaveis = editingLider ? supervisores : [...supervisores, ...lideres];
 
   const onSubmit = async (data: UpdateUserFormData) => {
     if (readOnly) {

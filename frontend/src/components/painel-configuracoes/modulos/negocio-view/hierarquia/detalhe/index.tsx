@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { ArrowRightLeft, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { HierarquiaNode } from "@/types/cargo";
 import { cargoBadgeClass, getIniciais } from "@/utils/hierarquia";
 import { VincularLideres } from "./vincularLider";
 import { FormularioColaborador } from "./formulario";
+import { MoverUsuarioDialog } from "./moverUsuarioDialog";
 
 const TEXTO_CONFIRMACAO_EXCLUSAO = "desejo excluir o usuario";
 
@@ -35,12 +36,16 @@ export function DetalheColaborador({
   const isAdmin = user?.role === "ADMIN";
   const deleteUser = useDeleteUser();
   const [confirmacaoAberta, setConfirmacaoAberta] = useState(false);
+  const [moverAberto, setMoverAberto] = useState(false);
   const [textoConfirmacao, setTextoConfirmacao] = useState("");
 
   const lideresVinculados =
     selecionado?.cargo === "SUPERVISOR"
       ? (selecionado.children ?? []).filter((filho) => filho.cargo === "LIDER")
       : [];
+
+  const podeMover =
+    Boolean(selecionado) && selecionado?.cargo !== "SUPERVISOR" && isAdmin;
 
   const confirmacaoValida =
     textoConfirmacao.trim().toLowerCase() === TEXTO_CONFIRMACAO_EXCLUSAO;
@@ -103,15 +108,28 @@ export function DetalheColaborador({
               </div>
 
               {isAdmin ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
-                  onClick={handleAbrirConfirmacao}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Remover
-                </Button>
+                <div className="flex items-center gap-1 shrink-0">
+                  {podeMover ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 gap-1.5"
+                      onClick={() => setMoverAberto(true)}
+                    >
+                      <ArrowRightLeft className="h-3.5 w-3.5" />
+                      Mover
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
+                    onClick={handleAbrirConfirmacao}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remover
+                  </Button>
+                </div>
               ) : null}
             </div>
 
@@ -121,8 +139,18 @@ export function DetalheColaborador({
             />
 
             {selecionado.cargo === "SUPERVISOR" ? (
-              <VincularLideres lideres={lideresVinculados} />
+              <VincularLideres
+                supervisorId={selecionado.id}
+                lideres={lideresVinculados}
+                readOnly={!isAdmin}
+              />
             ) : null}
+
+            <MoverUsuarioDialog
+              aberto={moverAberto}
+              usuario={selecionado}
+              onAbertoChange={setMoverAberto}
+            />
 
             <Dialog open={confirmacaoAberta} onOpenChange={handleFecharConfirmacao}>
               <DialogContent className="bg-[#090d16] border-slate-800 text-slate-100 sm:max-w-md">
