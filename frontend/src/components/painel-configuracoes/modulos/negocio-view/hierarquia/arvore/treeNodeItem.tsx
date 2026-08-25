@@ -40,7 +40,16 @@ export function TreeNodeItem({
   }, [destaque]);
 
   return (
-    <div className="w-full">
+    <motion.div
+      className="w-full"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.22,
+        ease: [0.22, 1, 0.36, 1],
+        delay: Math.min(profundidade * 0.04, 0.16),
+      }}
+    >
       <button
         ref={itemRef}
         type="button"
@@ -117,6 +126,6 @@ export function TreeNodeItem({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
