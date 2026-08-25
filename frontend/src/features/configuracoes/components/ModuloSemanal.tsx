@@ -1,7 +1,17 @@
 import { useState } from "react";
-import { Check, Edit2, Plus, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Copy, Edit2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCommissionRules,
   useMutateCommissionRules,
@@ -19,8 +29,49 @@ const EVENTO: Record<CategoriaTabela, CommissionRuleApi["evento"]> = {
   autonomos: "sale",
 };
 
+const CATEGORIA_UI: Record<
+  CategoriaTabela,
+  {
+    titulo: string;
+    coluna: string;
+    botao: string;
+    campoNome: string;
+    tituloCriar: string;
+    tituloEditar: string;
+  }
+> = {
+  tecnicos: {
+    titulo: "Técnicos terceirizados",
+    coluna: "Nome do técnico",
+    botao: "Adicionar técnico",
+    campoNome: "Nome do técnico",
+    tituloCriar: "Adicionar técnico",
+    tituloEditar: "Editar técnico",
+  },
+  retirada: {
+    titulo: "Retirada",
+    coluna: "UF",
+    botao: "Adicionar UF",
+    campoNome: "UF",
+    tituloCriar: "Adicionar UF",
+    tituloEditar: "Editar UF",
+  },
+  autonomos: {
+    titulo: "Exceções de autônomos",
+    coluna: "Nome do autônomo",
+    botao: "Adicionar autônomo",
+    campoNome: "Nome do autônomo",
+    tituloCriar: "Adicionar autônomo",
+    tituloEditar: "Editar autônomo",
+  },
+};
+
 function toNumber(valor: number | string | null): number {
   return Number(valor ?? 0);
+}
+
+function fraseExclusao(nome: string): string {
+  return `DELETAR ${nome}`;
 }
 
 function regrasDaCategoria(
@@ -40,220 +91,264 @@ function regrasDaCategoria(
   });
 }
 
+function TabelaSkeleton() {
+  return (
+    <div className="bg-[#05080f] rounded-xl border border-slate-800 overflow-hidden">
+      <div className="px-4 py-3 bg-[#090d16] border-b border-slate-800 flex justify-between">
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-9 w-40 rounded-xl" />
+      </div>
+      <div className="px-4 py-3 space-y-3">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-5/6" />
+        <Skeleton className="h-3 w-4/6" />
+      </div>
+    </div>
+  );
+}
+
+function ModuloSemanalSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-44" />
+        <Skeleton className="h-3 w-64" />
+      </div>
+      <TabelaSkeleton />
+      <TabelaSkeleton />
+      <Skeleton className="h-20 w-full rounded-xl" />
+      <TabelaSkeleton />
+    </div>
+  );
+}
+
+type DialogFormulario =
+  | {
+      tipo: "criar";
+      categoria: CategoriaTabela;
+    }
+  | {
+      tipo: "editar";
+      categoria: CategoriaTabela;
+      regraId: number;
+    }
+  | {
+      tipo: "padrao";
+      regraId: number;
+    }
+  | {
+      tipo: "excluir";
+      regraId: number;
+      nome: string;
+    };
+
 export function ModuloSemanal() {
   const { data: rules = [], isLoading, isError } = useCommissionRules();
   const { create, update, remove } = useMutateCommissionRules();
-  const [novosCampos, setNovosCampos] = useState({
-    tecnicos: { nome: "", valor: "" },
-    retirada: { nome: "", valor: "" },
-    autonomos: { nome: "", valor: "" },
-  });
-  const [editandoId, setEditandoId] = useState<number | null>(null);
-  const [valoresEdicao, setValoresEdicao] = useState({ nome: "", valor: "" });
-  const [valorPadrao, setValorPadrao] = useState("");
+  const [dialog, setDialog] = useState<DialogFormulario | null>(null);
+  const [formulario, setFormulario] = useState({ nome: "", valor: "" });
+  const [confirmacaoExclusao, setConfirmacaoExclusao] = useState("");
 
   const padrao = rules.find(
     (regra) =>
       regra.evento === "sale" && (regra.filters ?? "").toUpperCase() === "PADRAO",
   );
 
-  const adicionarItem = (categoria: CategoriaTabela) => {
-    const campos = novosCampos[categoria];
-    if (!campos.nome.trim() || campos.valor === "") {
+  const fecharDialog = () => {
+    setDialog(null);
+    setFormulario({ nome: "", valor: "" });
+    setConfirmacaoExclusao("");
+  };
+
+  const abrirCriar = (categoria: CategoriaTabela) => {
+    setFormulario({ nome: "", valor: "" });
+    setDialog({ tipo: "criar", categoria });
+  };
+
+  const abrirEditar = (categoria: CategoriaTabela, regra: CommissionRuleApi) => {
+    setFormulario({
+      nome: regra.nome,
+      valor: String(toNumber(regra.valor)),
+    });
+    setDialog({ tipo: "editar", categoria, regraId: regra.id });
+  };
+
+  const abrirExcluir = (regra: CommissionRuleApi) => {
+    setConfirmacaoExclusao("");
+    setDialog({ tipo: "excluir", regraId: regra.id, nome: regra.nome });
+  };
+
+  const abrirPadrao = () => {
+    if (!padrao) {
       return;
     }
 
-    create.mutate({
-      nome: campos.nome.trim(),
-      evento: EVENTO[categoria],
-      valor: Number(campos.valor),
+    setFormulario({
+      nome: padrao.nome,
+      valor: String(toNumber(padrao.valor)),
     });
-    setNovosCampos((atual) => ({
-      ...atual,
-      [categoria]: { nome: "", valor: "" },
-    }));
+    setDialog({ tipo: "padrao", regraId: padrao.id });
   };
 
-  const salvarEdicao = (id: number) => {
-    if (!valoresEdicao.nome.trim() || valoresEdicao.valor === "") {
+  const salvarDialog = () => {
+    if (dialog?.tipo === "excluir") {
+      if (confirmacaoExclusao !== fraseExclusao(dialog.nome)) {
+        return;
+      }
+
+      remove.mutate(dialog.regraId);
+      fecharDialog();
       return;
     }
 
-    update.mutate({
-      id,
-      payload: {
-        nome: valoresEdicao.nome.trim(),
-        valor: Number(valoresEdicao.valor),
-      },
-    });
-    setEditandoId(null);
-  };
-
-  const salvarPadrao = () => {
-    if (!padrao || valorPadrao === "") {
+    if (formulario.valor === "") {
       return;
     }
 
-    update.mutate({
-      id: padrao.id,
-      payload: { valor: Number(valorPadrao) },
-    });
+    if (dialog?.tipo === "criar") {
+      if (!formulario.nome.trim()) {
+        return;
+      }
+
+      create.mutate({
+        nome: formulario.nome.trim(),
+        evento: EVENTO[dialog.categoria],
+        valor: Number(formulario.valor),
+      });
+      fecharDialog();
+      return;
+    }
+
+    if (dialog?.tipo === "editar") {
+      if (!formulario.nome.trim()) {
+        return;
+      }
+
+      update.mutate({
+        id: dialog.regraId,
+        payload: {
+          nome: formulario.nome.trim(),
+          valor: Number(formulario.valor),
+        },
+      });
+      fecharDialog();
+      return;
+    }
+
+    if (dialog?.tipo === "padrao") {
+      update.mutate({
+        id: dialog.regraId,
+        payload: { valor: Number(formulario.valor) },
+      });
+      fecharDialog();
+    }
   };
 
-  const renderTabela = (
-    titulo: string,
-    categoria: CategoriaTabela,
-    labelColuna: string,
-  ) => {
+  const tituloDialog =
+    dialog?.tipo === "padrao"
+      ? "Atualizar valor padrão"
+      : dialog?.tipo === "excluir"
+        ? "Confirmar exclusão"
+        : dialog
+          ? dialog.tipo === "criar"
+            ? CATEGORIA_UI[dialog.categoria].tituloCriar
+            : CATEGORIA_UI[dialog.categoria].tituloEditar
+          : "";
+
+  const labelNome =
+    dialog && dialog.tipo !== "padrao" && dialog.tipo !== "excluir"
+      ? CATEGORIA_UI[dialog.categoria].campoNome
+      : "";
+
+  const fraseAtual =
+    dialog?.tipo === "excluir" ? fraseExclusao(dialog.nome) : "";
+  const podeExcluir =
+    dialog?.tipo === "excluir" && confirmacaoExclusao === fraseAtual;
+
+  const copiarFrase = () => {
+    void navigator.clipboard.writeText(fraseAtual);
+  };
+
+  const renderTabela = (categoria: CategoriaTabela, delay: number) => {
     const lista = regrasDaCategoria(rules, categoria);
+    const ui = CATEGORIA_UI[categoria];
 
     return (
-      <div className="bg-[#05080f] rounded-xl border border-slate-800 overflow-hidden">
-        <div className="px-4 py-3 bg-[#090d16] border-b border-slate-800">
-          <h4 className="text-sm font-semibold text-slate-200">{titulo}</h4>
-        </div>
-
-        <div className="p-3 bg-[#03060b] border-b border-slate-800/60 flex gap-2">
-          <Input
-            placeholder={`Novo ${labelColuna.toLowerCase()}`}
-            value={novosCampos[categoria].nome}
-            onChange={(evento) =>
-              setNovosCampos((atual) => ({
-                ...atual,
-                [categoria]: { ...atual[categoria], nome: evento.target.value },
-              }))
-            }
-            className={inputClassName}
-          />
-          <Input
-            type="number"
-            placeholder="R$"
-            value={novosCampos[categoria].valor}
-            onChange={(evento) =>
-              setNovosCampos((atual) => ({
-                ...atual,
-                [categoria]: { ...atual[categoria], valor: evento.target.value },
-              }))
-            }
-            className={`${inputClassName} w-24`}
-          />
-          <Button
-            type="button"
-            className="h-9 bg-indigo-600 hover:bg-indigo-500"
-            onClick={() => adicionarItem(categoria)}
-            disabled={create.isPending}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className="divide-y divide-slate-800/40 px-4">
-          <div className="grid grid-cols-12 py-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-            <div className="col-span-6">{labelColuna}</div>
-            <div className="col-span-3 text-right">Valor</div>
-            <div className="col-span-3 text-center">Ações</div>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay }}
+      >
+        <div className="bg-[#05080f] rounded-xl border border-slate-800 overflow-hidden">
+          <div className="px-4 py-3 bg-[#090d16] border-b border-slate-800 flex items-center justify-between gap-3">
+            <h4 className="text-sm font-semibold text-slate-200">{ui.titulo}</h4>
+            <Button
+              type="button"
+              className="h-9 bg-indigo-600 hover:bg-indigo-500"
+              onClick={() => abrirCriar(categoria)}
+            >
+              <Plus className="h-4 w-4" />
+              {ui.botao}
+            </Button>
           </div>
 
-          {lista.length === 0 ? (
-            <p className="text-slate-600 py-4 text-center text-xs">
-              Nenhum valor configurado.
-            </p>
-          ) : (
-            lista.map((regra) => {
-              const estaEditando = editandoId === regra.id;
+          <div className="divide-y divide-slate-800/40 px-4">
+            <div className="grid grid-cols-12 py-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+              <div className="col-span-6">{ui.coluna}</div>
+              <div className="col-span-3 text-right">Valor</div>
+              <div className="col-span-3 text-center">Ações</div>
+            </div>
 
-              return (
-                <div
-                  key={regra.id}
-                  className="grid grid-cols-12 py-2.5 items-center gap-1 text-xs"
-                >
-                  {estaEditando ? (
-                    <>
-                      <div className="col-span-6 pr-2">
-                        <Input
-                          value={valoresEdicao.nome}
-                          onChange={(evento) =>
-                            setValoresEdicao((atual) => ({
-                              ...atual,
-                              nome: evento.target.value,
-                            }))
-                          }
-                          className={inputClassName}
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <Input
-                          type="number"
-                          value={valoresEdicao.valor}
-                          onChange={(evento) =>
-                            setValoresEdicao((atual) => ({
-                              ...atual,
-                              valor: evento.target.value,
-                            }))
-                          }
-                          className={`${inputClassName} text-right`}
-                        />
-                      </div>
-                      <div className="col-span-3 flex justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => salvarEdicao(regra.id)}
-                          className="text-emerald-400 p-1 rounded bg-emerald-500/10"
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditandoId(null)}
-                          className="text-slate-400 text-[10px]"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="col-span-6 text-slate-300 truncate">
-                        {regra.nome}
-                      </div>
-                      <div className="col-span-3 text-right text-emerald-400 font-semibold">
-                        R$ {toNumber(regra.valor).toFixed(2)}
-                      </div>
-                      <div className="col-span-3 flex justify-center gap-4">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditandoId(regra.id);
-                            setValoresEdicao({
-                              nome: regra.nome,
-                              valor: String(toNumber(regra.valor)),
-                            });
-                          }}
-                          className="text-slate-400 hover:text-indigo-400"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => remove.mutate(regra.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })
-          )}
+            {lista.length === 0 ? (
+              <p className="text-slate-600 py-4 text-center text-xs">
+                Nenhum valor configurado.
+              </p>
+            ) : (
+              <AnimatePresence initial={false}>
+                {lista.map((regra) => (
+                  <motion.div
+                    key={regra.id}
+                    layout
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="grid grid-cols-12 py-2.5 items-center gap-1 text-xs rounded-lg hover:bg-slate-800/40 transition-colors"
+                  >
+                    <div className="col-span-6 text-slate-300 truncate">
+                      {regra.nome}
+                    </div>
+                    <div className="col-span-3 text-right text-emerald-400 font-semibold">
+                      R$ {toNumber(regra.valor).toFixed(2)}
+                    </div>
+                    <div className="col-span-3 flex justify-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => abrirEditar(categoria, regra)}
+                        className="text-slate-400 hover:text-indigo-400 transition-colors"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => abrirExcluir(regra)}
+                        className="text-red-400 hover:text-red-300 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
   if (isLoading) {
-    return <p className="text-sm text-slate-500">Carregando comissões...</p>;
+    return <ModuloSemanalSkeleton />;
   }
 
   if (isError) {
@@ -266,45 +361,158 @@ export function ModuloSemanal() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      >
         <h3 className="text-base font-semibold text-slate-200">
           Relatório semanal
         </h3>
         <p className="text-xs text-slate-500">
-          Valores de GET /commissions/rules.
+          Controle de comissões semanal para os diferentes módulos de negócios.
         </p>
-      </div>
+      </motion.div>
 
-      {renderTabela("Técnicos terceirizados", "tecnicos", "Alias")}
-      {renderTabela("Retirada", "retirada", "UF")}
+      {renderTabela("tecnicos", 0.05)}
+      {renderTabela("retirada", 0.1)}
 
-      <div className="bg-[#05080f] rounded-xl border border-slate-800 p-4 flex justify-between items-center gap-3">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+        className="bg-[#05080f] rounded-xl border border-slate-800 p-4 flex justify-between items-center gap-3"
+      >
         <div>
           <span className="text-sm font-semibold text-slate-200 block">
             Autônomos
           </span>
           <span className="text-xs text-slate-500">Valor padrão por venda</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-emerald-400 font-semibold">R$</span>
-          <Input
-            type="number"
-            defaultValue={padrao ? toNumber(padrao.valor) : 0}
-            onChange={(evento) => setValorPadrao(evento.target.value)}
-            className={`${inputClassName} w-20 text-center text-emerald-400`}
-          />
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-emerald-400 font-semibold">
+            R$ {padrao ? toNumber(padrao.valor).toFixed(2) : "0.00"}
+          </span>
           <Button
             type="button"
             className="h-9 bg-indigo-600 hover:bg-indigo-500"
-            onClick={salvarPadrao}
-            disabled={!padrao || update.isPending}
+            onClick={abrirPadrao}
+            disabled={!padrao}
           >
-            Salvar
+            Editar
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      {renderTabela("Exceções de autônomos", "autonomos", "Nome")}
+      {renderTabela("autonomos", 0.2)}
+
+      <Dialog
+        open={dialog !== null}
+        onOpenChange={(aberto) => !aberto && fecharDialog()}
+      >
+        <DialogContent className="bg-[#090d16] border-slate-800 text-slate-100 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{tituloDialog}</DialogTitle>
+            <DialogDescription className="text-slate-500">
+              {dialog?.tipo === "excluir"
+                ? "Copie a mensagem abaixo e cole no campo para confirmar a exclusão."
+                : "Informe os dados e confirme para salvar no catálogo de comissões."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {dialog?.tipo === "excluir" ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-800 bg-[#05080f] px-3 py-2">
+                <code className="text-xs text-red-300 break-all">
+                  {fraseAtual}
+                </code>
+                <button
+                  type="button"
+                  onClick={copiarFrase}
+                  className="text-slate-400 hover:text-slate-200 shrink-0"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400">
+                  Cole a mensagem aqui
+                </label>
+                <Input
+                  value={confirmacaoExclusao}
+                  onChange={(evento) =>
+                    setConfirmacaoExclusao(evento.target.value)
+                  }
+                  placeholder={fraseAtual}
+                  className={inputClassName}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {dialog?.tipo !== "padrao" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-slate-400">{labelNome}</label>
+                  <Input
+                    value={formulario.nome}
+                    onChange={(evento) =>
+                      setFormulario((atual) => ({
+                        ...atual,
+                        nome: evento.target.value,
+                      }))
+                    }
+                    className={inputClassName}
+                  />
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-400">Valor (R$)</label>
+                <Input
+                  type="number"
+                  value={formulario.valor}
+                  onChange={(evento) =>
+                    setFormulario((atual) => ({
+                      ...atual,
+                      valor: evento.target.value,
+                    }))
+                  }
+                  className={inputClassName}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-slate-700 bg-transparent text-slate-300"
+              onClick={fecharDialog}
+            >
+              Cancelar
+            </Button>
+            {dialog?.tipo === "excluir" ? (
+              <Button
+                type="button"
+                className="bg-red-600 hover:bg-red-500"
+                onClick={salvarDialog}
+                disabled={!podeExcluir || remove.isPending}
+              >
+                Excluir
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="bg-indigo-600 hover:bg-indigo-500"
+                onClick={salvarDialog}
+                disabled={create.isPending || update.isPending}
+              >
+                Salvar
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
