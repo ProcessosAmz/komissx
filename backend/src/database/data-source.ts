@@ -12,6 +12,7 @@ import { UserRole } from "@/module/users/entities/userRole.entity";
 import { Users } from "@/module/users/entities/users.entity";
 import { config } from "dotenv";
 import { DataSource } from "typeorm";
+import { CommissionRule } from "@/module/commissions/entities/comissionRule.entity";
 
 config({ path: ".env" });
 
@@ -37,6 +38,7 @@ export default new DataSource({
     RolePermission,
     BetterAuthUser,
     BetterAuthAccount,
+    CommissionRule,
   ],
   migrations: ["src/migrations/*.ts"],
 });

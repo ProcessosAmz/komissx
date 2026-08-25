@@ -4,7 +4,6 @@ import {
   Users, 
   Wrench, 
   FileSpreadsheet, 
-  Sliders, 
   ArrowRight, 
   ShieldAlert, 
   TrendingUp, 

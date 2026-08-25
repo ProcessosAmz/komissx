@@ -1,9 +1,13 @@
-import { Module } from '@nestjs/common';
-import { CommissionsService } from '@/module/commissions/service/index.service';
-import { CommissionsController } from '@/module/commissions/controller/index.controller';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { CommissionsController } from "@/module/commissions/controller/index.controller";
+import { CommissionRule } from "@/module/commissions/entities/comissionRule.entity";
+import { CommissionRulesRepository } from "@/module/commissions/repository/index.repository";
+import { ListCommissionRulesUseCase } from "@/module/commissions/useCase";
 
 @Module({
+  imports: [TypeOrmModule.forFeature([CommissionRule])],
   controllers: [CommissionsController],
-  providers: [CommissionsService],
+  providers: [CommissionRulesRepository, ListCommissionRulesUseCase],
 })
 export class CommissionsModule {}

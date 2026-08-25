@@ -1,5 +1,5 @@
-// features/fechamentos/services/ConfigService.ts
-import { RuleEngineConfig } from '../types';
+import { CommissionRulesService, mapRulesToSemanal } from "@/service/commissionRulesService";
+import { RuleEngineConfig } from "@/pages/Fechamentos/types";
 
 export class ConfigService {
   private static instance: ConfigService;
@@ -14,16 +14,31 @@ export class ConfigService {
     return ConfigService.instance;
   }
 
-  public async loadConfigurations(): Promise<RuleEngineConfig> {
-    if (this.cachedConfig) return this.cachedConfig;
+  public clearCache() {
+    this.cachedConfig = null;
+  }
 
-    try {
-      // Atualmente lendo do Mock local, amanhã substituído por: fetch('/api/v1/rules')
-      const response = await import('@/data/rules.json');
-      this.cachedConfig = response.default as unknown as RuleEngineConfig;
+  public async loadConfigurations(): Promise<RuleEngineConfig> {
+    if (this.cachedConfig) {
       return this.cachedConfig;
-    } catch (error) {
-      throw new Error("Erro catastrófico ao carregar o Motor de Regras (RuleEngine)");
     }
+
+    const local = (await import("@/data/rules.json")).default as unknown as RuleEngineConfig;
+    const rules = await CommissionRulesService.findAll();
+    const semanal = mapRulesToSemanal(rules.data);
+
+    this.cachedConfig = {
+      ...local,
+      fechamento_semanal: {
+        tecnicos_terceirizados: semanal.tecnicosTerceirizados,
+        retirada_estado: semanal.retiradaEstado,
+        autonomos: {
+          valor_padrao: semanal.autonomos.valorPadrao,
+          excecoes: semanal.autonomos.excecoes,
+        },
+      },
+    };
+
+    return this.cachedConfig;
   }
 }

@@ -12,6 +12,7 @@ import { UsersModule } from "@/module/users/index.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { CommissionsModule } from "@/module/commissions/index.module";
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
     LoggerModule,
     RedisModule,
     HealthModule,
+    CommissionsModule,
   ],
 })
 export class AppModule {}

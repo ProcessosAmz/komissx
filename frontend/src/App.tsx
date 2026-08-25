@@ -22,6 +22,7 @@ import { GuestRoute } from "@/guards/guestRoute.tsx";
 import { PermissionRoute } from "@/guards/permissionRoute.tsx";
 import { PrivateRoute } from "@/guards/privateRoute.tsx";
 import { RootRedirect } from "@/guards/rootRedirect.tsx";
+import RelatorioSemanal from "@/pages/Fechamentos/relatorioSemana.tsx";
 
 export default function App() {
   return (
@@ -64,11 +65,10 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route element={<PermissionRoute modulo="configuracoes" />}>
-              <Route path="configuracoes" element={<PainelConfiguracoes />}>
-                <Route index element={<Equipes />} />
-                <Route path="equipes" element={<Equipes />} />
-              </Route>
+            <Route path="configuracoes" element={<PainelConfiguracoes />}>
+              <Route index element={<Equipes />} />
+              <Route path="equipes" element={<Equipes />} />
+              <Route path="semanal" element={<RelatorioSemanal />} />
             </Route>
           </Route>
         </Route>

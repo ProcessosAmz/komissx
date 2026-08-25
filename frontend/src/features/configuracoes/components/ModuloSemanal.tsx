@@ -1,314 +1,336 @@
-// src/features/configuracoes/components/ModuloSemanal.tsx
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Check } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { Check, Edit2, Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import { useCommissionRules } from "@/hooks/useCommissionRules";
+import type { FechamentoSemanalValores } from "@/service/commissionRulesService";
 
-interface ModuloSemanalProps {
-  dados: any;
-  onSalvar: (novosDados: any) => void;
-}
+const inputClassName =
+  "h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs text-slate-100";
 
-export function ModuloSemanal({ dados, onSalvar }: ModuloSemanalProps) {
-  // Estados para gerenciar as 3 seções do JSON
-  const [tecnicos, setTecnicos] = useState<Record<string, number>>({});
-  const [retirada, setRetirada] = useState<Record<string, number>>({});
-  const [autonomoPadrao, setAutonomoPadrao] = useState<number>(0);
-  const [autonomoExcecoes, setAutonomoExcecoes] = useState<Record<string, number>>({});
+const VALORES_VAZIOS: FechamentoSemanalValores = {
+  tecnicosTerceirizados: {},
+  retiradaEstado: {},
+  autonomos: { valorPadrao: 0, excecoes: {} },
+};
 
-  // Estado para a mensagem de feedback do salvamento
-  const [notificacao, setNotificacao] = useState<{ mensagem: string; erro: boolean } | null>(null);
+type CategoriaTabela = "tecnicos" | "retirada" | "autonomos";
 
-  // Monitora o carregamento e mudanças da prop 'dados' vinda do JSON externo
-  useEffect(() => {
-    if (dados?.fechamento_semanal) {
-      const f = dados.fechamento_semanal;
-      setTecnicos(f.tecnicos_terceirizados || {});
-      setRetirada(f.retirada_estado || {});
-      setAutonomoPadrao(f.autonomos?.valor_padrao || 0);
-      setAutonomoExcecoes(f.autonomos?.excecoes || {});
-    }
-  }, [dados]);
-
-  // Controle de Edição de Itens Existentes (Permite alterar o Nome/Estado e o Valor simultaneamente)
-  const [editando, setEditando] = useState<{ categoria: string; chaveOriginal: string } | null>(null);
-  const [valoresEdicao, setValoresEdicao] = useState({ nome: '', valor: '' });
-
-  // Inputs para Novos Cadastros
+export function ModuloSemanal() {
+  const { data, isLoading, isError } = useCommissionRules();
+  const [valores, setValores] = useState<FechamentoSemanalValores>(VALORES_VAZIOS);
   const [novosCampos, setNovosCampos] = useState({
-    tecnicos: { nome: '', valor: '' },
-    retirada: { nome: '', valor: '' },
-    autonomos: { nome: '', valor: '' },
+    tecnicos: { nome: "", valor: "" },
+    retirada: { nome: "", valor: "" },
+    autonomos: { nome: "", valor: "" },
   });
+  const [editando, setEditando] = useState<{
+    categoria: CategoriaTabela;
+    chaveOriginal: string;
+  } | null>(null);
+  const [valoresEdicao, setValoresEdicao] = useState({ nome: "", valor: "" });
 
-  // --- Adicionar Novo Item ---
-  const adicionarItem = (categoria: 'tecnicos' | 'retirada' | 'autonomos') => {
-    const inputs = novosCampos[categoria];
-    if (!inputs.nome || !inputs.valor) return;
-
-    const chave = inputs.nome.toUpperCase().trim();
-    const valorNum = Number(inputs.valor);
-
-    if (categoria === 'tecnicos') setTecnicos(prev => ({ ...prev, [chave]: valorNum }));
-    if (categoria === 'retirada') setRetirada(prev => ({ ...prev, [chave]: valorNum }));
-    if (categoria === 'autonomos') setAutonomoExcecoes(prev => ({ ...prev, [chave]: valorNum }));
-
-    setNovosCampos(prev => ({ ...prev, [categoria]: { nome: '', valor: '' } }));
-  };
-
-  // --- Remover Item ---
-  const removerItem = (categoria: 'tecnicos' | 'retirada' | 'autonomos', nome: string) => {
-    if (categoria === 'tecnicos') {
-      setTecnicos(prev => { const c = { ...prev }; delete c[nome]; return c; });
-    } else if (categoria === 'retirada') {
-      setRetirada(prev => { const c = { ...prev }; delete c[nome]; return c; });
-    } else if (categoria === 'autonomos') {
-      setAutonomoExcecoes(prev => { const c = { ...prev }; delete c[nome]; return c; });
+  useEffect(() => {
+    if (!data) {
+      return;
     }
-    if (editando?.chaveOriginal === nome && editando?.categoria === categoria) setEditando(null);
+
+    setValores(data);
+  }, [data]);
+
+  const mapaPorCategoria: Record<CategoriaTabela, Record<string, number>> = {
+    tecnicos: valores.tecnicosTerceirizados,
+    retirada: valores.retiradaEstado,
+    autonomos: valores.autonomos.excecoes,
   };
 
-  // --- Salvar Alteração do Item em Edição (Atualiza chave e valor) ---
-  const salvarEdicao = (categoria: 'tecnicos' | 'retirada' | 'autonomos') => {
-    if (!valoresEdicao.nome || !valoresEdicao.valor || !editando) return;
+  const atualizarMapa = (
+    categoria: CategoriaTabela,
+    proximo: Record<string, number>,
+  ) => {
+    setValores((atual) => {
+      switch (categoria) {
+        case "tecnicos":
+          return { ...atual, tecnicosTerceirizados: proximo };
+        case "retirada":
+          return { ...atual, retiradaEstado: proximo };
+        default:
+          return {
+            ...atual,
+            autonomos: { ...atual.autonomos, excecoes: proximo },
+          };
+      }
+    });
+  };
 
-    const novaChave = valoresEdicao.nome.toUpperCase().trim();
-    const novoValor = Number(valoresEdicao.valor);
-    const antigaChave = editando.chaveOriginal;
+  const adicionarItem = (categoria: CategoriaTabela) => {
+    const campos = novosCampos[categoria];
+    if (!campos.nome.trim() || campos.valor === "") {
+      return;
+    }
 
-    const processarObjeto = (prev: any) => {
-      const clone = { ...prev };
-      delete clone[antigaChave]; // Deleta o nome antigo caso ele tenha sido renomeado
-      clone[novaChave] = novoValor; // Aplica o novo nome com o novo valor
-      return clone;
-    };
+    const chave = campos.nome.toUpperCase().trim();
+    atualizarMapa(categoria, {
+      ...mapaPorCategoria[categoria],
+      [chave]: Number(campos.valor),
+    });
+    setNovosCampos((atual) => ({
+      ...atual,
+      [categoria]: { nome: "", valor: "" },
+    }));
+  };
 
-    if (categoria === 'tecnicos') setTecnicos(prev => processarObjeto(prev));
-    if (categoria === 'retirada') setRetirada(prev => processarObjeto(prev));
-    if (categoria === 'autonomos') setAutonomoExcecoes(prev => processarObjeto(prev));
+  const removerItem = (categoria: CategoriaTabela, nome: string) => {
+    const clone = { ...mapaPorCategoria[categoria] };
+    delete clone[nome];
+    atualizarMapa(categoria, clone);
+    if (editando?.categoria === categoria && editando.chaveOriginal === nome) {
+      setEditando(null);
+    }
+  };
 
+  const salvarEdicao = (categoria: CategoriaTabela) => {
+    if (!editando || !valoresEdicao.nome.trim() || valoresEdicao.valor === "") {
+      return;
+    }
+
+    const clone = { ...mapaPorCategoria[categoria] };
+    delete clone[editando.chaveOriginal];
+    clone[valoresEdicao.nome.toUpperCase().trim()] = Number(valoresEdicao.valor);
+    atualizarMapa(categoria, clone);
     setEditando(null);
   };
 
-  // --- Despachar Alterações para o Componente Pai e Avisar se salvou ---
-  const lidarComSalvarGeral = () => {
-    try {
-      onSalvar({
-        ...dados,
-        fechamento_semanal: {
-          ...dados?.fechamento_semanal,
-          tecnicos_terceirizados: tecnicos,
-          retirada_estado: retirada,
-          autonomos: {
-            valor_padrao: Number(autonomoPadrao),
-            excecoes: autonomoExcecoes
-          }
-        }
-      });
-
-      // Exibe mensagem de sucesso na tela
-      setNotificacao({ mensagem: "Configurações salvas com sucesso!", erro: false });
-    } catch (e) {
-      // Caso ocorra algum erro inesperado no envio dos dados
-      setNotificacao({ mensagem: "Erro ao tentar salvar as configurações.", erro: true });
-    }
-
-    // Esconde a mensagem automaticamente após 4 segundos
-    setTimeout(() => setNotificacao(null), 4000);
+  const handleSalvar = () => {
+    toast({
+      variant: "success",
+      title: "Valores do backend",
+      description: "Leitura ok. Gravar alteração no banco ainda não está ligado.",
+    });
   };
 
-  // --- Renderização das Tabelas ---
-  const renderizarTabela = (
+  const renderTabela = (
     titulo: string,
-    categoriaId: 'tecnicos' | 'retirada' | 'autonomos',
-    listaDados: Record<string, number>,
-    labelColunaPrincipal: string
-  ) => {
-    return (
-      <div className="bg-[#05080f] rounded-xl border border-slate-800 overflow-hidden">
-        {/* Cabeçalho do Bloco */}
-        <div className="px-4 py-3 bg-[#090d16] border-b border-slate-800 flex justify-between items-center">
-          <h4 className="text-sm font-semibold text-slate-200">{titulo}</h4>
-          <span className="text-xs text-indigo-400 font-mono font-semibold">[+] Adicionar abaixo</span>
-        </div>
-
-        {/* Inputs de Criação (+) */}
-        <div className="p-3 bg-[#03060b] border-b border-slate-800/60 flex gap-2">
-          <input
-            type="text"
-            placeholder={`Inserir novo ${labelColunaPrincipal.toLowerCase()}...`}
-            value={novosCampos[categoriaId].nome}
-            onChange={e => setNovosCampos({
-              ...novosCampos,
-              [categoriaId]: { ...novosCampos[categoriaId], nome: e.target.value }
-            })}
-            className="bg-[#090d16] border border-slate-700 rounded-lg p-2 text-xs flex-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-          />
-          <input
-            type="number"
-            placeholder="Valor R$"
-            value={novosCampos[categoriaId].valor}
-            onChange={e => setNovosCampos({
-              ...novosCampos,
-              [categoriaId]: { ...novosCampos[categoriaId], valor: e.target.value }
-            })}
-            className="bg-[#090d16] border border-slate-700 rounded-lg p-2 text-xs w-24 text-slate-200 focus:outline-none focus:border-indigo-500"
-          />
-          <button
-            onClick={() => adicionarItem(categoriaId)}
-            className="bg-indigo-600 hover:bg-indigo-500 px-3 rounded-lg text-white flex items-center justify-center transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Listagem das Linhas */}
-        <div className="divide-y divide-slate-800/40 font-mono text-xs px-4">
-          {/* Cabeçalho das Colunas */}
-          <div className="grid grid-cols-12 py-2 text-slate-500 font-sans text-[11px] font-medium">
-            <div className="col-span-6">{labelColunaPrincipal}</div>
-            <div className="col-span-3 text-right">Valor</div>
-            <div className="col-span-3 text-center">Ações</div>
-          </div>
-
-          {Object.entries(listaDados).length === 0 ? (
-            <div className="text-slate-600 py-4 text-center italic font-sans">Nenhum registro configurado.</div>
-          ) : (
-            Object.entries(listaDados).map(([nome, valor]) => {
-              const estaEditandoLinha = editando?.categoria === categoriaId && editando?.chaveOriginal === nome;
-
-              return (
-                <div key={nome} className="grid grid-cols-12 py-2.5 items-center gap-1">
-                  {estaEditandoLinha ? (
-                    // ✎ MODO EDIÇÃO: Altera o Nome/Estado e o Valor ao mesmo tempo
-                    <>
-                      <div className="col-span-6 pr-2">
-                        <input
-                          type="text"
-                          value={valoresEdicao.nome}
-                          onChange={e => setValoresEdicao({ ...valoresEdicao, nome: e.target.value })}
-                          className="bg-[#0e1422] border border-indigo-500 rounded px-2 py-1 w-full text-slate-200 focus:outline-none font-sans"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="number"
-                          value={valoresEdicao.valor}
-                          onChange={e => setValoresEdicao({ ...valoresEdicao, valor: e.target.value })}
-                          className="bg-[#0e1422] border border-indigo-500 rounded px-2 py-1 w-full text-emerald-400 text-right focus:outline-none font-mono"
-                        />
-                      </div>
-                      <div className="col-span-3 flex justify-center gap-2 pl-2">
-                        {/* Botão de Check para confirmar o ajuste temporário na linha */}
-                        <button 
-                          onClick={() => salvarEdicao(categoriaId)} 
-                          className="text-emerald-400 hover:text-emerald-300 p-1 bg-emerald-500/10 rounded"
-                          title="Confirmar alteração nesta linha"
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                        </button>
-                        <button 
-                          onClick={() => setEditando(null)} 
-                          className="text-slate-400 hover:text-slate-300 text-[10px] font-sans px-1"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    // 👁 MODO VISUALIZAÇÃO PADRÃO
-                    <>
-                      <div className="col-span-6 text-slate-300 font-sans truncate">{nome}</div>
-                      <div className="col-span-3 text-right text-emerald-400 font-semibold">R$ {valor.toFixed(2)}</div>
-                      <div className="col-span-3 flex justify-center gap-4">
-                        {/* Botão Editar (Canetinha) */}
-                        <button
-                          onClick={() => {
-                            setEditando({ categoria: categoriaId, chaveOriginal: nome });
-                            setValoresEdicao({ nome, valor: valor.toString() });
-                          }}
-                          className="text-slate-400 hover:text-indigo-400 transition-colors"
-                          title="Editar Nome e Valor"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        {/* Botão Remover (Lixeira) */}
-                        <button
-                          onClick={() => removerItem(categoriaId, nome)}
-                          className="text-red-400 hover:text-red-300 transition-colors"
-                          title="Remover Item"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
+    categoria: CategoriaTabela,
+    lista: Record<string, number>,
+    labelColuna: string,
+  ) => (
+    <div className="bg-[#05080f] rounded-xl border border-slate-800 overflow-hidden">
+      <div className="px-4 py-3 bg-[#090d16] border-b border-slate-800">
+        <h4 className="text-sm font-semibold text-slate-200">{titulo}</h4>
       </div>
+
+      <div className="p-3 bg-[#03060b] border-b border-slate-800/60 flex gap-2">
+        <Input
+          placeholder={`Novo ${labelColuna.toLowerCase()}`}
+          value={novosCampos[categoria].nome}
+          onChange={(evento) =>
+            setNovosCampos((atual) => ({
+              ...atual,
+              [categoria]: { ...atual[categoria], nome: evento.target.value },
+            }))
+          }
+          className={inputClassName}
+        />
+        <Input
+          type="number"
+          placeholder="R$"
+          value={novosCampos[categoria].valor}
+          onChange={(evento) =>
+            setNovosCampos((atual) => ({
+              ...atual,
+              [categoria]: { ...atual[categoria], valor: evento.target.value },
+            }))
+          }
+          className={`${inputClassName} w-24`}
+        />
+        <Button
+          type="button"
+          className="h-9 bg-indigo-600 hover:bg-indigo-500"
+          onClick={() => adicionarItem(categoria)}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="divide-y divide-slate-800/40 px-4">
+        <div className="grid grid-cols-12 py-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+          <div className="col-span-6">{labelColuna}</div>
+          <div className="col-span-3 text-right">Valor</div>
+          <div className="col-span-3 text-center">Ações</div>
+        </div>
+
+        {Object.entries(lista).length === 0 ? (
+          <p className="text-slate-600 py-4 text-center text-xs">
+            Nenhum valor configurado.
+          </p>
+        ) : (
+          Object.entries(lista).map(([nome, valor]) => {
+            const estaEditando =
+              editando?.categoria === categoria &&
+              editando.chaveOriginal === nome;
+
+            return (
+              <div
+                key={nome}
+                className="grid grid-cols-12 py-2.5 items-center gap-1 text-xs"
+              >
+                {estaEditando ? (
+                  <>
+                    <div className="col-span-6 pr-2">
+                      <Input
+                        value={valoresEdicao.nome}
+                        onChange={(evento) =>
+                          setValoresEdicao((atual) => ({
+                            ...atual,
+                            nome: evento.target.value,
+                          }))
+                        }
+                        className={inputClassName}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        type="number"
+                        value={valoresEdicao.valor}
+                        onChange={(evento) =>
+                          setValoresEdicao((atual) => ({
+                            ...atual,
+                            valor: evento.target.value,
+                          }))
+                        }
+                        className={`${inputClassName} text-right`}
+                      />
+                    </div>
+                    <div className="col-span-3 flex justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => salvarEdicao(categoria)}
+                        className="text-emerald-400 p-1 rounded bg-emerald-500/10"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditando(null)}
+                        className="text-slate-400 text-[10px]"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="col-span-6 text-slate-300 truncate">{nome}</div>
+                    <div className="col-span-3 text-right text-emerald-400 font-semibold">
+                      R$ {valor.toFixed(2)}
+                    </div>
+                    <div className="col-span-3 flex justify-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditando({ categoria, chaveOriginal: nome });
+                          setValoresEdicao({
+                            nome,
+                            valor: String(valor),
+                          });
+                        }}
+                        className="text-slate-400 hover:text-indigo-400"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removerItem(categoria, nome)}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return <p className="text-sm text-slate-500">Carregando comissões...</p>;
+  }
+
+  if (isError) {
+    return (
+      <p className="text-sm text-red-400">
+        Não foi possível carregar as comissões do backend.
+      </p>
     );
-  };
+  }
 
   return (
-    <div className="space-y-6 relative">
-      {/* Mensagem de Feedback flutuante na tela */}
-      {notificacao && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl border text-xs font-semibold shadow-lg font-sans animate-bounce ${
-          notificacao.erro 
-            ? 'bg-red-950 border-red-800 text-red-200' 
-            : 'bg-emerald-950 border-emerald-800 text-emerald-200'
-        }`}>
-          {notificacao.mensagem}
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-base font-semibold text-slate-200">
+          Relatório semanal
+        </h3>
+        <p className="text-xs text-slate-500">
+          Valores de GET /commissions/rules.
+        </p>
+      </div>
+
+      {renderTabela(
+        "Técnicos terceirizados",
+        "tecnicos",
+        valores.tecnicosTerceirizados,
+        "Alias",
       )}
 
-      <div>
-        <h3 className="text-base font-semibold text-slate-200">Parâmetros Semanais</h3>
-        <p className="text-xs text-slate-500">Visualize e edite os valores lidos diretamente do JSON configurado.</p>
-      </div>
+      {renderTabela("Retirada", "retirada", valores.retiradaEstado, "UF")}
 
-      <div className="space-y-6">
-        {/* Bloco 1: Técnicos */}
-        {renderizarTabela("Técnicos Terceirizados", "tecnicos", tecnicos, "Nome")}
-
-        {/* Bloco 2: Retirada */}
-        {renderizarTabela("Retirada", "retirada", retirada, "Estado")}
-
-        {/* Bloco 3: Autônomos */}
-        <div className="space-y-2">
-          <div className="bg-[#05080f] rounded-xl border border-slate-800 p-4 flex justify-between items-center">
-            <div>
-              <span className="text-sm font-semibold text-slate-200 block">Autônomos</span>
-              <span className="text-xs text-slate-500">Valor padrão cobrado de vendedores</span>
-            </div>
-            <div className="flex items-center gap-3 bg-[#090d16] border border-slate-800 px-3 py-2 rounded-xl">
-              <span className="text-xs text-slate-400 font-medium font-sans">Valor Padrão:</span>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-emerald-400 font-mono font-bold">R$</span>
-                <input
-                  type="number"
-                  value={autonomoPadrao}
-                  onChange={e => setAutonomoPadrao(Number(e.target.value))}
-                  className="bg-[#03060b] border border-slate-700 rounded-lg p-1 text-xs w-16 text-center text-emerald-400 font-mono font-bold focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Subtabela de Exceções dos Autônomos */}
-          {renderizarTabela("Exceções de Autônomos", "autonomos", autonomoExcecoes, "Nome")}
+      <div className="bg-[#05080f] rounded-xl border border-slate-800 p-4 flex justify-between items-center">
+        <div>
+          <span className="text-sm font-semibold text-slate-200 block">
+            Autônomos
+          </span>
+          <span className="text-xs text-slate-500">Valor padrão por venda</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-emerald-400 font-semibold">R$</span>
+          <Input
+            type="number"
+            value={valores.autonomos.valorPadrao}
+            onChange={(evento) =>
+              setValores((atual) => ({
+                ...atual,
+                autonomos: {
+                  ...atual.autonomos,
+                  valorPadrao: Number(evento.target.value),
+                },
+              }))
+            }
+            className={`${inputClassName} w-20 text-center text-emerald-400`}
+          />
         </div>
       </div>
 
-      {/* Botão Salvar Geral */}
+      {renderTabela(
+        "Exceções de autônomos",
+        "autonomos",
+        valores.autonomos.excecoes,
+        "Nome",
+      )}
+
       <div className="pt-4 border-t border-slate-800 flex justify-end">
-        <button
-          onClick={lidarComSalvarGeral}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-6 py-3 rounded-xl transition-colors shadow-md active:scale-95"
+        <Button
+          type="button"
+          className="bg-indigo-600 hover:bg-indigo-500"
+          onClick={handleSalvar}
         >
-          Salvar Geral
-        </button>
+          Salvar valores
+        </Button>
       </div>
     </div>
   );

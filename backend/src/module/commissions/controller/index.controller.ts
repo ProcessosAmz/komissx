@@ -1,45 +1,22 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
-import { CommissionsService } from '../service/index.service';
-import { CreateCommissionDto } from '../dto/createCommission.dto';
-import { UpdateCommissionDto } from '../dto/updateCommission.dto';
+} from "@nestjs/common";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ListCommissionRulesUseCase } from "@/module/commissions/useCase";
 
-@Controller('commissions')
+@ApiTags("commissions")
+@Controller("commissions")
 export class CommissionsController {
-  constructor(private readonly commissionsService: CommissionsService) {}
+  constructor(
+    private readonly listCommissionRulesUseCase: ListCommissionRulesUseCase,
+  ) {}
 
-  @Post()
-  create(@Body() createCommissionDto: CreateCommissionDto) {
-    return this.commissionsService.create(createCommissionDto);
+  @Get("rules")
+  @ApiOperation({ summary: "List commission catalog values" })
+  @ApiResponse({ status: 200, description: "Values listed successfully" })
+  findRules() {
+    return this.listCommissionRulesUseCase.execute();
   }
 
-  @Get()
-  findAll() {
-    return this.commissionsService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.commissionsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateCommissionDto: UpdateCommissionDto,
-  ) {
-    return this.commissionsService.update(+id, updateCommissionDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.commissionsService.remove(+id);
-  }
 }
