@@ -29,9 +29,18 @@ const inputClassName =
 const selectClassName =
   "w-full h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed";
 
+export type ResponsavelCriacao = {
+  id: string;
+  nome: string;
+  cargo: "SUPERVISOR" | "LIDER";
+  empresaId: string;
+  unidadeId: string;
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  responsavel?: ResponsavelCriacao | null;
 };
 
 function isSupervisorRole(roleName: string) {
@@ -43,7 +52,11 @@ function isLiderRole(roleName: string) {
   return normalized.includes("LIDER") || normalized.includes("LÍDER");
 }
 
-function hierarquiaHint(roleName: string, creatingSupervisor: boolean, creatingLider: boolean) {
+function hierarquiaHint(
+  roleName: string,
+  creatingSupervisor: boolean,
+  creatingLider: boolean,
+) {
   switch (true) {
     case !roleName:
       return "Selecione o cargo para definir se o usuário terá um responsável.";
@@ -56,7 +69,7 @@ function hierarquiaHint(roleName: string, creatingSupervisor: boolean, creatingL
   }
 }
 
-export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
+export function NovoUsuarioDialog({ open, onOpenChange, responsavel }: Props) {
   const createUser = useCreateUser();
   const { data: empresasResponse } = useEmpresas();
   const { data: rolesResponse } = useRoles();
@@ -93,23 +106,65 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
   const empresas = empresasResponse?.data ?? [];
   const unidades = unidadesResponse?.data ?? [];
   const roles = rolesResponse?.data ?? [];
+  const rolesDisponiveis = roles.filter((role) => {
+    if (!responsavel) {
+      return true;
+    }
+
+    if (isSupervisorRole(role.name)) {
+      return false;
+    }
+
+    if (responsavel.cargo === "LIDER" && isLiderRole(role.name)) {
+      return false;
+    }
+
+    return true;
+  });
   const selectedRole = roles.find((role) => role.id === roleId);
   const selectedRoleName = selectedRole?.name ?? "";
   const creatingSupervisor = isSupervisorRole(selectedRoleName);
   const creatingLider = isLiderRole(selectedRoleName);
-  const showResponsavel = Boolean(selectedRoleName) && !creatingSupervisor;
+  const showResponsavel =
+    Boolean(responsavel) || (Boolean(selectedRoleName) && !creatingSupervisor);
   const responsavelLabel = creatingLider ? "Supervisor" : "Líder ou supervisor";
+  const lotacaoTravada = Boolean(responsavel);
 
   const colaboradores = flattenUsers(usersResponse?.data ?? []);
   const supervisores = colaboradores.filter((user) =>
     isSupervisorRole(user.roleName),
   );
   const lideres = colaboradores.filter((user) => isLiderRole(user.roleName));
-  const responsaveis = creatingLider ? supervisores : [...supervisores, ...lideres];
+  const responsaveis = creatingLider
+    ? supervisores
+    : [...supervisores, ...lideres];
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    reset({
+      name: "",
+      email: "",
+      password: "",
+      roleId: "",
+      empresaId: responsavel?.empresaId ?? "",
+      unidadeId: responsavel?.unidadeId ?? "",
+      supervisorId: responsavel?.id ?? null,
+      participaFechamento: false,
+      active: true,
+    });
+  }, [open, responsavel, reset]);
+
+  useEffect(() => {
+    if (responsavel) {
+      setValue("supervisorId", responsavel.id);
+      return;
+    }
+
     setValue("supervisorId", null);
-  }, [roleId, setValue]);
+  }, [roleId, responsavel, setValue]);
 
   const onSubmit = async (data: CreateUserFormData) => {
     if (showResponsavel && !data.supervisorId) {
@@ -142,7 +197,13 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
         <DialogHeader>
           <DialogTitle>Novo usuário</DialogTitle>
           <DialogDescription className="text-slate-400">
-            {hierarquiaHint(selectedRoleName, creatingSupervisor, creatingLider)}
+            {responsavel
+              ? `O novo usuário vai responder a ${responsavel.nome}.`
+              : hierarquiaHint(
+                  selectedRoleName,
+                  creatingSupervisor,
+                  creatingLider,
+                )}
           </DialogDescription>
         </DialogHeader>
 
@@ -188,7 +249,7 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
                 </label>
                 <select className={selectClassName} {...register("roleId")}>
                   <option value="">Selecione</option>
-                  {roles.map((role) => (
+                  {rolesDisponiveis.map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.name}
                     </option>
@@ -222,6 +283,7 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
                 </label>
                 <select
                   className={selectClassName}
+                  disabled={lotacaoTravada}
                   {...register("empresaId")}
                   onChange={(event) => {
                     setValue("empresaId", event.target.value);
@@ -246,7 +308,7 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
                 </label>
                 <select
                   className={selectClassName}
-                  disabled={!empresaId}
+                  disabled={lotacaoTravada || !empresaId}
                   {...register("unidadeId")}
                 >
                   <option value="">Selecione</option>
@@ -272,15 +334,24 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   {responsavelLabel}
                 </label>
-                <select className={selectClassName} {...register("supervisorId")}>
-                  <option value="">Selecione</option>
-                  {responsaveis.map((colaborador) => (
-                    <option key={colaborador.id} value={colaborador.id}>
-                      {colaborador.name}
-                    </option>
-                  ))}
-                </select>
-                {responsaveis.length === 0 ? (
+                {responsavel ? (
+                  <>
+                    <p className="h-9 rounded-xl border border-slate-800 bg-[#05080f] px-3 text-xs text-slate-100 flex items-center">
+                      {responsavel.nome}
+                    </p>
+                    <input type="hidden" {...register("supervisorId")} />
+                  </>
+                ) : (
+                  <select className={selectClassName} {...register("supervisorId")}>
+                    <option value="">Selecione</option>
+                    {responsaveis.map((colaborador) => (
+                      <option key={colaborador.id} value={colaborador.id}>
+                        {colaborador.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {!responsavel && responsaveis.length === 0 ? (
                   <p className="text-[11px] text-amber-400">
                     {creatingLider
                       ? "Cadastre um supervisor antes de criar um líder."
@@ -288,7 +359,9 @@ export function NovoUsuarioDialog({ open, onOpenChange }: Props) {
                   </p>
                 ) : null}
                 {errors.supervisorId && (
-                  <p className="text-[11px] text-red-400">{errors.supervisorId.message}</p>
+                  <p className="text-[11px] text-red-400">
+                    {errors.supervisorId.message}
+                  </p>
                 )}
               </div>
             </section>

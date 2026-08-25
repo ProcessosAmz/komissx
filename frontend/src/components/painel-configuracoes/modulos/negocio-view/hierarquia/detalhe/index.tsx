@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRightLeft, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Trash2, UserPlus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { NovoUsuarioDialog } from "@/components/painel-configuracoes/create-user-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useDeleteUser } from "@/hooks/useDeleteUser";
 import { HierarquiaNode } from "@/types/cargo";
@@ -37,6 +38,7 @@ export function DetalheColaborador({
   const deleteUser = useDeleteUser();
   const [confirmacaoAberta, setConfirmacaoAberta] = useState(false);
   const [moverAberto, setMoverAberto] = useState(false);
+  const [novoUsuarioAberto, setNovoUsuarioAberto] = useState(false);
   const [textoConfirmacao, setTextoConfirmacao] = useState("");
 
   const lideresVinculados =
@@ -46,6 +48,10 @@ export function DetalheColaborador({
 
   const podeMover =
     Boolean(selecionado) && selecionado?.cargo !== "SUPERVISOR" && isAdmin;
+
+  const podeAdicionar =
+    isAdmin &&
+    (selecionado?.cargo === "SUPERVISOR" || selecionado?.cargo === "LIDER");
 
   const confirmacaoValida =
     textoConfirmacao.trim().toLowerCase() === TEXTO_CONFIRMACAO_EXCLUSAO;
@@ -109,6 +115,17 @@ export function DetalheColaborador({
 
               {isAdmin ? (
                 <div className="flex items-center gap-1 shrink-0">
+                  {podeAdicionar ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 gap-1.5"
+                      onClick={() => setNovoUsuarioAberto(true)}
+                    >
+                      <UserPlus className="h-3.5 w-3.5" />
+                      Adicionar
+                    </Button>
+                  ) : null}
                   {podeMover ? (
                     <Button
                       variant="ghost"
@@ -145,6 +162,24 @@ export function DetalheColaborador({
                 readOnly={!isAdmin}
               />
             ) : null}
+
+            <NovoUsuarioDialog
+              open={novoUsuarioAberto}
+              onOpenChange={setNovoUsuarioAberto}
+              responsavel={
+                podeAdicionar &&
+                (selecionado.cargo === "SUPERVISOR" ||
+                  selecionado.cargo === "LIDER")
+                  ? {
+                      id: selecionado.id,
+                      nome: selecionado.nome,
+                      cargo: selecionado.cargo,
+                      empresaId: selecionado.empresaId,
+                      unidadeId: selecionado.unidadeId,
+                    }
+                  : null
+              }
+            />
 
             <MoverUsuarioDialog
               aberto={moverAberto}
