@@ -11,6 +11,7 @@ import { Users, UserRole, UserPermission } from "@/module/users/entities";
 import { UsersRepository } from "@/module/users/repository/index.repository";
 import {
   CreateUserUseCase,
+  DeleteUserUseCase,
   ListUsersUseCase,
   UpdateUserUseCase,
 } from "@/module/users/useCase";
@@ -31,7 +32,8 @@ import {
     CreateUserUseCase,
     ListUsersUseCase,
     UpdateUserUseCase,
-    UsersRepository,
+    DeleteUserUseCase,
+    UsersRepository,  
     BetterAuthRepository,
   ],
   exports: [TypeOrmModule, UsersRepository],
