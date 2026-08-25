@@ -28,4 +28,12 @@ export class UsersService {
       message: string;
     };
   }
+
+  static async delete(userId: string) {
+    const response = await API.delete(`${this.path}/${userId}`);
+    return response.data as {
+      data: { id: string; name: string; email: string };
+      message: string;
+    };
+  }
 }

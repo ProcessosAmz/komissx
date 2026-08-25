@@ -18,6 +18,7 @@ import {
 import {
   updateUserSchema,
   type UpdateUserFormData,
+  type UpdateUserFormInput,
 } from "@/utils/validators/user";
 
 const inputClassName =
@@ -28,9 +29,10 @@ const selectClassName =
 
 type FormularioColaboradorProps = {
   selecionado: HierarquiaNode;
+  readOnly?: boolean;
 };
 
-function toFormValues(selecionado: HierarquiaNode): UpdateUserFormData {
+function toFormValues(selecionado: HierarquiaNode): UpdateUserFormInput {
   return {
     name: selecionado.nome,
     email: selecionado.email,
@@ -47,6 +49,7 @@ function toFormValues(selecionado: HierarquiaNode): UpdateUserFormData {
 
 export function FormularioColaborador({
   selecionado,
+  readOnly = false,
 }: FormularioColaboradorProps) {
   const updateUser = useUpdateUser();
   const { data: empresasResponse } = useEmpresas();
@@ -61,7 +64,7 @@ export function FormularioColaborador({
     setValue,
     setError,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<UpdateUserFormData>({
+  } = useForm<UpdateUserFormInput, unknown, UpdateUserFormData>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: toFormValues(selecionado),
   });
@@ -99,6 +102,10 @@ export function FormularioColaborador({
   const responsaveis = editingLider ? supervisores : lideres;
 
   const onSubmit = async (data: UpdateUserFormData) => {
+    if (readOnly) {
+      return;
+    }
+
     if (showResponsavel && !data.supervisorId) {
       setError("supervisorId", {
         message: `Informe o ${responsavelLabel.toLowerCase()}.`,
@@ -119,186 +126,190 @@ export function FormularioColaborador({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Nome
-          </label>
-          <Input className={inputClassName} {...register("name")} />
-          {errors.name && (
-            <p className="text-[11px] text-red-400">{errors.name.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Email
-          </label>
-          <Input type="email" className={inputClassName} {...register("email")} />
-          {errors.email && (
-            <p className="text-[11px] text-red-400">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Cargo
-          </label>
-          <select
-            className={selectClassName}
-            {...register("roleId")}
-            onChange={(event) => {
-              const nextRoleId = event.target.value;
-              const nextRole = roles.find((role) => role.id === nextRoleId);
-              const nextRoleName = nextRole?.name ?? "";
-
-              setValue("roleId", nextRoleId, { shouldDirty: true });
-
-              if (isSupervisorRole(nextRoleName)) {
-                setValue("supervisorId", null, { shouldDirty: true });
-                return;
-              }
-
-              if (nextRoleId !== selecionado.roleId) {
-                setValue("supervisorId", null, { shouldDirty: true });
-              }
-            }}
-          >
-            <option value="">Selecione</option>
-            {roles.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name}
-              </option>
-            ))}
-          </select>
-          {errors.roleId && (
-            <p className="text-[11px] text-red-400">{errors.roleId.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Nova senha
-          </label>
-          <Input
-            type="password"
-            placeholder="Deixe em branco para manter"
-            className={inputClassName}
-            {...register("password")}
-          />
-          {errors.password && (
-            <p className="text-[11px] text-red-400">{errors.password.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Empresa
-          </label>
-          <select
-            className={selectClassName}
-            {...register("empresaId")}
-            onChange={(event) => {
-              setValue("empresaId", event.target.value, { shouldDirty: true });
-              setValue("unidadeId", "", { shouldDirty: true });
-            }}
-          >
-            <option value="">Selecione</option>
-            {empresas.map((empresa) => (
-              <option key={empresa.id} value={empresa.id}>
-                {empresa.name}
-              </option>
-            ))}
-          </select>
-          {errors.empresaId && (
-            <p className="text-[11px] text-red-400">{errors.empresaId.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            Unidade
-          </label>
-          <select
-            className={selectClassName}
-            disabled={!empresaId}
-            {...register("unidadeId")}
-          >
-            <option value="">Selecione</option>
-            {unidades.map((unidade) => (
-              <option key={unidade.id} value={unidade.id}>
-                {unidade.name}
-              </option>
-            ))}
-          </select>
-          {errors.unidadeId && (
-            <p className="text-[11px] text-red-400">{errors.unidadeId.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-            ID Hubsoft
-          </label>
-          <Input type="number" className={inputClassName} {...register("hubsoftId")} />
-          {errors.hubsoftId && (
-            <p className="text-[11px] text-red-400">{errors.hubsoftId.message}</p>
-          )}
-        </div>
-
-        {showResponsavel ? (
+      <fieldset disabled={readOnly} className="space-y-4 disabled:opacity-70">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              {responsavelLabel}
+              Nome
             </label>
-            <select className={selectClassName} {...register("supervisorId")}>
+            <Input className={inputClassName} {...register("name")} />
+            {errors.name && (
+              <p className="text-[11px] text-red-400">{errors.name.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Email
+            </label>
+            <Input type="email" className={inputClassName} {...register("email")} />
+            {errors.email && (
+              <p className="text-[11px] text-red-400">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Cargo
+            </label>
+            <select
+              className={selectClassName}
+              {...register("roleId")}
+              onChange={(event) => {
+                const nextRoleId = event.target.value;
+                const nextRole = roles.find((role) => role.id === nextRoleId);
+                const nextRoleName = nextRole?.name ?? "";
+
+                setValue("roleId", nextRoleId, { shouldDirty: true });
+
+                if (isSupervisorRole(nextRoleName)) {
+                  setValue("supervisorId", null, { shouldDirty: true });
+                  return;
+                }
+
+                if (nextRoleId !== selecionado.roleId) {
+                  setValue("supervisorId", null, { shouldDirty: true });
+                }
+              }}
+            >
               <option value="">Selecione</option>
-              {responsaveis.map((colaborador) => (
-                <option key={colaborador.id} value={colaborador.id}>
-                  {colaborador.name}
+              {roles.map((role) => (
+                <option key={role.id} value={role.id}>
+                  {role.name}
                 </option>
               ))}
             </select>
-            {errors.supervisorId && (
-              <p className="text-[11px] text-red-400">
-                {errors.supervisorId.message}
-              </p>
+            {errors.roleId && (
+              <p className="text-[11px] text-red-400">{errors.roleId.message}</p>
             )}
           </div>
-        ) : null}
-      </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#05080f] px-3 py-2.5">
-        <span className="text-xs text-slate-300">Participa fechamento mensal</span>
-        <button
-          type="button"
-          className={`relative h-5 w-9 rounded-full transition-colors ${
-            participaFechamento ? "bg-indigo-500" : "bg-slate-700"
-          }`}
-          aria-label="Participa fechamento mensal"
-          onClick={() =>
-            setValue("participaFechamento", !participaFechamento, {
-              shouldDirty: true,
-            })
-          }
-        >
-          <span
-            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
-              participaFechamento ? "left-4" : "left-0.5"
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Nova senha
+            </label>
+            <Input
+              type="password"
+              placeholder="Deixe em branco para manter"
+              className={inputClassName}
+              {...register("password")}
+            />
+            {errors.password && (
+              <p className="text-[11px] text-red-400">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Empresa
+            </label>
+            <select
+              className={selectClassName}
+              {...register("empresaId")}
+              onChange={(event) => {
+                setValue("empresaId", event.target.value, { shouldDirty: true });
+                setValue("unidadeId", "", { shouldDirty: true });
+              }}
+            >
+              <option value="">Selecione</option>
+              {empresas.map((empresa) => (
+                <option key={empresa.id} value={empresa.id}>
+                  {empresa.name}
+                </option>
+              ))}
+            </select>
+            {errors.empresaId && (
+              <p className="text-[11px] text-red-400">{errors.empresaId.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              Unidade
+            </label>
+            <select
+              className={selectClassName}
+              disabled={!empresaId}
+              {...register("unidadeId")}
+            >
+              <option value="">Selecione</option>
+              {unidades.map((unidade) => (
+                <option key={unidade.id} value={unidade.id}>
+                  {unidade.name}
+                </option>
+              ))}
+            </select>
+            {errors.unidadeId && (
+              <p className="text-[11px] text-red-400">{errors.unidadeId.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              ID Hubsoft
+            </label>
+            <Input type="number" className={inputClassName} {...register("hubsoftId")} />
+            {errors.hubsoftId && (
+              <p className="text-[11px] text-red-400">{errors.hubsoftId.message}</p>
+            )}
+          </div>
+
+          {showResponsavel ? (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                {responsavelLabel}
+              </label>
+              <select className={selectClassName} {...register("supervisorId")}>
+                <option value="">Selecione</option>
+                {responsaveis.map((colaborador) => (
+                  <option key={colaborador.id} value={colaborador.id}>
+                    {colaborador.name}
+                  </option>
+                ))}
+              </select>
+              {errors.supervisorId && (
+                <p className="text-[11px] text-red-400">
+                  {errors.supervisorId.message}
+                </p>
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-[#05080f] px-3 py-2.5">
+          <span className="text-xs text-slate-300">Participa fechamento mensal</span>
+          <button
+            type="button"
+            className={`relative h-5 w-9 rounded-full transition-colors ${
+              participaFechamento ? "bg-indigo-500" : "bg-slate-700"
             }`}
-          />
-        </button>
-      </div>
+            aria-label="Participa fechamento mensal"
+            onClick={() =>
+              setValue("participaFechamento", !participaFechamento, {
+                shouldDirty: true,
+              })
+            }
+          >
+            <span
+              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+                participaFechamento ? "left-4" : "left-0.5"
+              }`}
+            />
+          </button>
+        </div>
+      </fieldset>
 
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={isSubmitting || updateUser.isPending || !isDirty}
-          className="bg-indigo-600 hover:bg-indigo-500"
-        >
-          {updateUser.isPending ? "Salvando..." : "Salvar alterações"}
-        </Button>
-      </div>
+      {!readOnly ? (
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={isSubmitting || updateUser.isPending || !isDirty}
+            className="bg-indigo-600 hover:bg-indigo-500"
+          >
+            {updateUser.isPending ? "Salvando..." : "Salvar alterações"}
+          </Button>
+        </div>
+      ) : null}
     </form>
   );
 }

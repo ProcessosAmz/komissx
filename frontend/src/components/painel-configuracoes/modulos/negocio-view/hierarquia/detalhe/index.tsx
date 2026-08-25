@@ -1,22 +1,72 @@
+import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/useAuth";
+import { useDeleteUser } from "@/hooks/useDeleteUser";
 import { HierarquiaNode } from "@/types/cargo";
 import { cargoBadgeClass, getIniciais } from "@/utils/hierarquia";
 import { VincularLideres } from "./vincularLider";
 import { FormularioColaborador } from "./formulario";
 
+const TEXTO_CONFIRMACAO_EXCLUSAO = "desejo excluir o usuario";
+
 type DetalheColaboradorProps = {
   selecionado: HierarquiaNode | null;
+  onDeleted?: () => void;
 };
 
-export function DetalheColaborador({ selecionado }: DetalheColaboradorProps) {
+export function DetalheColaborador({
+  selecionado,
+  onDeleted,
+}: DetalheColaboradorProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const deleteUser = useDeleteUser();
+  const [confirmacaoAberta, setConfirmacaoAberta] = useState(false);
+  const [textoConfirmacao, setTextoConfirmacao] = useState("");
+
   const lideresVinculados =
     selecionado?.cargo === "SUPERVISOR"
       ? (selecionado.children ?? []).filter((filho) => filho.cargo === "LIDER")
       : [];
+
+  const confirmacaoValida =
+    textoConfirmacao.trim().toLowerCase() === TEXTO_CONFIRMACAO_EXCLUSAO;
+
+  const handleAbrirConfirmacao = () => {
+    setTextoConfirmacao("");
+    setConfirmacaoAberta(true);
+  };
+
+  const handleFecharConfirmacao = (aberto: boolean) => {
+    if (!aberto) {
+      setTextoConfirmacao("");
+    }
+    setConfirmacaoAberta(aberto);
+  };
+
+  const handleConfirmarRemocao = async () => {
+    if (!selecionado || !confirmacaoValida) {
+      return;
+    }
+
+    await deleteUser.mutateAsync(selecionado.id);
+    setTextoConfirmacao("");
+    setConfirmacaoAberta(false);
+    onDeleted?.();
+  };
 
   return (
     <Card className="xl:col-span-7 bg-[#090d16] border-slate-800 rounded-2xl w-1/2">
@@ -52,21 +102,64 @@ export function DetalheColaborador({ selecionado }: DetalheColaboradorProps) {
                 </div>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Remover
-              </Button>
+              {isAdmin ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
+                  onClick={handleAbrirConfirmacao}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Remover
+                </Button>
+              ) : null}
             </div>
 
-            <FormularioColaborador selecionado={selecionado} />
+            <FormularioColaborador
+              selecionado={selecionado}
+              readOnly={!isAdmin}
+            />
 
             {selecionado.cargo === "SUPERVISOR" ? (
               <VincularLideres lideres={lideresVinculados} />
             ) : null}
+
+            <Dialog open={confirmacaoAberta} onOpenChange={handleFecharConfirmacao}>
+              <DialogContent className="bg-[#090d16] border-slate-800 text-slate-100 sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Remover usuário</DialogTitle>
+                  <DialogDescription className="text-slate-400">
+                    {`Para remover ${selecionado.nome}, digite exatamente: ${TEXTO_CONFIRMACAO_EXCLUSAO}`}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <Input
+                  value={textoConfirmacao}
+                  onChange={(event) => setTextoConfirmacao(event.target.value)}
+                  placeholder={TEXTO_CONFIRMACAO_EXCLUSAO}
+                  className="h-9 rounded-xl border-slate-800 bg-[#05080f] text-xs text-slate-100"
+                  autoComplete="off"
+                />
+
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => handleFecharConfirmacao(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    className="bg-red-600 hover:bg-red-500"
+                    disabled={deleteUser.isPending || !confirmacaoValida}
+                    onClick={handleConfirmarRemocao}
+                  >
+                    {deleteUser.isPending ? "Removendo..." : "Confirmar remoção"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </>
         )}
       </CardContent>

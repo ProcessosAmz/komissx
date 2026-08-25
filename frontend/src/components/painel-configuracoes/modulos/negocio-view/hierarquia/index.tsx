@@ -81,7 +81,10 @@ export function ModuloHierarquia() {
             onToggle={onToggle}
             onSelect={setSelecionadoId}
           />
-          <DetalheColaborador selecionado={selecionado} />
+          <DetalheColaborador
+            selecionado={selecionado}
+            onDeleted={() => setSelecionadoId("")}
+          />
         </div>
       )}
     </div>
