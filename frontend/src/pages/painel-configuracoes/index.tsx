@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { ConfiguracoesContent } from "@/components/painel-configuracoes/configuracoes-content";
 import { ModulosNegocioSidebar } from "@/components/painel-configuracoes/modulos/negocio-sidebar";
 import { Header } from "@/components/painel-configuracoes/header";
@@ -7,10 +8,15 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function PainelConfiguracoes() {
   const { user } = useAuth();
+  const location = useLocation();
   const isAdmin = user?.role === "ADMIN";
   const [globalRules, setGlobalRules] = useState();
   const [globalUsers, setGlobalUsers] = useState();
   const [dialogNovoUsuarioAberto, setDialogNovoUsuarioAberto] = useState(false);
+
+  const isEquipes =
+    /\/admin\/configuracoes\/?$/.test(location.pathname) ||
+    location.pathname.includes("/configuracoes/equipes");
 
   const handleSalvarConfiguracoes = (novosDados: any) => setGlobalRules(novosDados);
   const handleUpdateUsers = (novosUsuarios: any) => setGlobalUsers(novosUsuarios);
@@ -19,7 +25,9 @@ export default function PainelConfiguracoes() {
     <div className="space-y-6">
       <Header
         onNovoUsuario={
-          isAdmin ? () => setDialogNovoUsuarioAberto(true) : undefined
+          isAdmin && isEquipes
+            ? () => setDialogNovoUsuarioAberto(true)
+            : undefined
         }
       />
 

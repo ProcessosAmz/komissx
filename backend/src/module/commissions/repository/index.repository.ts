@@ -16,4 +16,16 @@ export class CommissionRulesRepository {
       order: { evento: "ASC", nome: "ASC" },
     });
   }
+
+  findById(id: number): Promise<CommissionRule | null> {
+    return this.ormRepository.findOne({ where: { id } });
+  }
+
+  create(data: Partial<CommissionRule>): Promise<CommissionRule> {
+    return this.ormRepository.save(this.ormRepository.create(data));
+  }
+
+  update(rule: CommissionRule, data: Partial<CommissionRule>): Promise<CommissionRule> {
+    return this.ormRepository.save({ ...rule, ...data });
+  }
 }

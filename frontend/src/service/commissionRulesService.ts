@@ -77,4 +77,22 @@ export class CommissionRulesService {
       message: string;
     };
   }
+  static async create(payload: {
+    nome: string;
+    evento: CommissionRuleApi["evento"];
+    valor: number;
+  }) {
+    const response = await API.post(this.path, payload);
+    return response.data as { data: CommissionRuleApi; message: string };
+  }
+  
+  static async update(id: number, payload: { nome?: string; valor?: number }) {
+    const response = await API.patch(`${this.path}/${id}`, payload);
+    return response.data as { data: CommissionRuleApi; message: string };
+  }
+  
+  static async remove(id: number) {
+    const response = await API.delete(`${this.path}/${id}`);
+    return response.data as { data: CommissionRuleApi; message: string };
+  }
 }
