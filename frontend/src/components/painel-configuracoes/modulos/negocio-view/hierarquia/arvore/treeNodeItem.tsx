@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cargoBadgeClass, getIniciais } from "@/utils/hierarquia";
@@ -62,11 +63,11 @@ export function TreeNodeItem({
           }}
         >
           {temFilhos ? (
-            aberto ? (
-              <ChevronDown className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronRight className="h-3.5 w-3.5" />
-            )
+            <ChevronRight
+              className={`h-3.5 w-3.5 transition-transform duration-200 ease-out ${
+                aberto ? "rotate-90" : "rotate-0"
+              }`}
+            />
           ) : null}
         </span>
 
@@ -91,22 +92,31 @@ export function TreeNodeItem({
         </Badge>
       </button>
 
-      {temFilhos && aberto ? (
-        <div className="mt-0.5 space-y-0.5">
-          {no.children!.map((filho: HierarquiaNode) => (
-            <TreeNodeItem
-              key={filho.id}
-              no={filho}
-              profundidade={profundidade + 1}
-              selecionadoId={selecionadoId}
-              destaqueId={destaqueId}
-              abertos={abertos}
-              onToggle={onToggle}
-              onSelect={onSelect}
-            />
-          ))}
-        </div>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {temFilhos && aberto ? (
+          <motion.div
+            key={`${no.id}-filhos`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-0.5 space-y-0.5 overflow-hidden"
+          >
+            {no.children!.map((filho: HierarquiaNode) => (
+              <TreeNodeItem
+                key={filho.id}
+                no={filho}
+                profundidade={profundidade + 1}
+                selecionadoId={selecionadoId}
+                destaqueId={destaqueId}
+                abertos={abertos}
+                onToggle={onToggle}
+                onSelect={onSelect}
+              />
+            ))}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
