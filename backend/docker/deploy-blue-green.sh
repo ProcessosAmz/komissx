@@ -35,7 +35,7 @@ else
 fi
 
 echo "==> Buildando backend-$NEW_COLOR..."
-$COMPOSE --profile "$NEW_COLOR" build "backend-$NEW_COLOR"
+$COMPOSE --profile "$NEW_COLOR" build --pull never "backend-$NEW_COLOR"
 
 echo "==> Subindo backend-$NEW_COLOR..."
 $COMPOSE --profile "$NEW_COLOR" up -d --force-recreate "backend-$NEW_COLOR"
