@@ -18,6 +18,12 @@ export class HealthController {
   ) {}
 
   @Public()
+  @Get("live")
+  live() {
+    return { status: "ok" };
+  }
+
+  @Public()
   @Get()
   @HealthCheck()
   check() {

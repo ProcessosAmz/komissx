@@ -9,7 +9,6 @@ const PING_TIMEOUT_MS = 2000;
 @Injectable()
 export class PostgresHealthIndicator extends HealthIndicator {
   private readonly logger = new Logger(PostgresHealthIndicator.name);
-  private renovandoPool: Promise<void> | null = null;
 
   constructor(
     @InjectDataSource()
@@ -34,38 +33,10 @@ export class PostgresHealthIndicator extends HealthIndicator {
       this.logger.error(
         `Ping do banco falhou: ${getErrorMessage(error)}`,
       );
-      void this.recriarPool();
 
       return this.getStatus(key, false, {
         message: getErrorMessage(error),
       });
     }
-  }
-
-  private recriarPool(): Promise<void> {
-    if (this.renovandoPool) {
-      return this.renovandoPool;
-    }
-
-    this.renovandoPool = (async () => {
-      try {
-        this.logger.warn("Recriando pool do Postgres (conexões antigas descartadas)");
-
-        if (this.dataSource.isInitialized) {
-          await this.dataSource.destroy();
-        }
-
-        await this.dataSource.initialize();
-        this.logger.log("Pool do Postgres recriado");
-      } catch (error) {
-        this.logger.error(
-          `Falha ao recriar pool do Postgres: ${getErrorMessage(error)}`,
-        );
-      } finally {
-        this.renovandoPool = null;
-      }
-    })();
-
-    return this.renovandoPool;
   }
 }
