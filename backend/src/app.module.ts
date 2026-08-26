@@ -13,6 +13,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CommissionsModule } from "@/module/commissions/index.module";
+import { postgresPoolConfig } from "@/database/postgresPool.config";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CommissionsModule } from "@/module/commissions/index.module";
       synchronize: false,
       migrations: [`${__dirname}/migrations/*{.js}`],
       migrationsRun: false,
+      extra: postgresPoolConfig,
     }),
     LocalidadeModule,
     EmpresasModule,

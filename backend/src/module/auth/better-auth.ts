@@ -1,3 +1,4 @@
+import { postgresPoolConfig } from "@/database/postgresPool.config";
 import { betterAuth } from "better-auth";
 import * as bcrypt from "bcrypt";
 import { config } from "dotenv";
@@ -16,6 +17,7 @@ export const authPool = new Pool({
   user: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
+  ...postgresPoolConfig,
 });
 
 export const auth = betterAuth({

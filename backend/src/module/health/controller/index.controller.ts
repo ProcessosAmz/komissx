@@ -23,7 +23,7 @@ export class HealthController {
   check() {
     return this.healthCheckService.check([
       () => this.shutdownHealthIndicator.isAcceptingTraffic("shutdown"),
-      () => this.typeOrmHealthIndicator.pingCheck("database"),
+      () => this.typeOrmHealthIndicator.pingCheck("database", { timeout: 5000 }),
       () => this.redisHealthIndicator.ping("redis"),
     ]);
   }

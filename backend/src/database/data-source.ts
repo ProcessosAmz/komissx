@@ -10,6 +10,7 @@ import { Unidades } from "@/module/unidades/entities/unidades.entity";
 import { UserPermission } from "@/module/users/entities/userPermission.entity";
 import { UserRole } from "@/module/users/entities/userRole.entity";
 import { Users } from "@/module/users/entities/users.entity";
+import { postgresPoolConfig } from "@/database/postgresPool.config";
 import { config } from "dotenv";
 import { DataSource } from "typeorm";
 import { CommissionRule } from "@/module/commissions/entities/comissionRule.entity";
@@ -41,4 +42,5 @@ export default new DataSource({
     CommissionRule,
   ],
   migrations: ["src/migrations/*.ts"],
+  extra: postgresPoolConfig,
 });
