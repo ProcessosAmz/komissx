@@ -3,6 +3,7 @@ import {
   atendimentoPadraoPorHost,
   idUsuarioFilaQualidadePorHost,
 } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
+import { hubsoftConsole } from "@/integrations/logger/hubsoftConsole.logger";
 import {
   HubsoftGetAtendimentosFilaQualidadeRepository,
   HubsoftGetOrdensServicoFilaQualidadeRepository,
@@ -18,7 +19,7 @@ import {
   obterQuintaMaisRecenteFilaQualidade,
 } from "@/integrations/useCase/helper/filaQualidade.ordem.helper";
 import { MoveInstallationToQualityQueueUseCase } from "@/integrations/useCase/moveInstallationToQualityQueue.useCase";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 
 export type MudancaFilaQualidade = {
   atualizado: boolean;
@@ -42,8 +43,6 @@ const NOME_FILA_QUALIDADE = "FILA QUALIDADE AUDITORIA";
 
 @Injectable()
 export class MoveAuditsToQualityQueueUseCase {
-  private readonly logger = new Logger(MoveAuditsToQualityQueueUseCase.name);
-
   constructor(
     private readonly hubsoftService: HubsoftService,
     private readonly hubsoftGetAtendimentosFilaQualidadeRepository: HubsoftGetAtendimentosFilaQualidadeRepository,
@@ -52,6 +51,8 @@ export class MoveAuditsToQualityQueueUseCase {
   ) {}
 
   async executeMoverTodos(host: Host): Promise<MoverFilaQualidadeResult> {
+    hubsoftConsole.start(host, "update", "mover todos para FILA QUALIDADE");
+
     const token = await this.hubsoftService.garantirTokenValido(host);
     const ordens = await this.listar(host, token);
     const mudancas = await this.moverTodos(host, token, ordens);
@@ -59,8 +60,15 @@ export class MoveAuditsToQualityQueueUseCase {
       (mudanca) => mudanca.atualizado,
     ).length;
 
-    this.logger.log(
-      `Fila qualidade — PUT todos | ${totalAtualizados}/${ordens.length} atualizados para ${NOME_FILA_QUALIDADE} (${host})`,
+    hubsoftConsole.success(
+      host,
+      "update",
+      `${totalAtualizados}/${ordens.length} atualizados → ${NOME_FILA_QUALIDADE}`,
+    );
+    hubsoftConsole.end(
+      host,
+      "update",
+      `${totalAtualizados}/${ordens.length} ok`,
     );
 
     return {
@@ -74,8 +82,10 @@ export class MoveAuditsToQualityQueueUseCase {
     host: Host,
     tokenInformado?: string,
   ): Promise<OrdemServicoListaItem[]> {
-    this.logger.log(
-      `Fila qualidade — listando auditoria de venda na lista de espera (${host})`,
+    hubsoftConsole.info(
+      host,
+      "update",
+      "listando auditorias na lista de espera",
     );
 
     const token =
@@ -98,8 +108,10 @@ export class MoveAuditsToQualityQueueUseCase {
         token,
       );
 
-    this.logger.log(
-      `Fila qualidade — ${ordens.length} OS de instalação finalizadas | ${auditoriasIndexadas.auditorias.length} tickets na lista de espera (${host})`,
+    hubsoftConsole.info(
+      host,
+      "update",
+      `${ordens.length} OS instalação finalizadas | ${auditoriasIndexadas.auditorias.length} tickets lista espera`,
     );
 
     const resultado = montarOrdensComAuditoria({
@@ -111,8 +123,10 @@ export class MoveAuditsToQualityQueueUseCase {
       direita.dataCadastro.localeCompare(esquerda.dataCadastro),
     );
 
-    this.logger.log(
-      `Fila qualidade — ${resultado.length} atendimentos COMERCIAL - AUDITORIA DE VENDA na lista de espera (${host}) | clientes: ${resultado.map((ordem) => ordem.codigoCliente).join(", ") || "nenhum"}`,
+    hubsoftConsole.info(
+      host,
+      "update",
+      `${resultado.length} elegíveis | clientes: ${resultado.map((ordem) => ordem.codigoCliente).join(", ") || "nenhum"}`,
     );
 
     return resultado;
@@ -127,8 +141,10 @@ export class MoveAuditsToQualityQueueUseCase {
     const mudancas: MudancaFilaQualidade[] = [];
 
     for (const ordem of ordens) {
-      this.logger.log(
-        `Fila qualidade — PUT | cliente ${ordem.codigoCliente} | protocolo ${ordem.protocolo} | atendimento ${ordem.idAtendimento} | OS ${ordem.numeroOrdemServico} | de ${ordem.nomeFila ?? "n/a"} (${ordem.idFila ?? "n/a"}) para ${NOME_FILA_QUALIDADE} (${idFilaNova ?? "n/a"}) (${host})`,
+      hubsoftConsole.info(
+        host,
+        "update",
+        `PUT cliente ${ordem.codigoCliente} | protocolo ${ordem.protocolo} | OS ${ordem.numeroOrdemServico} | ${ordem.nomeFila ?? "n/a"} → ${NOME_FILA_QUALIDADE}`,
       );
 
       const atualizado = ordem.idAtendimento
@@ -139,9 +155,19 @@ export class MoveAuditsToQualityQueueUseCase {
           })
         : false;
 
-      this.logger.log(
-        `Fila qualidade — PUT resultado | atualizado=${atualizado} | atendimento ${ordem.idAtendimento} | protocolo ${ordem.protocolo} | cliente ${ordem.codigoCliente} (${host})`,
-      );
+      if (atualizado) {
+        hubsoftConsole.success(
+          host,
+          "update",
+          `ok | atendimento ${ordem.idAtendimento} | cliente ${ordem.codigoCliente}`,
+        );
+      } else {
+        hubsoftConsole.skip(
+          host,
+          "update",
+          `não atualizado | atendimento ${ordem.idAtendimento ?? "n/a"} | cliente ${ordem.codigoCliente}`,
+        );
+      }
 
       mudancas.push({
         atualizado,

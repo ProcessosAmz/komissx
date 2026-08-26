@@ -1,5 +1,6 @@
 import { Host } from "@/common/enums/host.enum";
 import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
+import { hubsoftConsole } from "@/integrations/logger/hubsoftConsole.logger";
 import {
   HubsoftEditarAtendimentoBody,
   HubsoftUpdateAtendimentoRepository,
@@ -7,12 +8,10 @@ import {
 import { OrdemServicoListaItem } from "@/integrations/types/OrderServicoLista.type";
 import { isAtendimentoFinalizado } from "@/integrations/useCase/helper/filaQualidade.helper";
 import { getErrorMessage } from "@/utils/error.utils";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class UpdateAuditTicketUseCase {
-  private readonly logger = new Logger(UpdateAuditTicketUseCase.name);
-
   constructor(
     private readonly hubsoftUpdateAtendimentoRepository: HubsoftUpdateAtendimentoRepository,
     private readonly hubsoftLogger: HubsoftLogger,
@@ -32,8 +31,10 @@ export class UpdateAuditTicketUseCase {
     nomeFila: string;
   }): Promise<boolean> {
     if (!ordem.idAtendimento) {
-      this.logger.warn(
-        `Fila qualidade — PUT ignorado | OS ${ordem.numeroOrdemServico} | cliente ${ordem.codigoCliente} (${host}) — atendimento não encontrado`,
+      hubsoftConsole.warn(
+        host,
+        "update",
+        `PUT ignorado | OS ${ordem.numeroOrdemServico} | cliente ${ordem.codigoCliente} — sem atendimento`,
       );
       return false;
     }
@@ -44,10 +45,6 @@ export class UpdateAuditTicketUseCase {
         ordem.idAtendimento,
         body,
         token,
-      );
-
-      this.logger.log(
-        `Fila qualidade — PUT ok | categoria ${ordem.categoriaOrdemServico} | cliente ${ordem.codigoCliente} | atendimento ${ordem.idAtendimento} | protocolo ${ordem.protocolo} | OS ${ordem.numeroOrdemServico} (${host})`,
       );
 
       await this.hubsoftLogger.filaQualidade({
@@ -71,14 +68,18 @@ export class UpdateAuditTicketUseCase {
       const message = getErrorMessage(error);
 
       if (isAtendimentoFinalizado(message)) {
-        this.logger.log(
-          `Fila qualidade — ignorado | cliente ${ordem.codigoCliente} | atendimento ${ordem.idAtendimento} | OS ${ordem.numeroOrdemServico} (${host}) — atendimento já finalizado`,
+        hubsoftConsole.skip(
+          host,
+          "update",
+          `já finalizado | atendimento ${ordem.idAtendimento} | cliente ${ordem.codigoCliente}`,
         );
         return false;
       }
 
-      this.logger.error(
-        `Fila qualidade — PUT erro | cliente ${ordem.codigoCliente} | atendimento ${ordem.idAtendimento} | OS ${ordem.numeroOrdemServico} (${host}) — ${message}`,
+      hubsoftConsole.error(
+        host,
+        "update",
+        `PUT erro | atendimento ${ordem.idAtendimento} | cliente ${ordem.codigoCliente} — ${message}`,
       );
 
       await this.hubsoftLogger.filaQualidade({

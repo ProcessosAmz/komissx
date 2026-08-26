@@ -1,16 +1,18 @@
-import { Logger } from '@nestjs/common';
-import { Host } from '@/common/enums/host.enum';
-import { getErrorMessage } from '@/utils/error.utils';
+import { Host } from "@/common/enums/host.enum";
+import { hubsoftConsole } from "@/integrations/logger/hubsoftConsole.logger";
+import { getErrorMessage } from "@/utils/error.utils";
+import { Logger } from "@nestjs/common";
 
 export function logTicketIgnorado(
-  logger: Logger,
   idClienteServico: number | undefined,
   numeroOrdem: string | undefined,
-  host: Host | null,
+  host: Host,
   motivo: string,
 ): void {
-  logger.log(
-    `Ticket ignorado — ${motivo} — cliente ${idClienteServico ?? 'n/a'}, OS ${numeroOrdem ?? 'n/a'} (${host ?? 'desconhecido'})`,
+  hubsoftConsole.skip(
+    host,
+    "create",
+    `ignorado — ${motivo} — cliente ${idClienteServico ?? "n/a"} | OS ${numeroOrdem ?? "n/a"}`,
   );
 }
 
@@ -18,11 +20,18 @@ export function logAndRethrow(
   logger: Logger,
   context: string,
   error: unknown,
+  host?: Host,
 ): never {
   const message = getErrorMessage(error);
-  logger.error(
-    `${context}: ${message}`,
-    error instanceof Error ? error.stack : undefined,
-  );
+
+  if (host) {
+    hubsoftConsole.error(host, "create", `${context}: ${message}`);
+  } else {
+    logger.error(
+      `${context}: ${message}`,
+      error instanceof Error ? error.stack : undefined,
+    );
+  }
+
   throw error;
 }

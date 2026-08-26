@@ -1,6 +1,7 @@
 import { Host } from "@/common/enums/host.enum";
 import { atendimentoPadraoPorHost } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
 import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
+import { hubsoftConsole } from "@/integrations/logger/hubsoftConsole.logger";
 import { RedisService } from "@/integrations/redis/service/index.service";
 import {
   HubsoftCreateAtendimentoRepository,
@@ -50,19 +51,25 @@ export class CreateTicketUseCase {
     const hostDetectado = resolveOrdemServicoHost(numeroOrdem);
     const idUsuarioAbertura = payload.body.id_usuario_abertura;
 
-    this.logger.log(
-      `Ticket — usuário ${idUsuarioAbertura ?? "n/a"} — OS ${numeroOrdem} — cliente ${idClienteServico} (${host})`,
+    hubsoftConsole.start(
+      host,
+      "create",
+      `OS ${numeroOrdem} | cliente ${idClienteServico}`,
+    );
+    hubsoftConsole.info(
+      host,
+      "create",
+      `usuário abertura ${idUsuarioAbertura ?? "n/a"} | tipo OS ${payload.body.id_tipo_ordem_servico ?? "n/a"}`,
     );
 
     if (hostDetectado && hostDetectado !== host) {
       logTicketIgnorado(
-        this.logger,
         idClienteServico,
         numeroOrdem,
         host,
         `host inconsistente: OS pertence a ${hostDetectado}, recebida em ${host}`,
       );
-
+      hubsoftConsole.end(host, "create", "ignorado");
       return null;
     }
 
@@ -73,12 +80,12 @@ export class CreateTicketUseCase {
 
     if (!instalacao) {
       logTicketIgnorado(
-        this.logger,
         idClienteServico,
         numeroOrdem,
         host,
         `tipo ${payload.body.id_tipo_ordem_servico ?? "n/a"} não é instalação`,
       );
+      hubsoftConsole.end(host, "create", "ignorado");
       return null;
     }
 
@@ -90,9 +97,12 @@ export class CreateTicketUseCase {
     );
 
     if (!claimed) {
-      this.logger.log(
-        `Ticket duplicado — OS ${numeroOrdem} — webhook já processado (${host})`,
+      hubsoftConsole.skip(
+        host,
+        "create",
+        `duplicado — webhook já processado | OS ${numeroOrdem}`,
       );
+      hubsoftConsole.end(host, "create", "duplicado");
       return {
         message: "Webhook já processado",
         duplicate: true,
@@ -110,8 +120,10 @@ export class CreateTicketUseCase {
 
       if (!cliente) {
         await releaseWebhookTicket(this.redisService, host, ordemServicoId);
-        this.logger.log(
-          `Ticket erro — OS ${numeroOrdem} — cliente não encontrado id_cliente_servico ${idClienteServico} (${host})`,
+        hubsoftConsole.error(
+          host,
+          "create",
+          `cliente não encontrado | id_cliente_servico ${idClienteServico}`,
         );
         await this.hubsoftLogger.createTicket({
           action: "create_error",
@@ -121,6 +133,7 @@ export class CreateTicketUseCase {
           payload: payload.body,
           cliente: null,
         });
+        hubsoftConsole.end(host, "create", "erro");
         return null;
       }
 
@@ -146,9 +159,12 @@ export class CreateTicketUseCase {
       );
 
       if (jaExisteNesteCliente) {
-        this.logger.log(
-          `Ticket duplicado — OS ${numeroOrdem} — atendimento 475 já existe para o cliente (${host})`,
+        hubsoftConsole.skip(
+          host,
+          "create",
+          `duplicado — auditoria já existe para o cliente | OS ${numeroOrdem}`,
         );
+        hubsoftConsole.end(host, "create", "duplicado");
         return {
           message: "Atendimento de auditoria já existe para o cliente",
           duplicate: true,
@@ -178,9 +194,12 @@ export class CreateTicketUseCase {
         atendimento,
       });
 
-      this.logger.log(
-        `Ticket criado — cliente ${atendimento.cliente.codigo_cliente} — OS ${numeroOrdem} (${host})`,
+      hubsoftConsole.success(
+        host,
+        "create",
+        `ticket criado | cliente ${atendimento.cliente.codigo_cliente} | OS ${numeroOrdem} | protocolo ${atendimento.protocolo ?? "n/a"}`,
       );
+      hubsoftConsole.end(host, "create", "sucesso");
 
       return {
         message: "Atendimento criado com sucesso",
@@ -194,7 +213,8 @@ export class CreateTicketUseCase {
         isInstalacao: instalacao,
         payload: payload.body,
       });
-      logAndRethrow(this.logger, "Erro ao criar atendimento no Hubsoft", error);
+      hubsoftConsole.end(host, "create", "erro");
+      logAndRethrow(this.logger, "Erro ao criar atendimento no Hubsoft", error, host);
     }
   }
 }

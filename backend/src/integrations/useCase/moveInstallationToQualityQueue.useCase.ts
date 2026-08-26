@@ -1,15 +1,12 @@
 import { Host } from "@/common/enums/host.enum";
 import { idUsuarioFilaQualidadePorHost } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
+import { hubsoftConsole } from "@/integrations/logger/hubsoftConsole.logger";
 import { OrdemServicoListaItem } from "@/integrations/types/OrderServicoLista.type";
 import { UpdateAuditTicketUseCase } from "@/integrations/useCase/updateAuditTicket.useCase";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 
 @Injectable()
 export class MoveInstallationToQualityQueueUseCase {
-  private readonly logger = new Logger(
-    MoveInstallationToQualityQueueUseCase.name,
-  );
-
   constructor(
     private readonly updateAuditTicketUseCase: UpdateAuditTicketUseCase,
   ) {}
@@ -25,13 +22,11 @@ export class MoveInstallationToQualityQueueUseCase {
   }): Promise<boolean> {
     const idFilaQualidade = idUsuarioFilaQualidadePorHost[host];
 
-    this.logger.log(
-      `Fila qualidade — instalação | OS ${ordem.numeroOrdemServico} | atendimento ${ordem.idAtendimento} | cliente ${ordem.codigoCliente} | fila ${idFilaQualidade ?? "n/a"} (${host})`,
-    );
-
     if (!idFilaQualidade) {
-      this.logger.warn(
-        `Fila qualidade — instalação ignorada | fila qualidade não configurada (${host})`,
+      hubsoftConsole.warn(
+        host,
+        "update",
+        `fila qualidade não configurada — OS ${ordem.numeroOrdemServico}`,
       );
       return false;
     }
