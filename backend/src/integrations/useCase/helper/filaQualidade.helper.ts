@@ -393,9 +393,6 @@ export const montarOrdensComAuditoria = (params: {
     );
 
     if (auditoriasElegiveis.length === 0) {
-      filaQualidadeLogger.log(
-        `Lista espera — OS sem auditoria | os ${ordem.numero} | cliente ${codigoCliente ?? "n/a"} | servico ${idClienteServico || "n/a"}`,
-      );
       continue;
     }
 
