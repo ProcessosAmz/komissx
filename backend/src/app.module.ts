@@ -13,7 +13,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CommissionsModule } from "@/module/commissions/index.module";
-import { postgresPoolConfig } from "@/database/postgresPool.config";
+import { postgresPoolConfig, handlePostgresPoolError } from "@/database/postgresPool.config";
 
 @Module({
   imports: [
@@ -32,6 +32,9 @@ import { postgresPoolConfig } from "@/database/postgresPool.config";
       migrations: [`${__dirname}/migrations/*{.js}`],
       migrationsRun: false,
       extra: postgresPoolConfig,
+      retryAttempts: 5,
+      retryDelay: 2000,
+      poolErrorHandler: handlePostgresPoolError,
     }),
     LocalidadeModule,
     EmpresasModule,
