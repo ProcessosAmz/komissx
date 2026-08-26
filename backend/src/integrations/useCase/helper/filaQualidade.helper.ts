@@ -19,20 +19,12 @@ import {
   isOsElegivelParaFilaQualidade,
   resolverCategoriaOrdemServicoFilaQualidade,
 } from "@/integrations/useCase/helper/filaQualidade.ordem.helper";
-import { Logger } from "@nestjs/common";
 
 export type AuditoriaComercial = HubsoftAtendimento;
 
-export const idUsuarioTesteAbertura = 2166;
-
-const NOME_USUARIO_TESTE_ABERTURA = "ingrid andrade";
 const NOME_TIPO_AUDITORIA_VENDA = "auditoria de venda";
 const NOME_FILA_LISTA_ESPERA = "lista de espera";
 const NOME_STATUS_AGUARDANDO_ANALISE = "aguardando analise";
-const PROTOCOLO_ALVO_INGRID = "20260825164026910798";
-const ID_SERVICO_ALVO_INGRID = 276111;
-
-const filaQualidadeLogger = new Logger("FilaQualidadeHelper");
 
 const normalizarTexto = (valor: string): string =>
   valor
@@ -40,19 +32,6 @@ const normalizarTexto = (valor: string): string =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
-
-export const isUsuarioTesteAbertura = (
-  idUsuarioAbertura?: number | null,
-  nomeUsuarioAbertura?: string | null,
-): boolean => {
-  if (idUsuarioAbertura === idUsuarioTesteAbertura) {
-    return true;
-  }
-
-  return normalizarTexto(nomeUsuarioAbertura ?? "").includes(
-    NOME_USUARIO_TESTE_ABERTURA,
-  );
-};
 
 export type AuditoriasIndexadas = {
   auditorias: AuditoriaComercial[];
@@ -229,36 +208,6 @@ export const isAtendimentoNaListaEspera = (
   );
 };
 
-export const logUsuarioAberturaAtendimento = (
-  contexto: string,
-  auditoria: HubsoftAtendimento,
-  host?: Host,
-): ReturnType<typeof resolverUsuarioAbertura> => {
-  const abertura = resolverUsuarioAbertura(
-    auditoria.usuario_abertura,
-    auditoria.id_usuario_abertura,
-  );
-  const ehIngrid = isUsuarioTesteAbertura(abertura.id, abertura.nome);
-  const idClienteServico = resolverIdClienteServicoLista(auditoria);
-  const ehAlvo =
-    auditoria.protocolo === PROTOCOLO_ALVO_INGRID ||
-    idClienteServico === ID_SERVICO_ALVO_INGRID;
-
-  if (!ehAlvo && !ehIngrid) {
-    return abertura;
-  }
-
-  const naListaEspera = host
-    ? isAtendimentoNaListaEspera(host, auditoria)
-    : false;
-
-  filaQualidadeLogger.log(
-    `${contexto} | protocolo ${auditoria.protocolo} | cliente ${resolverCodigoClienteLista(auditoria) ?? "n/a"} | servico ${idClienteServico ?? "n/a"} | tipo ${JSON.stringify(auditoria.tipo_atendimento)} | id_tipo ${auditoria.id_tipo_atendimento ?? "n/a"} | status ${JSON.stringify(auditoria.status)} | nome_status ${resolverNomeStatus(auditoria) || "n/a"} | id_status ${auditoria.id_atendimento_status ?? "n/a"} | fila ${resolverNomeFila(auditoria) || "n/a"} | lista_espera=${naListaEspera} | id_usuario_abertura campo=${auditoria.id_usuario_abertura ?? "n/a"} | usuario_abertura raw=${JSON.stringify(auditoria.usuario_abertura)} | parse id=${abertura.id ?? "n/a"} nome=${abertura.nome || "n/a"} origem=${abertura.origem} | ingrid=${ehIngrid}`,
-  );
-
-  return abertura;
-};
-
 export const buscarAuditoriasNaListaEspera = async (params: {
   host: Host;
   token: string;
@@ -296,12 +245,6 @@ export const buscarAuditoriasNaListaEspera = async (params: {
     if (auditoria.data_fechamento) {
       continue;
     }
-
-    logUsuarioAberturaAtendimento(
-      "Lista espera — parse usuário",
-      auditoria,
-      params.host,
-    );
 
     if (
       !isAtendimentoAuditoriaDeVenda(
