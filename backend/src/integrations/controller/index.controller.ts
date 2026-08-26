@@ -118,53 +118,35 @@ export class IntegrationsController {
   @Post(":host/ordens-servico")
   @HttpCode(200)
   @ApiOperation({
-    summary:
-      "Move auditorias para a fila de qualidade e retorna as ordens de serviço",
+    summary: "Webhook para mover auditoria de venda para a fila qualidade",
     description:
-      "Busca as ordens de serviço do host informado, identifica as que possuem auditoria e move os atendimentos elegíveis para a fila de qualidade.",
+      "Consulta COMERCIAL - AUDITORIA DE VENDA na LISTA DE ESPERA e altera o responsável de todos para FILA QUALIDADE AUDITORIA.",
   })
   @ApiParam({
     name: "host",
     enum: Host,
-    description: "Conta Hubsoft que será consultada",
-    example: Host.MANIA,
+    description: "Conta Hubsoft responsável pelo webhook",
+    example: Host.AMAZONET,
   })
   @ApiResponse({
     status: 200,
-    description: "Lista de ordens de serviço processadas.",
-    schema: {
-      type: "object",
-      properties: {
-        host: {
-          type: "string",
-          enum: Object.values(Host),
-          example: Host.MANIA,
-        },
-        total: {
-          type: "number",
-          example: 10,
-        },
-        ordens: {
-          type: "array",
-          items: {
-            type: "object",
-          },
-        },
-      },
-    },
+    description: "Log das mudanças de fila de todos os atendimentos consultados.",
   })
   @ApiResponse({
     status: 400,
     description: "Host inválido.",
   })
-  async buscarOrdensServicoPost(
+  async moverFilaQualidade(
     @Param("host", new ParseEnumPipe(Host)) host: Host,
   ) {
-    const ordens = await this.moveAuditsToQualityQueueUseCase.execute(host);
+    const { ordens, mudancas, totalAtualizados } =
+      await this.moveAuditsToQualityQueueUseCase.executeMoverTodos(host);
 
     return {
       host,
       total: ordens.length,
+      totalAtualizados,
+      mudancas,
       ordens,
     };
   }

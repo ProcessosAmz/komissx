@@ -1,21 +1,44 @@
 import { Host } from "@/common/enums/host.enum";
-import { atendimentoPadraoPorHost } from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
 import {
-  HubsoftGetAtendimentosRepository,
-  HubsoftGetOrdensServicoRepository,
+  atendimentoPadraoPorHost,
+  idUsuarioFilaQualidadePorHost,
+} from "@/integrations/constants/hubsoft/atendimentoPadrao.constants";
+import {
+  HubsoftGetAtendimentosFilaQualidadeRepository,
+  HubsoftGetOrdensServicoFilaQualidadeRepository,
 } from "@/integrations/repository/hubsoft";
-import {
-  formatDateYmd,
-  getMostRecentThursday,
-} from "@/integrations/service/helper";
 import { HubsoftService } from "@/integrations/service/hubsoft.service";
 import { OrdemServicoListaItem } from "@/integrations/types/OrderServicoLista.type";
-import { DispatchQualityQueueUseCase } from "@/integrations/useCase/dispatchQualityQueue.useCase";
 import {
   buscarAuditoriasNaListaEspera,
   montarOrdensComAuditoria,
-} from "@/integrations/useCase/helper";
+} from "@/integrations/useCase/helper/filaQualidade.helper";
+import {
+  formatarDataYmdFilaQualidade,
+  obterQuintaMaisRecenteFilaQualidade,
+} from "@/integrations/useCase/helper/filaQualidade.ordem.helper";
+import { MoveInstallationToQualityQueueUseCase } from "@/integrations/useCase/moveInstallationToQualityQueue.useCase";
 import { Injectable, Logger } from "@nestjs/common";
+
+export type MudancaFilaQualidade = {
+  atualizado: boolean;
+  idAtendimento: number | null;
+  protocolo: string | null;
+  codigoCliente: number | null;
+  numeroOrdemServico: string | null;
+  filaAnterior: string | null;
+  idFilaAnterior: number | null;
+  filaNova: string;
+  idFilaNova: number | null;
+};
+
+export type MoverFilaQualidadeResult = {
+  ordens: OrdemServicoListaItem[];
+  mudancas: MudancaFilaQualidade[];
+  totalAtualizados: number;
+};
+
+const NOME_FILA_QUALIDADE = "FILA QUALIDADE AUDITORIA";
 
 @Injectable()
 export class MoveAuditsToQualityQueueUseCase {
@@ -23,27 +46,60 @@ export class MoveAuditsToQualityQueueUseCase {
 
   constructor(
     private readonly hubsoftService: HubsoftService,
-    private readonly hubsoftGetAtendimentosRepository: HubsoftGetAtendimentosRepository,
-    private readonly hubsoftGetOrdensServicoRepository: HubsoftGetOrdensServicoRepository,
-    private readonly dispatchQualityQueueUseCase: DispatchQualityQueueUseCase,
+    private readonly hubsoftGetAtendimentosFilaQualidadeRepository: HubsoftGetAtendimentosFilaQualidadeRepository,
+    private readonly hubsoftGetOrdensServicoFilaQualidadeRepository: HubsoftGetOrdensServicoFilaQualidadeRepository,
+    private readonly moveInstallationToQualityQueueUseCase: MoveInstallationToQualityQueueUseCase,
   ) {}
 
-  async execute(host: Host): Promise<OrdemServicoListaItem[]> {
-    this.logger.log(`Fila qualidade — buscando OS concluídas (${host})`);
-
+  async executeMoverTodos(host: Host): Promise<MoverFilaQualidadeResult> {
     const token = await this.hubsoftService.garantirTokenValido(host);
-    const dataInicio = formatDateYmd(getMostRecentThursday());
+    const ordens = await this.listar(host, token);
+    const mudancas = await this.moverTodos(host, token, ordens);
+    const totalAtualizados = mudancas.filter(
+      (mudanca) => mudanca.atualizado,
+    ).length;
+
+    this.logger.log(
+      `Fila qualidade — PUT todos | ${totalAtualizados}/${ordens.length} atualizados para ${NOME_FILA_QUALIDADE} (${host})`,
+    );
+
+    return {
+      ordens,
+      mudancas,
+      totalAtualizados,
+    };
+  }
+
+  private async listar(
+    host: Host,
+    tokenInformado?: string,
+  ): Promise<OrdemServicoListaItem[]> {
+    this.logger.log(
+      `Fila qualidade — listando auditoria de venda na lista de espera (${host})`,
+    );
+
+    const token =
+      tokenInformado ?? (await this.hubsoftService.garantirTokenValido(host));
+    const dataInicio = formatarDataYmdFilaQualidade(
+      obterQuintaMaisRecenteFilaQualidade(),
+    );
     const atendimentoPadrao = atendimentoPadraoPorHost[host];
     const auditoriasIndexadas = await buscarAuditoriasNaListaEspera({
       host,
       token,
       dataInicio,
       atendimentoPadrao,
-      hubsoftGetAtendimentosRepository: this.hubsoftGetAtendimentosRepository,
+      hubsoftGetAtendimentosFilaQualidadeRepository:
+        this.hubsoftGetAtendimentosFilaQualidadeRepository,
     });
-    const ordens = await this.hubsoftGetOrdensServicoRepository.execute(
-      host,
-      token,
+    const ordens =
+      await this.hubsoftGetOrdensServicoFilaQualidadeRepository.execute(
+        host,
+        token,
+      );
+
+    this.logger.log(
+      `Fila qualidade — ${ordens.length} OS de instalação finalizadas | ${auditoriasIndexadas.auditorias.length} tickets na lista de espera (${host})`,
     );
 
     const resultado = montarOrdensComAuditoria({
@@ -51,39 +107,55 @@ export class MoveAuditsToQualityQueueUseCase {
       ordens,
       atendimentoPadrao,
       auditoriasIndexadas,
-    });
-
-    const idsAtendimento = [
-      ...new Set(resultado.map((ordem) => ordem.idAtendimento)),
-    ];
-    let totalAtualizados = 0;
-
-    for (const idAtendimento of idsAtendimento) {
-      const ordem = resultado.find(
-        (item) => item.idAtendimento === idAtendimento,
-      );
-
-      if (!ordem) {
-        continue;
-      }
-
-      const atualizado = await this.dispatchQualityQueueUseCase.execute({
-        host,
-        token,
-        ordem,
-      });
-
-      if (atualizado) {
-        totalAtualizados += 1;
-      }
-    }
-
-    this.logger.log(
-      `Fila qualidade — ${resultado.length} encontrados, ${totalAtualizados} atualizados (${host}) | clientes: ${resultado.map((ordem) => ordem.codigoCliente).join(", ") || "nenhum"} | atendimentos: ${idsAtendimento.join(", ") || "nenhum"}`,
-    );
-
-    return resultado.sort((esquerda, direita) =>
+    }).sort((esquerda, direita) =>
       direita.dataCadastro.localeCompare(esquerda.dataCadastro),
     );
+
+    this.logger.log(
+      `Fila qualidade — ${resultado.length} atendimentos COMERCIAL - AUDITORIA DE VENDA na lista de espera (${host}) | clientes: ${resultado.map((ordem) => ordem.codigoCliente).join(", ") || "nenhum"}`,
+    );
+
+    return resultado;
+  }
+
+  private async moverTodos(
+    host: Host,
+    token: string,
+    ordens: OrdemServicoListaItem[],
+  ): Promise<MudancaFilaQualidade[]> {
+    const idFilaNova = idUsuarioFilaQualidadePorHost[host] ?? null;
+    const mudancas: MudancaFilaQualidade[] = [];
+
+    for (const ordem of ordens) {
+      this.logger.log(
+        `Fila qualidade — PUT | cliente ${ordem.codigoCliente} | protocolo ${ordem.protocolo} | atendimento ${ordem.idAtendimento} | OS ${ordem.numeroOrdemServico} | de ${ordem.nomeFila ?? "n/a"} (${ordem.idFila ?? "n/a"}) para ${NOME_FILA_QUALIDADE} (${idFilaNova ?? "n/a"}) (${host})`,
+      );
+
+      const atualizado = ordem.idAtendimento
+        ? await this.moveInstallationToQualityQueueUseCase.execute({
+            host,
+            token,
+            ordem,
+          })
+        : false;
+
+      this.logger.log(
+        `Fila qualidade — PUT resultado | atualizado=${atualizado} | atendimento ${ordem.idAtendimento} | protocolo ${ordem.protocolo} | cliente ${ordem.codigoCliente} (${host})`,
+      );
+
+      mudancas.push({
+        atualizado,
+        idAtendimento: ordem.idAtendimento,
+        protocolo: ordem.protocolo,
+        codigoCliente: ordem.codigoCliente,
+        numeroOrdemServico: ordem.numeroOrdemServico,
+        filaAnterior: ordem.nomeFila,
+        idFilaAnterior: ordem.idFila,
+        filaNova: NOME_FILA_QUALIDADE,
+        idFilaNova,
+      });
+    }
+
+    return mudancas;
   }
 }

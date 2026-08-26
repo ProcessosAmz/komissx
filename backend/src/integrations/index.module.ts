@@ -5,9 +5,9 @@ import { HubsoftLogger } from "@/integrations/logger/hubsoft.logger";
 import {
   HubsoftGetByIdClienteRepository,
   HubsoftCreateAtendimentoRepository,
-  HubsoftGetAtendimentosRepository,
   HubsoftGetAtendimentosCreateTicketRepository,
-  HubsoftGetOrdensServicoRepository,
+  HubsoftGetAtendimentosFilaQualidadeRepository,
+  HubsoftGetOrdensServicoFilaQualidadeRepository,
   HubsoftGetAtendimentoByIdRepository,
   HubsoftUpdateAtendimentoRepository,
 } from "@/integrations/repository/hubsoft";
@@ -36,9 +36,9 @@ import {
     DispatchQualityQueueUseCase,
     HubsoftGetByIdClienteRepository,
     HubsoftCreateAtendimentoRepository,
-    HubsoftGetAtendimentosRepository,
     HubsoftGetAtendimentosCreateTicketRepository,
-    HubsoftGetOrdensServicoRepository,
+    HubsoftGetAtendimentosFilaQualidadeRepository,
+    HubsoftGetOrdensServicoFilaQualidadeRepository,
     HubsoftGetAtendimentoByIdRepository,
     HubsoftUpdateAtendimentoRepository,
     HubsoftLogger,

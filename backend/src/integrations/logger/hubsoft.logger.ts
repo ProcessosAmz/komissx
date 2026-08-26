@@ -8,6 +8,34 @@ import { OrdemServicoWebhook } from '@/integrations/types/OrdemServicoWebhook.ty
 import { CreateTicketLogData } from '@/integrations/logger/type/createTicket.type';
 import { FilaQualidadeLogData } from '@/integrations/logger/type/filaQualidade.type';
 
+const toTextoStatus = (status: HubsoftAtendimento['status']): string => {
+  if (typeof status === 'string') {
+    return status;
+  }
+
+  return status?.descricao ?? '';
+};
+
+const toTextoTipo = (
+  tipo: HubsoftAtendimento['tipo_atendimento'],
+): string => {
+  if (typeof tipo === 'string') {
+    return tipo;
+  }
+
+  return tipo?.descricao ?? '';
+};
+
+const toCodigoCliente = (atendimento: HubsoftAtendimento): number =>
+  atendimento.cliente?.codigo_cliente ??
+  atendimento.cliente_servico?.cliente?.codigo_cliente ??
+  0;
+
+const toNomeCliente = (atendimento: HubsoftAtendimento): string =>
+  atendimento.cliente?.nome_razaosocial ??
+  atendimento.cliente_servico?.cliente?.nome_razaosocial ??
+  '';
+
 @Injectable()
 export class HubsoftLogger {
   private readonly moduleName = 'hubsoft';
@@ -47,10 +75,10 @@ export class HubsoftLogger {
         ? {
           id_atendimento: params.atendimento.id_atendimento,
           protocolo: params.atendimento.protocolo,
-          status: params.atendimento.status,
-          tipo_atendimento: params.atendimento.tipo_atendimento,
-          codigo_cliente: params.atendimento.cliente.codigo_cliente,
-          nome_cliente: params.atendimento.cliente.nome_razaosocial,
+          status: toTextoStatus(params.atendimento.status),
+          tipo_atendimento: toTextoTipo(params.atendimento.tipo_atendimento),
+          codigo_cliente: toCodigoCliente(params.atendimento),
+          nome_cliente: toNomeCliente(params.atendimento),
         }
         : null,
     };

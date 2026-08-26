@@ -52,25 +52,57 @@ export type HubsoftAtendimento = {
   protocolo: string;
   descricao_abertura: string;
   descricao_fechamento: string | null;
-  tipo_atendimento: string;
+  tipo_atendimento:
+    | string
+    | {
+        id_tipo_atendimento?: number;
+        descricao?: string;
+      };
   id_tipo_atendimento?: number | null;
   id_atendimento_status?: number | null;
   id_usuario_responsavel?: number | null;
-  usuarios_responsaveis?: { id: number; name?: string }[];
-  usuario_abertura: string;
-  usuario_responsavel: string;
+  usuarios_responsaveis?: {
+    id?: number;
+    id_usuario?: number;
+    name?: string;
+    pivot?: {
+      id_atendimento?: number;
+      id_usuario?: number;
+    };
+  }[];
+  id_usuario_abertura?: number | null;
+  usuario_abertura?: string | { id?: number; name?: string };
+  usuario_responsavel?: string | { id?: number; name?: string } | null;
   usuario_fechamento: string | null;
   data_cadastro: string;
   data_fechamento: string | null;
   setor_responsavel: string | null;
   status_fechamento: string | null;
   motivo_fechamento: string | null;
-  status: string;
+  status:
+    | string
+    | {
+        descricao?: string;
+        id_atendimento_status?: number;
+      };
+  id_cliente_servico?: number;
+  cliente_servico?: {
+    id_cliente_servico?: number;
+    id_cliente?: number;
+    cliente?: {
+      codigo_cliente?: number;
+      nome_razaosocial?: string;
+    };
+    servico?: {
+      id_servico?: number;
+      descricao?: string;
+    };
+  };
   atendimento_mensagem: unknown[];
   disponibilidade_atendimento: unknown[];
   destino: string;
   cliente: HubsoftAtendimentoCliente;
-  servico: HubsoftAtendimentoServico;
+  servico?: HubsoftAtendimentoServico | null;
   pop: unknown | null;
   prospecto: unknown | null;
   ordens_servico: unknown[];
@@ -97,6 +129,7 @@ export type HubsoftAtendimentoTodosQuery = {
   tipo_atendimento?: string;
   status_atendimento?: string;
   id_servico?: number;
+  relacoes?: string;
   tipo_data?: "data_cadastro" | "data_fechamento";
 };
 

@@ -5,7 +5,7 @@ import {
   HubsoftUpdateAtendimentoRepository,
 } from "@/integrations/repository/hubsoft";
 import { OrdemServicoListaItem } from "@/integrations/types/OrderServicoLista.type";
-import { isAtendimentoFinalizado } from "@/integrations/useCase/helper";
+import { isAtendimentoFinalizado } from "@/integrations/useCase/helper/filaQualidade.helper";
 import { getErrorMessage } from "@/utils/error.utils";
 import { Injectable, Logger } from "@nestjs/common";
 
@@ -31,6 +31,13 @@ export class UpdateAuditTicketUseCase {
     body: HubsoftEditarAtendimentoBody;
     nomeFila: string;
   }): Promise<boolean> {
+    if (!ordem.idAtendimento) {
+      this.logger.warn(
+        `Fila qualidade — PUT ignorado | OS ${ordem.numeroOrdemServico} | cliente ${ordem.codigoCliente} (${host}) — atendimento não encontrado`,
+      );
+      return false;
+    }
+
     try {
       await this.hubsoftUpdateAtendimentoRepository.execute(
         host,
@@ -52,7 +59,7 @@ export class UpdateAuditTicketUseCase {
           host,
           idAtendimento: ordem.idAtendimento,
           codigoCliente: ordem.codigoCliente,
-          idFila: body.id_usuario_responsavel ?? ordem.idFila,
+          idFila: body.id_usuario_responsavel ?? ordem.idFila ?? undefined,
           nomeFila,
           idUsuarioResponsavel:
             body.id_usuario_responsavel ?? ordem.idUsuarioResponsavel,

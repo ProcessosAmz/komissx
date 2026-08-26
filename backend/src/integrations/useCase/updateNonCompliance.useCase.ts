@@ -31,7 +31,7 @@ export class UpdateNonComplianceUseCase {
       host,
       token,
       ordem,
-      nomeFila: ordem.nomeFila,
+      nomeFila: ordem.nomeFila ?? "LISTA DE ESPERA",
       body: {
         fechar_atendimento: false,
         id_atendimento_status: idStatus,
