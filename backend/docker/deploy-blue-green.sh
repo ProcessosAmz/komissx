@@ -39,11 +39,17 @@ else
   echo "==> Traefik já está no host, pulando pull"
 fi
 
-echo "==> Buildando backend-$NEW_COLOR..."
-$COMPOSE --profile "$NEW_COLOR" build "backend-$NEW_COLOR"
+BACKEND_IMAGE=$(grep -E '^BACKEND_IMAGE=' .env | cut -d= -f2- | tr -d '\r')
+if [ -z "$BACKEND_IMAGE" ]; then
+  echo "!! BACKEND_IMAGE ausente no .env"
+  exit 1
+fi
+
+echo "==> Pull backend $BACKEND_IMAGE..."
+docker pull "$BACKEND_IMAGE"
 
 echo "==> Subindo backend-$NEW_COLOR..."
-$COMPOSE --profile "$NEW_COLOR" up -d --force-recreate "backend-$NEW_COLOR"
+$COMPOSE --profile "$NEW_COLOR" up -d --force-recreate --no-build "backend-$NEW_COLOR"
 
 echo "==> Aguardando healthcheck..."
 elapsed=0

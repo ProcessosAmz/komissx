@@ -6,11 +6,7 @@ networks:
 services:
 
   frontend-blue:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL}
+    image: ${FRONTEND_IMAGE}
     container_name: komissx_frontend_blue
     restart: unless-stopped
     profiles: ["blue"]
@@ -23,11 +19,7 @@ services:
       start_period: 10s
 
   frontend-green:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL}
+    image: ${FRONTEND_IMAGE}
     container_name: komissx_frontend_green
     restart: unless-stopped
     profiles: ["green"]

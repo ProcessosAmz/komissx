@@ -22,11 +22,17 @@ fi
 
 echo "==> Frontend cor ativa: ${ACTIVE_COLOR:-nenhuma} | Nova cor: $NEW_COLOR"
 
-echo "==> Buildando frontend-$NEW_COLOR..."
-$COMPOSE --profile "$NEW_COLOR" build "frontend-$NEW_COLOR"
+FRONTEND_IMAGE=$(grep -E '^FRONTEND_IMAGE=' .env | cut -d= -f2- | tr -d '\r')
+if [ -z "$FRONTEND_IMAGE" ]; then
+  echo "!! FRONTEND_IMAGE ausente no .env"
+  exit 1
+fi
+
+echo "==> Pull frontend $FRONTEND_IMAGE..."
+docker pull "$FRONTEND_IMAGE"
 
 echo "==> Subindo frontend-$NEW_COLOR..."
-$COMPOSE --profile "$NEW_COLOR" up -d --force-recreate "frontend-$NEW_COLOR"
+$COMPOSE --profile "$NEW_COLOR" up -d --force-recreate --no-build "frontend-$NEW_COLOR"
 
 echo "==> Aguardando healthcheck..."
 elapsed=0
