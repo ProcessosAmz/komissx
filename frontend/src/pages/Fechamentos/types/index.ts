@@ -1,5 +1,3 @@
-// features/fechamentos/types/index.ts
-
 export interface HierarchyBranch {
   supervisores: string[];
   lideres: string[];
@@ -17,23 +15,31 @@ export interface FechamentoSemanalRules {
 export interface RuleEngineConfig {
   hierarquia: Record<string, Record<string, HierarchyBranch>>;
   fechamento_semanal: FechamentoSemanalRules;
-  fechamento_mensal: Record<string, any>;
+  fechamento_mensal: Record<string, unknown>;
 }
 
-export type StatusAuditoria = 'PENDENTE' | 'APROVADO' | 'NC APROVADO' | 'REPROVADO';
-export type StatusFinanceiro = 'PAGO' | '-';
+export type StatusAuditoria = "PENDENTE" | "APROVADO" | "NC APROVADO" | "REPROVADO";
+export type StatusFinanceiro = "PAGO" | "-";
 
 export interface OrdemServico {
   id: string;
   codigo_cliente: string;
+  nome_cliente: string;
   numero_ordem_servico: string;
   usuario_fechamento: string;
   usuario_fechamento_limpo: string;
   usuario_abertura: string;
   tipo_ordem_servico: string;
   data_termino_executado: string;
+  cidade: string;
+  estado: string;
+  bairro: string;
+  motivo_fechamento: string;
+  etapa_instalacao: string;
+  status_instalacao: string;
+  motivo_instalacao: string;
   status_auditoria: StatusAuditoria;
-  conta: 'amazonet' | 'mania';
+  conta: "amazonet" | "mania";
   tecnico_id?: string | null;
 }
 
@@ -47,5 +53,5 @@ export interface ResumoFechamentoDTO {
   totalReceber: number;
   totalOS: number;
   aprovadas: number;
-  reprovadas: number;
+  pendentes: number;
 }

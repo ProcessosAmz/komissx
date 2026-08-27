@@ -123,6 +123,7 @@ export const useTecnicos = (filtroTecnico: string, buscaOS: string) => {
         termo.length === 0 ||
         os.numero_ordem_servico.toLowerCase().includes(termo) ||
         os.codigo_cliente.toLowerCase().includes(termo) ||
+        (os.nome_cliente || "").toLowerCase().includes(termo) ||
         os.usuario_fechamento_limpo.toLowerCase().includes(termo);
       return matchTecnico && matchBusca;
     });
@@ -136,11 +137,11 @@ export const useTecnicos = (filtroTecnico: string, buscaOS: string) => {
           acc.aprovadas += 1;
           acc.totalReceber += os.valor_a_pagar || 0;
         } else {
-          acc.reprovadas += 1;
+          acc.pendentes += 1;
         }
         return acc;
       },
-      { totalReceber: 0, totalOS: 0, aprovadas: 0, reprovadas: 0 },
+      { totalReceber: 0, totalOS: 0, aprovadas: 0, pendentes: 0 },
     );
   }, [dadosFiltrados]);
 
@@ -177,7 +178,6 @@ export const useTecnicos = (filtroTecnico: string, buscaOS: string) => {
     resumo,
     loading,
     erro,
-    totalSincronizados: Object.keys(semanalRules?.tecnicos_terceirizados || {}).length,
     handleExcluir,
     handleAlterarStatus,
   };

@@ -1,12 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useTecnicos } from "./hooks/useTecnicos";
 import { TecnicosResumoCards } from "./components/TecnicosResumoCards";
 import { TecnicosFilters } from "./components/TecnicosFilters";
 import { TecnicosTable } from "./components/TecnicosTable";
+import { TecnicosDetalheDialog } from "./components/TecnicosDetalheDialog";
+import { TecnicoRowViewModel } from "../../types";
 
 export default function FechamentoTecnico() {
   const [filtroTecnico, setFiltroTecnico] = useState("TODOS");
   const [buscaOS, setBuscaOS] = useState("");
+  const [ordemSelecionada, setOrdemSelecionada] = useState<TecnicoRowViewModel | null>(
+    null,
+  );
 
   const {
     dataInicio,
@@ -18,27 +23,22 @@ export default function FechamentoTecnico() {
     resumo,
     loading,
     erro,
-    totalSincronizados,
     handleExcluir,
     handleAlterarStatus,
   } = useTecnicos(filtroTecnico, buscaOS);
 
+  const ordemAtual =
+    dadosFiltrados.find((item) => item.id === ordemSelecionada?.id) ?? ordemSelecionada;
+
   return (
     <>
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Fechamento Técnico</h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Ordens da query Fechamento Instalação Técnico, com valores do painel de regras semanais.
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Fechamento de instalação
+        </h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Instalações da semana, cruzadas com os técnicos cadastrados.
         </p>
-      </div>
-
-      <div className="bg-indigo-950/20 border border-indigo-500/20 px-4 py-3 rounded-xl flex items-center justify-between">
-        <div className="flex items-center gap-2.5 text-xs text-indigo-400">
-          <span className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
-          <span>
-            Motor ativo sincronizando {totalSincronizados} tabelas de técnicos terceirizados.
-          </span>
-        </div>
       </div>
 
       <TecnicosFilters
@@ -54,26 +54,37 @@ export default function FechamentoTecnico() {
       />
 
       {erro ? (
-        <div className="bg-red-950/20 border border-red-500/20 px-4 py-3 rounded-xl text-sm text-red-300">
+        <div className="rounded-2xl border border-red-500/20 bg-red-950/20 px-4 py-3 text-sm text-red-300">
           {erro}
         </div>
       ) : null}
 
       {loading ? (
-        <div className="flex items-center justify-center p-12 text-slate-400 font-medium text-sm">
-          <span className="h-4 w-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mr-2" />
-          Carregando instalações do Metabase...
+        <div className="flex items-center justify-center p-12 text-sm font-medium text-slate-400">
+          <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+          Carregando instalações...
         </div>
       ) : (
         <>
           <TecnicosResumoCards resumo={resumo} />
           <TecnicosTable
             dados={dadosFiltrados}
-            onAlterarStatus={handleAlterarStatus}
-            onExcluir={handleExcluir}
+            onAbrirDetalhe={setOrdemSelecionada}
           />
         </>
       )}
+
+      <TecnicosDetalheDialog
+        ordem={ordemAtual}
+        aberto={Boolean(ordemSelecionada)}
+        onAbertoChange={(aberto) => {
+          if (!aberto) {
+            setOrdemSelecionada(null);
+          }
+        }}
+        onAlterarStatus={handleAlterarStatus}
+        onExcluir={handleExcluir}
+      />
     </>
   );
 }

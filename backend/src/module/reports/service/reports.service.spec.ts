@@ -28,13 +28,20 @@ const makeRelatorioTecnicoDto = (
 const makeMetabaseRow = (
   overrides: Record<string, unknown> = {},
 ): Record<string, unknown> => ({
-  codigo_cliente: 20455,
-  numero_ordem_servico: "85961",
-  usuario_fechamento: "Edinelson Moura de Lima_TEC_TERC_MAO",
-  usuario_abertura: "Ariedina Augusta Feitosa Soares",
-  tipo_ordem_servico: "INSTALAÇÃO FTTH",
+  codigo_cliente: "177303",
+  nome_razaosocial: "Manuele Moura de Andrade",
+  numero_ordem_servico: "003226237083638768",
+  usuario_fechamento_os: "Edinelson Moura de Lima_TEC_TERC_MAO",
+  usuario_abertura_os: "Rodrigo Araujo da Silva_CMRC_MTA_EXT",
+  tipo_os: "INSTALAÇÃO GRÁTIS",
   data_termino_executado: "2026-08-21T15:40:00.000Z",
-  status_auditoria: "APROVADO",
+  cidade: "Monte Alegre",
+  estado: "PA",
+  bairro: "Curaxi 2",
+  motivo_fechamento: "INSTALAÇÃO CONCLUÍDA COM SUCESSO",
+  etapa_instalacao: "APROVADO",
+  status_instalacao: "Resolvido",
+  motivo_instalacao: "Auditoria - Instalação aprovada",
   ...overrides,
 });
 
@@ -128,9 +135,9 @@ describe("ReportService", () => {
       mockMetaService.vendasTecnico.mockResolvedValueOnce([
         makeMetabaseRow(),
         makeMetabaseRow({
-          codigo_cliente: 10023,
+          codigo_cliente: "10023",
           numero_ordem_servico: "85960",
-          usuario_fechamento: "Tecnico Avulso_TEC_MAO",
+          usuario_fechamento_os: "Tecnico Avulso_TEC_MAO",
         }),
       ]);
       mockMetaService.getInstalacaoTecnicoUrl.mockReturnValueOnce(
@@ -143,14 +150,22 @@ describe("ReportService", () => {
       expect(result).toEqual({
         data: [
           {
-            id: "amazonet-20455-85961-0",
-            codigo_cliente: "20455",
-            numero_ordem_servico: "85961",
+            id: "amazonet-177303-003226237083638768-0",
+            codigo_cliente: "177303",
+            nome_cliente: "Manuele Moura de Andrade",
+            numero_ordem_servico: "003226237083638768",
             usuario_fechamento: "Edinelson Moura de Lima_TEC_TERC_MAO",
             usuario_fechamento_limpo: "Edinelson Moura de Lima",
-            usuario_abertura: "Ariedina Augusta Feitosa Soares",
-            tipo_ordem_servico: "INSTALAÇÃO FTTH",
+            usuario_abertura: "Rodrigo Araujo da Silva_CMRC_MTA_EXT",
+            tipo_ordem_servico: "INSTALAÇÃO GRÁTIS",
             data_termino_executado: "2026-08-21",
+            cidade: "Monte Alegre",
+            estado: "PA",
+            bairro: "Curaxi 2",
+            motivo_fechamento: "INSTALAÇÃO CONCLUÍDA COM SUCESSO",
+            etapa_instalacao: "APROVADO",
+            status_instalacao: "Resolvido",
+            motivo_instalacao: "Auditoria - Instalação aprovada",
             status_auditoria: "APROVADO",
             conta: Host.AMAZONET,
             tecnico_id: TECNICO_ID,

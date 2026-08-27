@@ -5,30 +5,24 @@ import {
   TecnicoFechamentoResponseDto,
 } from "@/module/reports/dto/ordemServicoInstalacao.response.dto";
 
-const CAMPOS_CODIGO_CLIENTE = ["codigo_cliente", "codigo cliente"];
-const CAMPOS_NUMERO_OS = [
-  "numero_ordem_servico",
-  "numero_os",
-  "ordem_servico",
-];
+const CAMPOS_CODIGO_CLIENTE = ["codigo_cliente"];
+const CAMPOS_NOME_CLIENTE = ["nome_razaosocial", "nome_cliente"];
+const CAMPOS_NUMERO_OS = ["numero_ordem_servico", "numero_os"];
 const CAMPOS_USUARIO_FECHAMENTO = [
-  "usuario_fechamento",
   "usuario_fechamento_os",
+  "usuario_fechamento",
   "usuario_fechamento_limpo",
 ];
-const CAMPOS_USUARIO_ABERTURA = ["usuario_abertura", "usuario_cadastro"];
-const CAMPOS_TIPO_OS = ["tipo_ordem_servico", "tipo_os"];
-const CAMPOS_DATA_TERMINO = [
-  "data_termino_executado",
-  "data_fechamento",
-  "data_termino",
-];
-const CAMPOS_STATUS_AUDITORIA = [
-  "status_auditoria",
-  "motivo_auditoria",
-  "motivo_comercial",
-  "status",
-];
+const CAMPOS_USUARIO_ABERTURA = ["usuario_abertura_os", "usuario_abertura"];
+const CAMPOS_TIPO_OS = ["tipo_os", "tipo_ordem_servico"];
+const CAMPOS_DATA_TERMINO = ["data_termino_executado", "data_fechamento"];
+const CAMPOS_CIDADE = ["cidade"];
+const CAMPOS_ESTADO = ["estado"];
+const CAMPOS_BAIRRO = ["bairro"];
+const CAMPOS_MOTIVO_FECHAMENTO = ["motivo_fechamento"];
+const CAMPOS_ETAPA_INSTALACAO = ["etapa_instalacao"];
+const CAMPOS_STATUS_INSTALACAO = ["status_instalacao"];
+const CAMPOS_MOTIVO_INSTALACAO = ["motivo_instalacao"];
 
 const toRecord = (row: unknown): Record<string, unknown> => {
   if (row && typeof row === "object" && !Array.isArray(row)) {
@@ -38,16 +32,11 @@ const toRecord = (row: unknown): Record<string, unknown> => {
   return {};
 };
 
-const lerCampo = (
-  row: Record<string, unknown>,
-  aliases: string[],
-): string => {
+const lerCampo = (row: Record<string, unknown>, aliases: string[]): string => {
   const entries = Object.entries(row);
 
   for (const alias of aliases) {
-    const match = entries.find(
-      ([key]) => key.toLowerCase().trim() === alias,
-    );
+    const match = entries.find(([key]) => key.toLowerCase().trim() === alias);
 
     if (!match) {
       continue;
@@ -65,6 +54,13 @@ const lerCampo = (
   return "";
 };
 
+export const normalizarTexto = (valor: string): string =>
+  valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .trim();
+
 export const limparNomeTecnico = (usuarioFechamento: string): string => {
   const nome = usuarioFechamento.trim();
   const indiceSufixo = nome.indexOf("_");
@@ -76,33 +72,38 @@ export const limparNomeTecnico = (usuarioFechamento: string): string => {
   return nome.slice(0, indiceSufixo).trim();
 };
 
-export const classificarStatusAuditoria = (
-  valorBruto: string,
-): StatusAuditoriaInstalacao => {
-  const normalizado = valorBruto
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toUpperCase()
-    .trim();
+export const isOsInstalacao = (tipoOrdemServico: string): boolean => {
+  const tipo = normalizarTexto(tipoOrdemServico);
 
-  if (!normalizado || normalizado === "-") {
+  if (!tipo.includes("INSTALACAO")) {
+    return false;
+  }
+
+  return !tipo.includes("QUALIDADE") && !tipo.includes("POS ");
+};
+
+export const classificarStatusAuditoria = (
+  etapaInstalacao: string,
+  statusInstalacao = "",
+  motivoInstalacao = "",
+): StatusAuditoriaInstalacao => {
+  const combinado = normalizarTexto(
+    `${etapaInstalacao} ${statusInstalacao} ${motivoInstalacao}`,
+  );
+
+  if (!combinado) {
     return "PENDENTE";
   }
 
-  if (
-    normalizado.includes("N.C") ||
-    normalizado.includes("NC APROVADO") ||
-    normalizado.includes("NAO CONFORMIDADE") ||
-    normalizado.includes("REANALISE")
-  ) {
+  if (combinado.includes("NC APROVADO") || combinado.includes("N.C APROVADO")) {
     return "NC APROVADO";
   }
 
-  if (normalizado.includes("REPROVADO")) {
+  if (combinado.includes("REPROVADO")) {
     return "REPROVADO";
   }
 
-  if (normalizado.includes("APROVADO")) {
+  if (combinado.includes("APROVADO")) {
     return "APROVADO";
   }
 
@@ -145,49 +146,87 @@ export const toMetabaseJsonUrl = (url: string): string => {
   return `${origin}/api/public/card/${match[1]}/query/json`;
 };
 
+export const extrairLinhasMetabase = (payload: unknown): unknown[] => {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return [];
+  }
+
+  const corpo = payload as Record<string, unknown>;
+
+  if (Array.isArray(corpo.data)) {
+    return corpo.data;
+  }
+
+  const nested = corpo.data;
+  if (nested && typeof nested === "object") {
+    const rows = (nested as Record<string, unknown>).rows;
+    if (Array.isArray(rows)) {
+      return rows;
+    }
+  }
+
+  return [];
+};
+
 export const mapearLinhaInstalacaoTecnica = (
   row: unknown,
   index: number,
   urlMetabase: string,
-): OrdemServicoInstalacaoResponseDto => {
+): OrdemServicoInstalacaoResponseDto | null => {
   const registro = toRecord(row);
+  const tipoOrdemServico = lerCampo(registro, CAMPOS_TIPO_OS);
+
+  if (!isOsInstalacao(tipoOrdemServico)) {
+    return null;
+  }
+
   const usuarioFechamento = lerCampo(registro, CAMPOS_USUARIO_FECHAMENTO);
   const codigoCliente = lerCampo(registro, CAMPOS_CODIGO_CLIENTE);
   const numeroOs = lerCampo(registro, CAMPOS_NUMERO_OS);
+  const etapaInstalacao = lerCampo(registro, CAMPOS_ETAPA_INSTALACAO);
+  const statusInstalacao = lerCampo(registro, CAMPOS_STATUS_INSTALACAO);
+  const motivoInstalacao = lerCampo(registro, CAMPOS_MOTIVO_INSTALACAO);
   const conta = inferirConta(urlMetabase, usuarioFechamento);
 
   return {
     id: `${conta}-${codigoCliente}-${numeroOs}-${index}`,
     codigo_cliente: codigoCliente,
+    nome_cliente: lerCampo(registro, CAMPOS_NOME_CLIENTE),
     numero_ordem_servico: numeroOs,
     usuario_fechamento: usuarioFechamento,
     usuario_fechamento_limpo: limparNomeTecnico(usuarioFechamento),
     usuario_abertura: lerCampo(registro, CAMPOS_USUARIO_ABERTURA),
-    tipo_ordem_servico: lerCampo(registro, CAMPOS_TIPO_OS),
+    tipo_ordem_servico: tipoOrdemServico,
     data_termino_executado: formatarDataTermino(
       lerCampo(registro, CAMPOS_DATA_TERMINO),
     ),
+    cidade: lerCampo(registro, CAMPOS_CIDADE),
+    estado: lerCampo(registro, CAMPOS_ESTADO),
+    bairro: lerCampo(registro, CAMPOS_BAIRRO),
+    motivo_fechamento: lerCampo(registro, CAMPOS_MOTIVO_FECHAMENTO),
+    etapa_instalacao: etapaInstalacao,
+    status_instalacao: statusInstalacao,
+    motivo_instalacao: motivoInstalacao,
     status_auditoria: classificarStatusAuditoria(
-      lerCampo(registro, CAMPOS_STATUS_AUDITORIA),
+      etapaInstalacao,
+      statusInstalacao,
+      motivoInstalacao,
     ),
     conta,
     tecnico_id: null,
   };
 };
 
-export const normalizarNomeTecnico = (nome: string): string =>
-  nome
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toUpperCase()
-    .trim();
-
 export const osPertenceAoTecnico = (
   usuarioHubsoft: string,
   nomeTecnico: string,
 ): boolean => {
-  const hubsoft = normalizarNomeTecnico(limparNomeTecnico(usuarioHubsoft));
-  const cadastro = normalizarNomeTecnico(nomeTecnico);
+  const hubsoft = normalizarTexto(limparNomeTecnico(usuarioHubsoft));
+  const cadastro = normalizarTexto(nomeTecnico);
 
   if (!hubsoft || !cadastro) {
     return false;
@@ -231,11 +270,10 @@ export const mapearInstalacoesTecnicas = (
   rows: unknown,
   urlMetabase: string,
 ): OrdemServicoInstalacaoResponseDto[] => {
-  if (!Array.isArray(rows)) {
-    return [];
-  }
+  const linhas = extrairLinhasMetabase(rows);
 
-  return rows.map((row, index) =>
-    mapearLinhaInstalacaoTecnica(row, index, urlMetabase),
-  );
+  return linhas.flatMap((row, index) => {
+    const mapped = mapearLinhaInstalacaoTecnica(row, index, urlMetabase);
+    return mapped ? [mapped] : [];
+  });
 };

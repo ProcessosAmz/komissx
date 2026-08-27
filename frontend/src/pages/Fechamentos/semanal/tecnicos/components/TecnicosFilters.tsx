@@ -1,6 +1,4 @@
-import React from "react";
 import { Search } from "lucide-react";
-
 import { TecnicoFechamento } from "@/service/reportsService";
 
 interface FiltersProps {
@@ -15,7 +13,10 @@ interface FiltersProps {
   listaTecnicos: TecnicoFechamento[];
 }
 
-export const TecnicosFilters: React.FC<FiltersProps> = ({
+const campoClasse =
+  "w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-500";
+
+export function TecnicosFilters({
   dataInicio,
   dataFim,
   setDataInicio,
@@ -25,52 +26,62 @@ export const TecnicosFilters: React.FC<FiltersProps> = ({
   buscaOS,
   setBuscaOS,
   listaTecnicos,
-}) => (
-  <div className="grid gap-4 md:grid-cols-4 bg-[#0b0f19]/40 p-4 rounded-xl border border-slate-800/60 backdrop-blur-sm">
-    <div>
-      <label className="block text-xs font-medium text-slate-400 mb-1.5">Data início</label>
-      <input
-        type="date"
-        value={dataInicio}
-        onChange={(event) => setDataInicio(event.target.value)}
-        className="w-full bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-      />
-    </div>
-    <div>
-      <label className="block text-xs font-medium text-slate-400 mb-1.5">Data fim</label>
-      <input
-        type="date"
-        value={dataFim}
-        onChange={(event) => setDataFim(event.target.value)}
-        className="w-full bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-      />
-    </div>
-    <div>
-      <label className="block text-xs font-medium text-slate-400 mb-1.5">Filtrar Técnico</label>
-      <select
-        value={filtroTecnico}
-        onChange={(event) => setFiltroTecnico(event.target.value)}
-        className="w-full bg-slate-900/90 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-      >
-        {listaTecnicos.map((tecnico) => (
-          <option key={tecnico.id} value={tecnico.id}>
-            {tecnico.name}
-          </option>
-        ))}
-      </select>
-    </div>
-    <div>
-      <label className="block text-xs font-medium text-slate-400 mb-1.5">Filtro Global (OS / Cliente)</label>
-      <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+}: FiltersProps) {
+  return (
+    <div className="grid gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 md:grid-cols-4">
+      <label className="space-y-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          Início
+        </span>
         <input
-          type="text"
-          placeholder="Buscar por O.S..."
-          value={buscaOS}
-          onChange={(event) => setBuscaOS(event.target.value)}
-          className="w-full bg-slate-900/90 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 placeholder-slate-600"
+          type="date"
+          value={dataInicio}
+          onChange={(event) => setDataInicio(event.target.value)}
+          className={campoClasse}
         />
-      </div>
+      </label>
+      <label className="space-y-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          Fim
+        </span>
+        <input
+          type="date"
+          value={dataFim}
+          onChange={(event) => setDataFim(event.target.value)}
+          className={campoClasse}
+        />
+      </label>
+      <label className="space-y-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          Técnico
+        </span>
+        <select
+          value={filtroTecnico}
+          onChange={(event) => setFiltroTecnico(event.target.value)}
+          className={campoClasse}
+        >
+          {listaTecnicos.map((tecnico) => (
+            <option key={tecnico.id} value={tecnico.id}>
+              {tecnico.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="space-y-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          Buscar
+        </span>
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+          <input
+            type="text"
+            placeholder="OS, cliente ou técnico"
+            value={buscaOS}
+            onChange={(event) => setBuscaOS(event.target.value)}
+            className={`${campoClasse} pl-9`}
+          />
+        </div>
+      </label>
     </div>
-  </div>
-);
+  );
+}

@@ -4,7 +4,10 @@ import { firstValueFrom } from "rxjs";
 import { MetabaseParameter } from "@/common/interfaces/metabaseParameter.interface";
 import { METABASE_INSTALLATION_FILTERS } from "@/integrations/constants/metabase/metabase.constants";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
-import { toMetabaseJsonUrl } from "@/module/reports/useCase/helper/mapearInstalacaoTecnica.helper";
+import {
+  extrairLinhasMetabase,
+  toMetabaseJsonUrl,
+} from "@/module/reports/useCase/helper/mapearInstalacaoTecnica.helper";
 import { getErrorMessage } from "@/utils/error.utils";
 
 const METABASE_TIMEOUT_MS = 120000;
@@ -41,7 +44,7 @@ export class MetaService {
       parametros.push({
         type: config.type,
         value,
-        target: ["variable", ["template-tag", config.tag]],
+        target: [config.target, ["template-tag", config.tag]],
       });
     }
 
@@ -62,7 +65,7 @@ export class MetaService {
         }),
       );
 
-      return Array.isArray(response.data) ? response.data : [];
+      return extrairLinhasMetabase(response.data);
     } catch (error) {
       this.logger.error(
         `Erro ao consultar Metabase de instalação técnico: ${getErrorMessage(error)}`,
