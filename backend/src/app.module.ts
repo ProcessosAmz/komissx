@@ -13,41 +13,50 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CommissionsModule } from "@/module/commissions/index.module";
-import { postgresPoolConfig, handlePostgresPoolError } from "@/database/postgresPool.config";
+import {
+  postgresPoolConfig,
+  handlePostgresPoolError,
+} from "@/database/postgresPool.config";
+
+const skipDatabase = process.env.SKIP_DATABASE === "true";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: [".env.development.local", ".env.development", ".env"],
     }),
-    TypeOrmModule.forRoot({
-      type: "postgres",
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      autoLoadEntities: true,
-      synchronize: false,
-      migrations: [`${__dirname}/migrations/*{.js}`],
-      migrationsRun: false,
-      extra: postgresPoolConfig,
-      retryAttempts: 5,
-      retryDelay: 2000,
-      poolErrorHandler: handlePostgresPoolError,
-    }),
-    LocalidadeModule,
-    EmpresasModule,
-    UnidadesModule,
-    RolesModule,
-    PermissionsModule,
-    UsersModule,
-    AuthModule,
+    ...(skipDatabase
+      ? []
+      : [
+          TypeOrmModule.forRoot({
+            type: "postgres",
+            host: process.env.DB_HOST,
+            port: Number(process.env.DB_PORT),
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_DATABASE,
+            autoLoadEntities: true,
+            synchronize: false,
+            migrations: [`${__dirname}/migrations/*{.js}`],
+            migrationsRun: false,
+            extra: postgresPoolConfig,
+            retryAttempts: 5,
+            retryDelay: 2000,
+            poolErrorHandler: handlePostgresPoolError,
+          }),
+          LocalidadeModule,
+          EmpresasModule,
+          UnidadesModule,
+          RolesModule,
+          PermissionsModule,
+          UsersModule,
+          AuthModule,
+          CommissionsModule,
+        ]),
     IntegrationsModule,
     LoggerModule,
     RedisModule,
     HealthModule,
-    CommissionsModule,
   ],
 })
 export class AppModule {}

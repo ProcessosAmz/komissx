@@ -73,14 +73,13 @@ services:
       HOST_NAME: ${HOST_NAME}
       PORT_NEST: 3000
       APP_VERSION: ${APP_VERSION}
+      SKIP_DATABASE: "true"
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       TZ: America/Manaus
     stop_grace_period: 30s
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -108,14 +107,13 @@ services:
       HOST_NAME: ${HOST_NAME}
       PORT_NEST: 3000
       APP_VERSION: ${APP_VERSION}
+      SKIP_DATABASE: "true"
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       TZ: America/Manaus
     stop_grace_period: 30s
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:

@@ -35,7 +35,9 @@ async function bootstrap() {
   });
 
   const expressApp = app.getHttpAdapter().getInstance();
-  expressApp.all("/api/auth/{*any}", toNodeHandler(auth));
+  if (auth) {
+    expressApp.all("/api/auth/{*any}", toNodeHandler(auth));
+  }
   expressApp.use(json());
   expressApp.use(urlencoded({ extended: true }));
 

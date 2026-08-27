@@ -41,6 +41,7 @@ jobs:
           HOST_NAME=${{ vars.HOST_NAME }}
           PORT_NEST=${{ secrets.PORT_NEST }}
           APP_VERSION=1.0.${{ github.run_number }}
+          SKIP_DATABASE=true
           TZ=America/Manaus
           DB_HOST=postgres
           DB_PORT=5432

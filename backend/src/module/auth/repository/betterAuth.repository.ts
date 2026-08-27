@@ -35,6 +35,9 @@ export class BetterAuthRepository {
   ) {}
 
   async hashPassword(password: string): Promise<string> {
+    if (!auth) {
+      throw new Error("Autenticação indisponível");
+    }
     const context = await auth.$context;
     return context.password.hash(password);
   }
@@ -42,6 +45,10 @@ export class BetterAuthRepository {
   async createCredentialUser(
     input: CreateCredentialUserInput,
   ): Promise<void> {
+    if (!auth) {
+      throw new Error("Autenticação indisponível");
+    }
+
     const context = await auth.$context;
 
     await context.internalAdapter.createUser(

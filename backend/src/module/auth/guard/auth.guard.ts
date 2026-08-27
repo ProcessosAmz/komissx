@@ -27,6 +27,10 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
+    if (!auth) {
+      throw new UnauthorizedException("Autenticação indisponível");
+    }
+
     const request = context.switchToHttp().getRequest();
 
     const session = await auth.api.getSession({

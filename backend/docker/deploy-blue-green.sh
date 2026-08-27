@@ -53,7 +53,11 @@ until [ "$(docker inspect -f '{{.State.Health.Status}}' "komissx_backend_${NEW_C
 done
 
 echo "==> Rodando migrations..."
-$COMPOSE --profile "$NEW_COLOR" exec -T "backend-$NEW_COLOR" npm run migration:run
+if grep -qE '^SKIP_DATABASE=true' .env; then
+  echo "==> SKIP_DATABASE=true — pulando migrations"
+else
+  $COMPOSE --profile "$NEW_COLOR" exec -T "backend-$NEW_COLOR" npm run migration:run
+fi
 
 if docker ps -aq -f "name=^komissx_backend$" | grep -q .; then
   echo "==> Parando container legado komissx_backend (porta 3000)"
