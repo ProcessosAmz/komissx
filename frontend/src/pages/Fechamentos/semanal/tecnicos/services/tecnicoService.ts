@@ -44,13 +44,16 @@ export class TecnicoService {
     const deduplicados: TecnicoRowViewModel[] = [];
 
     for (const os of ordenados) {
-      const chaveUnica = `${os.codigo_cliente}_${os.numero_ordem_servico}`;
+        const chaveUnica = os.codigo_cliente;
       if (!visitados.has(chaveUnica)) {
         visitados.add(chaveUnica);
 
         const isAprovada = this.getPrioridadeAuditoria(os.status_auditoria) === 2;
         const statusFin = isAprovada ? 'PAGO' : '-';
-        const vBase = this.calcularValorRepasse(os.usuario_fechamento_limpo, rules);
+        const vBase = this.calcularValorRepasse(
+          `${os.usuario_fechamento_limpo} ${os.usuario_fechamento}`,
+          rules,
+        );
 
         deduplicados.push({
           ...os,

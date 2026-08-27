@@ -21,7 +21,7 @@ const makeRelatorioTecnicoDto = (
   overrides: Partial<RelatorioTecnicoDto> = {},
 ): RelatorioTecnicoDto => ({
   dataInicio: "2026-08-20",
-  dataFim: "2026-08-27",
+  dataFim: "2026-08-26",
   ...overrides,
 });
 
@@ -105,7 +105,6 @@ const makeTecnico = (overrides: Partial<Users> = {}): Users => ({
 
 const mockMetaService = {
   vendasTecnico: jest.fn(),
-  getInstalacaoTecnicoUrl: jest.fn(),
 };
 
 const mockUsersRepository = {
@@ -133,16 +132,19 @@ describe("ReportService", () => {
     it("should return only installations of technicians from the database", async () => {
       const dto = makeRelatorioTecnicoDto();
       mockMetaService.vendasTecnico.mockResolvedValueOnce([
-        makeMetabaseRow(),
-        makeMetabaseRow({
-          codigo_cliente: "10023",
-          numero_ordem_servico: "85960",
-          usuario_fechamento_os: "Tecnico Avulso_TEC_MAO",
-        }),
+        {
+          host: Host.AMAZONET,
+          url: METABASE_JSON_URL,
+          rows: [
+            makeMetabaseRow(),
+            makeMetabaseRow({
+              codigo_cliente: "10023",
+              numero_ordem_servico: "85960",
+              usuario_fechamento_os: "Tecnico Avulso_TEC_MAO",
+            }),
+          ],
+        },
       ]);
-      mockMetaService.getInstalacaoTecnicoUrl.mockReturnValueOnce(
-        METABASE_JSON_URL,
-      );
       mockUsersRepository.findAll.mockResolvedValueOnce([makeTecnico()]);
 
       const result = await sut.buscarInstalacaoTecnica(dto);
@@ -171,7 +173,13 @@ describe("ReportService", () => {
             tecnico_id: TECNICO_ID,
           },
         ],
-        tecnicos: [{ id: TECNICO_ID, name: "Edinelson Moura de Lima" }],
+        tecnicos: [
+          {
+            id: TECNICO_ID,
+            name: "Edinelson Moura de Lima",
+            conta: Host.AMAZONET,
+          },
+        ],
         message: "Instalações listadas com sucesso",
       });
       expect(mockMetaService.vendasTecnico).toHaveBeenCalledTimes(1);

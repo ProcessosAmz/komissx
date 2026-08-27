@@ -32,13 +32,64 @@ function somarDias(dataIso: string, dias: number): string {
   return formatarDataIso(data);
 }
 
-export const useTecnicos = (filtroTecnico: string, buscaOS: string) => {
-  const [dataInicio, setDataInicio] = useState(
-    formatarDataIso(getQuintaMaisRecente()),
-  );
-  const [dataFim, setDataFim] = useState(() =>
-    somarDias(formatarDataIso(getQuintaMaisRecente()), 6),
-  );
+function formatarDataBr(dataIso: string): string {
+  const [ano, mes, dia] = dataIso.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
+function getPeriodoFechamentoSemanal(referencia = new Date()): {
+  dataInicio: string;
+  dataFim: string;
+  dataPagamento: string;
+} {
+  const quintaPagamento = getQuintaMaisRecente(referencia);
+  const dataPagamento = formatarDataIso(quintaPagamento);
+  return {
+    dataInicio: somarDias(dataPagamento, -7),
+    dataFim: somarDias(dataPagamento, -1),
+    dataPagamento,
+  };
+}
+
+function textoBuscaOrdem(os: OrdemServico): string {
+  return [
+    os.numero_ordem_servico,
+    os.codigo_cliente,
+    os.nome_cliente,
+    os.usuario_fechamento_limpo,
+    os.usuario_fechamento,
+    os.conta,
+    os.cidade,
+    os.estado,
+    os.tipo_ordem_servico,
+  ]
+    .join(" ")
+    .toLowerCase();
+}
+
+function ordemCorrespondeABusca(os: OrdemServico, busca: string): boolean {
+  const termos = busca
+    .trim()
+    .toLowerCase()
+    .split(/[\s,;]+/)
+    .filter((termo) => termo.length > 0 && termo !== "e");
+
+  if (termos.length === 0) {
+    return true;
+  }
+
+  const texto = textoBuscaOrdem(os);
+  return termos.every((termo) => texto.includes(termo));
+}
+
+export const useTecnicos = (
+  filtroTecnico: string,
+  buscaOS: string,
+  filtroEmpresa: string,
+) => {
+  const periodoInicial = getPeriodoFechamentoSemanal();
+  const [dataInicio, setDataInicio] = useState(periodoInicial.dataInicio);
+  const [dataFim, setDataFim] = useState(periodoInicial.dataFim);
   const [dadosBrutos, setDadosBrutos] = useState<OrdemServico[]>([]);
   const [tecnicosCadastro, setTecnicosCadastro] = useState<TecnicoFechamento[]>(
     [],
@@ -108,42 +159,65 @@ export const useTecnicos = (filtroTecnico: string, buscaOS: string) => {
   }, [dadosBrutos, semanalRules]);
 
   const listaTecnicos = useMemo(() => {
-    return [
-      { id: "TODOS", name: "Todos os técnicos" },
-      ...tecnicosCadastro,
-    ];
+    return [{ id: "TODOS", name: "Todos os técnicos" }, ...tecnicosCadastro];
   }, [tecnicosCadastro]);
 
   const dadosFiltrados = useMemo(() => {
+    const tecnicoSelecionado = listaTecnicos.find(
+      (tecnico) => tecnico.id === filtroTecnico,
+    );
+    const filtrandoLiderLobatos =
+      filtroTecnico !== "TODOS" &&
+      Boolean(tecnicoSelecionado?.name) &&
+      /leidinaldo|lobatos|lobato/i.test(
+        tecnicoSelecionado.name
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, ""),
+      );
+
     return dadosDeduplicados.filter((os) => {
+      const matchEmpresa =
+        filtroEmpresa === "TODAS" || os.conta === filtroEmpresa;
       const matchTecnico =
-        filtroTecnico === "TODOS" || os.tecnico_id === filtroTecnico;
-      const termo = buscaOS.trim().toLowerCase();
-      const matchBusca =
-        termo.length === 0 ||
-        os.numero_ordem_servico.toLowerCase().includes(termo) ||
-        os.codigo_cliente.toLowerCase().includes(termo) ||
-        (os.nome_cliente || "").toLowerCase().includes(termo) ||
-        os.usuario_fechamento_limpo.toLowerCase().includes(termo);
-      return matchTecnico && matchBusca;
+        filtroTecnico === "TODOS" ||
+        os.tecnico_id === filtroTecnico ||
+        (filtrandoLiderLobatos &&
+          os.usuario_fechamento.toUpperCase().includes("TEC_LOBATOS"));
+      return (
+        matchEmpresa && matchTecnico && ordemCorrespondeABusca(os, buscaOS)
+      );
     });
-  }, [dadosDeduplicados, filtroTecnico, buscaOS]);
+  }, [dadosDeduplicados, filtroTecnico, buscaOS, filtroEmpresa, listaTecnicos]);
 
   const resumo = useMemo<ResumoFechamentoDTO>(() => {
-    return dadosFiltrados.reduce(
+    const totais = dadosFiltrados.reduce(
       (acc, os) => {
         acc.totalOS += 1;
         if (os.status_financeiro === "PAGO") {
           acc.aprovadas += 1;
           acc.totalReceber += os.valor_a_pagar || 0;
         } else {
-          acc.pendentes += 1;
+          acc.reprovadas += 1;
         }
         return acc;
       },
-      { totalReceber: 0, totalOS: 0, aprovadas: 0, pendentes: 0 },
+      { totalReceber: 0, totalOS: 0, aprovadas: 0, reprovadas: 0 },
     );
-  }, [dadosFiltrados]);
+
+    const tecnicoSelecionado = listaTecnicos.find(
+      (tecnico) => tecnico.id === filtroTecnico,
+    );
+
+    return {
+      ...totais,
+      dataPagamento: somarDias(dataFim, 1),
+      tecnico:
+        filtroTecnico === "TODOS"
+          ? "Todos os técnicos"
+          : tecnicoSelecionado?.name ?? "Técnico",
+      periodo: `${formatarDataBr(dataInicio)} a ${formatarDataBr(dataFim)}`,
+    };
+  }, [dadosFiltrados, dataInicio, dataFim, filtroTecnico, listaTecnicos]);
 
   const handleExcluir = (id: string) => {
     setDadosBrutos((prev) => prev.filter((item) => item.id !== id));

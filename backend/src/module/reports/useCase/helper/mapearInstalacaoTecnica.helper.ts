@@ -75,11 +75,25 @@ export const limparNomeTecnico = (usuarioFechamento: string): string => {
 export const isOsInstalacao = (tipoOrdemServico: string): boolean => {
   const tipo = normalizarTexto(tipoOrdemServico);
 
+  if (tipo.includes("MUDANCA DE ENDERECO")) {
+    return true;
+  }
+
+  if (tipo.includes("NAO CONFORMIDADE")) {
+    return true;
+  }
+
   if (!tipo.includes("INSTALACAO")) {
     return false;
   }
 
-  return !tipo.includes("QUALIDADE") && !tipo.includes("POS ");
+  return !tipo.includes("POS ");
+};
+
+export const toDataFimExclusivaMetabase = (dataFimInclusiva: string): string => {
+  const [ano, mes, dia] = dataFimInclusiva.slice(0, 10).split("-").map(Number);
+  const data = new Date(Date.UTC(ano, mes - 1, dia + 1));
+  return data.toISOString().slice(0, 10);
 };
 
 export const classificarStatusAuditoria = (
@@ -91,19 +105,27 @@ export const classificarStatusAuditoria = (
     `${etapaInstalacao} ${statusInstalacao} ${motivoInstalacao}`,
   );
 
-  if (!combinado) {
-    return "PENDENTE";
-  }
-
   if (combinado.includes("NC APROVADO") || combinado.includes("N.C APROVADO")) {
     return "NC APROVADO";
   }
 
-  if (combinado.includes("REPROVADO")) {
+  if (combinado.includes("REPROVADO") || combinado.includes("NAO CONFORMIDADE")) {
     return "REPROVADO";
   }
 
-  if (combinado.includes("APROVADO")) {
+  if (
+    combinado.includes("AGUARDANDO") ||
+    combinado.includes("PENDENTE") ||
+    combinado.includes("EM AUDITORIA")
+  ) {
+    return "PENDENTE";
+  }
+
+  if (
+    !combinado ||
+    combinado.includes("APROVADO") ||
+    combinado.includes("RESOLVIDO")
+  ) {
     return "APROVADO";
   }
 
@@ -122,10 +144,34 @@ export const formatarDataTermino = (valor: string): string => {
   return valor;
 };
 
+export const empresaParaConta = (nomeEmpresa: string): Host => {
+  if (normalizarTexto(nomeEmpresa).includes("MANIA")) {
+    return Host.MANIA;
+  }
+
+  return Host.AMAZONET;
+};
+
 export const inferirConta = (
+  numeroOrdemServico: string,
   urlMetabase: string,
   usuarioFechamento: string,
+  contaOrigem?: Host,
 ): Host => {
+  const prefixo = numeroOrdemServico.replace(/\D/g, "").slice(0, 4);
+
+  if (prefixo === "0048") {
+    return Host.MANIA;
+  }
+
+  if (prefixo === "0032") {
+    return Host.AMAZONET;
+  }
+
+  if (contaOrigem) {
+    return contaOrigem;
+  }
+
   const origem = `${urlMetabase} ${usuarioFechamento}`.toLowerCase();
 
   if (origem.includes("mania")) {
@@ -176,6 +222,7 @@ export const mapearLinhaInstalacaoTecnica = (
   row: unknown,
   index: number,
   urlMetabase: string,
+  contaOrigem?: Host,
 ): OrdemServicoInstalacaoResponseDto | null => {
   const registro = toRecord(row);
   const tipoOrdemServico = lerCampo(registro, CAMPOS_TIPO_OS);
@@ -190,7 +237,12 @@ export const mapearLinhaInstalacaoTecnica = (
   const etapaInstalacao = lerCampo(registro, CAMPOS_ETAPA_INSTALACAO);
   const statusInstalacao = lerCampo(registro, CAMPOS_STATUS_INSTALACAO);
   const motivoInstalacao = lerCampo(registro, CAMPOS_MOTIVO_INSTALACAO);
-  const conta = inferirConta(urlMetabase, usuarioFechamento);
+  const conta = inferirConta(
+    numeroOs,
+    urlMetabase,
+    usuarioFechamento,
+    contaOrigem,
+  );
 
   return {
     id: `${conta}-${codigoCliente}-${numeroOs}-${index}`,
@@ -221,6 +273,24 @@ export const mapearLinhaInstalacaoTecnica = (
   };
 };
 
+export const isEquipeLobatos = (usuarioHubsoft: string): boolean =>
+  normalizarTexto(usuarioHubsoft).includes("TEC_LOBATOS");
+
+export const isLiderEquipeLobatos = (nomeTecnico: string): boolean => {
+  const cadastro = normalizarTexto(nomeTecnico);
+  return (
+    cadastro.includes("LEIDINALDO") ||
+    cadastro.includes("LOBATOS") ||
+    cadastro.includes("LOBATO")
+  );
+};
+
+export const TECNICO_SINTETICO_LOBATOS: TecnicoFechamentoResponseDto = {
+  id: "equipe-tec-lobatos",
+  name: "Leidinaldo Lobato da Fonseca",
+  conta: Host.AMAZONET,
+};
+
 export const osPertenceAoTecnico = (
   usuarioHubsoft: string,
   nomeTecnico: string,
@@ -228,7 +298,15 @@ export const osPertenceAoTecnico = (
   const hubsoft = normalizarTexto(limparNomeTecnico(usuarioHubsoft));
   const cadastro = normalizarTexto(nomeTecnico);
 
-  if (!hubsoft || !cadastro) {
+  if (!cadastro) {
+    return false;
+  }
+
+  if (isEquipeLobatos(usuarioHubsoft) && isLiderEquipeLobatos(nomeTecnico)) {
+    return true;
+  }
+
+  if (!hubsoft) {
     return false;
   }
 
@@ -239,18 +317,42 @@ export const osPertenceAoTecnico = (
   );
 };
 
+export const encontrarLiderLobatos = (
+  tecnicos: TecnicoFechamentoResponseDto[],
+): TecnicoFechamentoResponseDto | undefined =>
+  tecnicos.find((tecnico) => isLiderEquipeLobatos(tecnico.name));
+
+const encontrarTecnicoDaOrdem = (
+  ordem: OrdemServicoInstalacaoResponseDto,
+  tecnicos: TecnicoFechamentoResponseDto[],
+): TecnicoFechamentoResponseDto | undefined => {
+  if (isEquipeLobatos(ordem.usuario_fechamento)) {
+    return (
+      encontrarLiderLobatos(
+        tecnicos.filter((tecnico) => tecnico.conta === ordem.conta),
+      ) ??
+      encontrarLiderLobatos(tecnicos) ??
+      TECNICO_SINTETICO_LOBATOS
+    );
+  }
+
+  const porNome = (lista: TecnicoFechamentoResponseDto[]) =>
+    lista.find((tecnico) =>
+      osPertenceAoTecnico(ordem.usuario_fechamento, tecnico.name),
+    );
+
+  return (
+    porNome(tecnicos.filter((tecnico) => tecnico.conta === ordem.conta)) ??
+    porNome(tecnicos)
+  );
+};
+
 export const filtrarInstalacoesDosTecnicos = (
   ordens: OrdemServicoInstalacaoResponseDto[],
   tecnicos: TecnicoFechamentoResponseDto[],
 ): OrdemServicoInstalacaoResponseDto[] => {
-  if (tecnicos.length === 0) {
-    return [];
-  }
-
   return ordens.flatMap((ordem) => {
-    const tecnico = tecnicos.find((item) =>
-      osPertenceAoTecnico(ordem.usuario_fechamento, item.name),
-    );
+    const tecnico = encontrarTecnicoDaOrdem(ordem, tecnicos);
 
     if (!tecnico) {
       return [];
@@ -269,11 +371,17 @@ export const filtrarInstalacoesDosTecnicos = (
 export const mapearInstalacoesTecnicas = (
   rows: unknown,
   urlMetabase: string,
+  contaOrigem?: Host,
 ): OrdemServicoInstalacaoResponseDto[] => {
   const linhas = extrairLinhasMetabase(rows);
 
   return linhas.flatMap((row, index) => {
-    const mapped = mapearLinhaInstalacaoTecnica(row, index, urlMetabase);
+    const mapped = mapearLinhaInstalacaoTecnica(
+      row,
+      index,
+      urlMetabase,
+      contaOrigem,
+    );
     return mapped ? [mapped] : [];
   });
 };

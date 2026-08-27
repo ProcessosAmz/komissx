@@ -3,8 +3,11 @@ import { MetaService } from "@/integrations/service/metabase.service";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
 import { TecnicoFechamentoResponseDto } from "@/module/reports/dto/ordemServicoInstalacao.response.dto";
 import {
+  empresaParaConta,
+  encontrarLiderLobatos,
   filtrarInstalacoesDosTecnicos,
   mapearInstalacoesTecnicas,
+  TECNICO_SINTETICO_LOBATOS,
 } from "@/module/reports/useCase/helper/mapearInstalacaoTecnica.helper";
 import { Users } from "@/module/users/entities/users.entity";
 import { UsersRepository } from "@/module/users/repository/index.repository";
@@ -27,17 +30,25 @@ export class ReportService {
     );
 
     try {
-      const [rows, tecnicos] = await Promise.all([
+      const [fontes, tecnicos] = await Promise.all([
         this.metaService.vendasTecnico(dto),
         this.listarTecnicosDoBanco(),
       ]);
-      const url = this.metaService.getInstalacaoTecnicoUrl();
-      const instalacoes = mapearInstalacoesTecnicas(rows, url);
+      const instalacoes = fontes.flatMap((fonte) =>
+        mapearInstalacoesTecnicas(fonte.rows, fonte.url, fonte.host),
+      );
       const data = filtrarInstalacoesDosTecnicos(instalacoes, tecnicos);
+      const usouSinteticoLobatos = data.some(
+        (ordem) => ordem.tecnico_id === TECNICO_SINTETICO_LOBATOS.id,
+      );
+      const tecnicosResposta =
+        encontrarLiderLobatos(tecnicos) || !usouSinteticoLobatos
+          ? tecnicos
+          : [...tecnicos, TECNICO_SINTETICO_LOBATOS];
 
       return {
         data,
-        tecnicos,
+        tecnicos: tecnicosResposta,
         message:
           data.length === 0
             ? "Nenhuma instalação encontrada para os técnicos cadastrados"
@@ -65,6 +76,7 @@ export class ReportService {
       .map((user) => ({
         id: user.id,
         name: user.name,
+        conta: empresaParaConta(user.empresa?.name ?? ""),
       }));
   }
 

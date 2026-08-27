@@ -6,6 +6,8 @@ interface FiltersProps {
   dataFim: string;
   setDataInicio: (value: string) => void;
   setDataFim: (value: string) => void;
+  filtroEmpresa: string;
+  setFiltroEmpresa: (value: string) => void;
   filtroTecnico: string;
   setFiltroTecnico: (value: string) => void;
   buscaOS: string;
@@ -21,6 +23,8 @@ export function TecnicosFilters({
   dataFim,
   setDataInicio,
   setDataFim,
+  filtroEmpresa,
+  setFiltroEmpresa,
   filtroTecnico,
   setFiltroTecnico,
   buscaOS,
@@ -28,7 +32,21 @@ export function TecnicosFilters({
   listaTecnicos,
 }: FiltersProps) {
   return (
-    <div className="grid gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 md:grid-cols-4">
+    <div className="grid gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 md:grid-cols-2 lg:grid-cols-5">
+      <label className="space-y-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+          Empresa
+        </span>
+        <select
+          value={filtroEmpresa}
+          onChange={(event) => setFiltroEmpresa(event.target.value)}
+          className={campoClasse}
+        >
+          <option value="TODAS">Amazonet e Mania</option>
+          <option value="amazonet">Amazonet</option>
+          <option value="mania">Mania</option>
+        </select>
+      </label>
       <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
           Início
@@ -62,7 +80,9 @@ export function TecnicosFilters({
         >
           {listaTecnicos.map((tecnico) => (
             <option key={tecnico.id} value={tecnico.id}>
-              {tecnico.name}
+              {tecnico.id === "TODOS" || filtroEmpresa !== "TODAS" || !tecnico.conta
+                ? tecnico.name
+                : `${tecnico.name} (${tecnico.conta === "mania" ? "Mania" : "Amazonet"})`}
             </option>
           ))}
         </select>
@@ -75,7 +95,7 @@ export function TecnicosFilters({
           <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
           <input
             type="text"
-            placeholder="OS, cliente ou técnico"
+            placeholder="mania edinelson, OS ou cliente"
             value={buscaOS}
             onChange={(event) => setBuscaOS(event.target.value)}
             className={`${campoClasse} pl-9`}

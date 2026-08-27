@@ -8,6 +8,7 @@ import { TecnicoRowViewModel } from "../../types";
 
 export default function FechamentoTecnico() {
   const [filtroTecnico, setFiltroTecnico] = useState("TODOS");
+  const [filtroEmpresa, setFiltroEmpresa] = useState("TODAS");
   const [buscaOS, setBuscaOS] = useState("");
   const [ordemSelecionada, setOrdemSelecionada] = useState<TecnicoRowViewModel | null>(
     null,
@@ -25,7 +26,7 @@ export default function FechamentoTecnico() {
     erro,
     handleExcluir,
     handleAlterarStatus,
-  } = useTecnicos(filtroTecnico, buscaOS);
+  } = useTecnicos(filtroTecnico, buscaOS, filtroEmpresa);
 
   const ordemAtual =
     dadosFiltrados.find((item) => item.id === ordemSelecionada?.id) ?? ordemSelecionada;
@@ -37,7 +38,8 @@ export default function FechamentoTecnico() {
           Fechamento de instalação
         </h1>
         <p className="mt-1 text-sm text-slate-400">
-          Instalações da semana, cruzadas com os técnicos cadastrados.
+          Semana de quinta a quarta, inclusive. Instalação, mudança de endereço e NC
+          entram no fechamento.
         </p>
       </div>
 
@@ -46,6 +48,8 @@ export default function FechamentoTecnico() {
         dataFim={dataFim}
         setDataInicio={setDataInicio}
         setDataFim={setDataFim}
+        filtroEmpresa={filtroEmpresa}
+        setFiltroEmpresa={setFiltroEmpresa}
         filtroTecnico={filtroTecnico}
         setFiltroTecnico={setFiltroTecnico}
         buscaOS={buscaOS}

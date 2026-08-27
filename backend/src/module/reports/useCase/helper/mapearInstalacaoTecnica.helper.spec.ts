@@ -8,6 +8,7 @@ import {
   mapearInstalacoesTecnicas,
   osPertenceAoTecnico,
   toMetabaseJsonUrl,
+  toDataFimExclusivaMetabase,
 } from "@/module/reports/useCase/helper/mapearInstalacaoTecnica.helper";
 
 const METABASE_PUBLIC_QUESTION =
@@ -66,6 +67,12 @@ describe("mapearInstalacaoTecnica.helper", () => {
     });
   });
 
+  describe("toDataFimExclusivaMetabase", () => {
+    it("should convert the inclusive week end into the exclusive Metabase date", () => {
+      expect(toDataFimExclusivaMetabase("2026-08-26")).toBe("2026-08-27");
+    });
+  });
+
   describe("limparNomeTecnico", () => {
     it("should keep the technician name before the hubsoft suffix", () => {
       expect(limparNomeTecnico("Edinelson Moura de Lima_TEC_TERC_MAO")).toBe(
@@ -80,7 +87,12 @@ describe("mapearInstalacaoTecnica.helper", () => {
       expect(isOsInstalacao("INSTALAÇÃO (R$ 100,00)")).toBe(true);
     });
 
-    it("should reject quality and non-installation orders", () => {
+    it("should accept address change and non-compliance quality orders", () => {
+      expect(isOsInstalacao("MUDANÇA DE ENDEREÇO")).toBe(true);
+      expect(isOsInstalacao("AMZ QUALIDADE - NÃO CONFORMIDADES")).toBe(true);
+    });
+
+    it("should reject post-sale quality and non-installation orders", () => {
       expect(isOsInstalacao("AMZ QUALIDADE - PÓS VENDA (INSTALAÇÃO)")).toBe(false);
       expect(isOsInstalacao("RETIRADA DE EQUIPAMENTOS")).toBe(false);
     });
@@ -97,14 +109,11 @@ describe("mapearInstalacaoTecnica.helper", () => {
       ).toBe("APROVADO");
     });
 
-    it("should keep non-compliance pending until NC is approved", () => {
-      expect(
-        classificarStatusAuditoria(
-          "NÃO CONFORMIDADE",
-          "Qualidade - Não Conformidade",
-          "",
-        ),
-      ).toBe("PENDENTE");
+    it("should classify resolved or empty audit as approved for weekly payment", () => {
+      expect(classificarStatusAuditoria("", "Resolvido", "Retenção não realizada")).toBe(
+        "APROVADO",
+      );
+      expect(classificarStatusAuditoria("", "", "")).toBe("APROVADO");
     });
   });
 
@@ -118,16 +127,16 @@ describe("mapearInstalacaoTecnica.helper", () => {
       expect(result).toEqual([ordemEsperadaEdinelson]);
     });
 
-    it("should infer mania account from the technician suffix", () => {
+    it("should infer mania account from the OS prefix", () => {
       const result = mapearInstalacoesTecnicas(
-        [makeMetabaseRow({ usuario_fechamento_os: "Gabriel Souza_MANIA" })],
+        [makeMetabaseRow({ numero_ordem_servico: "004826237083638768" })],
         METABASE_JSON_URL,
       );
 
       expect(result[0].conta).toBe(Host.MANIA);
-      expect(inferirConta(METABASE_JSON_URL, "Gabriel Souza_MANIA")).toBe(
-        Host.MANIA,
-      );
+      expect(
+        inferirConta("004826237083638768", METABASE_JSON_URL, "Gabriel Souza"),
+      ).toBe(Host.MANIA);
     });
   });
 
@@ -149,6 +158,7 @@ describe("mapearInstalacaoTecnica.helper", () => {
         {
           id: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
           name: "Edinelson Moura de Lima",
+          conta: Host.AMAZONET,
         },
       ]);
 
@@ -165,6 +175,67 @@ describe("mapearInstalacaoTecnica.helper", () => {
           "Edinelson Moura de Lima",
         ),
       ).toBe(true);
+    });
+
+    it("should attribute TEC_LOBATOS closers to Leidinaldo Lobato", () => {
+      const ordens = mapearInstalacoesTecnicas(
+        [
+          makeMetabaseRow({
+            codigo_cliente: "188201",
+            numero_ordem_servico: "003226238100000001",
+            usuario_fechamento_os: "Leidinaldo Lobato da Fonseca_TEC_LOBATOS",
+          }),
+          makeMetabaseRow({
+            codigo_cliente: "188202",
+            numero_ordem_servico: "003226238100000002",
+            usuario_fechamento_os: "Helio Souza_TEC_LOBATOS",
+          }),
+        ],
+        METABASE_JSON_URL,
+      );
+
+      const result = filtrarInstalacoesDosTecnicos(ordens, [
+        {
+          id: "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+          name: "Helio Souza",
+          conta: Host.AMAZONET,
+        },
+        {
+          id: "1b4e28ba-2fa1-11d2-883f-0016d3cca427",
+          name: "Leidinaldo Lobato da Fonseca",
+          conta: Host.AMAZONET,
+        },
+      ]);
+
+      expect(result).toHaveLength(2);
+      expect(result.every((ordem) => ordem.tecnico_id === "1b4e28ba-2fa1-11d2-883f-0016d3cca427")).toBe(
+        true,
+      );
+      expect(
+        result.every(
+          (ordem) =>
+            ordem.usuario_fechamento_limpo === "Leidinaldo Lobato da Fonseca",
+        ),
+      ).toBe(true);
+    it("should keep TEC_LOBATOS orders even without a registered leader", () => {
+      const ordens = mapearInstalacoesTecnicas(
+        [
+          makeMetabaseRow({
+            codigo_cliente: "177266",
+            numero_ordem_servico: "003226236135117078",
+            usuario_fechamento_os: "Wagner dos Santos Pinheiro_TEC_LOBATOS",
+          }),
+        ],
+        METABASE_JSON_URL,
+      );
+
+      const result = filtrarInstalacoesDosTecnicos(ordens, []);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].tecnico_id).toBe("equipe-tec-lobatos");
+      expect(result[0].usuario_fechamento_limpo).toBe(
+        "Leidinaldo Lobato da Fonseca",
+      );
     });
   });
 });

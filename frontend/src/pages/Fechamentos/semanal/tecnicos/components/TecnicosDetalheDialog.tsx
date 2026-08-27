@@ -82,7 +82,7 @@ export function TecnicosDetalheDialog({
           />
           <ItemDetalhe label="Bairro" value={valorOuTraco(ordem.bairro)} />
           <ItemDetalhe label="Abertura" value={valorOuTraco(ordem.usuario_abertura)} />
-          <ItemDetalhe label="Conta" value={ordem.conta} />
+          <ItemDetalhe label="Empresa" value={ordem.conta === "mania" ? "Mania" : "Amazonet"} />
           <ItemDetalhe label="Etapa auditoria" value={valorOuTraco(ordem.etapa_instalacao)} />
           <ItemDetalhe label="Status instalação" value={valorOuTraco(ordem.status_instalacao)} />
           <div className="sm:col-span-2">

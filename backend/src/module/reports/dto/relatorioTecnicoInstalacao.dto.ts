@@ -34,7 +34,7 @@ export class RelatorioTecnicoDto {
   @IsNotEmpty()
   dataInicio: string;
 
-  @ApiProperty({ example: "2026-08-27" })
+  @ApiProperty({ example: "2026-08-26" })
   @IsDateString()
   @IsNotEmpty()
   dataFim: string;

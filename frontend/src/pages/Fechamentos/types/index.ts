@@ -53,5 +53,8 @@ export interface ResumoFechamentoDTO {
   totalReceber: number;
   totalOS: number;
   aprovadas: number;
-  pendentes: number;
+  reprovadas: number;
+  dataPagamento: string;
+  tecnico: string;
+  periodo: string;
 }
