@@ -81,7 +81,12 @@ jobs:
       - name: Start infrastructure
         working-directory: ./backend
         run: |
-          docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --no-recreate --wait --wait-timeout 60 postgres redis
+          $compose = "docker compose --env-file .env -f docker/docker-compose.prod.yml"
+          if (Select-String -Path .env -Pattern '^SKIP_DATABASE=true' -Quiet) {
+            Invoke-Expression "$compose up -d --no-recreate --wait --wait-timeout 60 redis"
+          } else {
+            Invoke-Expression "$compose up -d --no-recreate --wait --wait-timeout 60 postgres redis"
+          }
 
       - name: Deploy backend blue-green
         working-directory: ./backend

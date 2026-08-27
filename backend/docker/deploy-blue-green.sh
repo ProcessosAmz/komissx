@@ -22,10 +22,15 @@ fi
 
 echo "==> Cor ativa: ${ACTIVE_COLOR:-nenhuma} | Nova cor: $NEW_COLOR"
 
-$COMPOSE up -d --no-recreate --wait --wait-timeout 60 postgres redis
+if grep -qE '^SKIP_DATABASE=true' .env; then
+  echo "==> SKIP_DATABASE=true — subindo só redis"
+  $COMPOSE up -d --no-recreate --wait --wait-timeout 60 redis
+else
+  $COMPOSE up -d --no-recreate --wait --wait-timeout 60 postgres redis
+  docker network connect --alias postgres komissx komissx_postgres 2>/dev/null || true
+fi
 
 docker network connect --alias redis komissx komissx_redis 2>/dev/null || true
-docker network connect --alias postgres komissx komissx_postgres 2>/dev/null || true
 
 if ! docker image inspect traefik:v3.1 >/dev/null 2>&1; then
   echo "==> Pull Traefik..."
