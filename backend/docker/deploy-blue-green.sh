@@ -83,7 +83,7 @@ http:
     backend:
       loadBalancer:
         healthCheck:
-          path: /api/health
+          path: /api/health/live
           interval: "5s"
           timeout: "3s"
         servers:

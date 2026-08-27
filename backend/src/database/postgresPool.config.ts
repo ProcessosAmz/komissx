@@ -13,7 +13,7 @@ export const postgresPoolConfig: Pick<
   | "maxUses"
 > = {
   max: 10,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 10000,
   keepAlive: true,
   keepAliveInitialDelayMillis: 1000,
