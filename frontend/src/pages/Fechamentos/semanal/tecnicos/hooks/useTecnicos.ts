@@ -1,36 +1,106 @@
-// features/fechamentos/semanal/tecnicos/hooks/useTecnicos.ts
-import { useState, useEffect, useMemo } from 'react';
-import { ConfigService } from '../../../../../config/ConfigService';
-import { TecnicoService } from '../services/tecnicoService';
-import { OrdemServico, TecnicoRowViewModel, ResumoFechamentoDTO, StatusAuditoria } from '../../../types';
+import { useEffect, useMemo, useState } from "react";
+import { isAxiosError } from "axios";
+import { ConfigService } from "../../../../../config/ConfigService";
+import { ReportsService, TecnicoFechamento } from "@/service/reportsService";
+import { TecnicoService } from "../services/tecnicoService";
+import {
+  FechamentoSemanalRules,
+  OrdemServico,
+  ResumoFechamentoDTO,
+  StatusAuditoria,
+} from "../../../types";
+
+function formatarDataIso(data: Date): string {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, "0");
+  const dia = String(data.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
+function getQuintaMaisRecente(referencia = new Date()): Date {
+  const data = new Date(referencia);
+  data.setHours(0, 0, 0, 0);
+  const diaSemana = data.getDay();
+  const diasDesdeQuinta = (diaSemana - 4 + 7) % 7;
+  data.setDate(data.getDate() - diasDesdeQuinta);
+  return data;
+}
+
+function somarDias(dataIso: string, dias: number): string {
+  const [ano, mes, dia] = dataIso.split("-").map(Number);
+  const data = new Date(ano, mes - 1, dia + dias);
+  return formatarDataIso(data);
+}
 
 export const useTecnicos = (filtroTecnico: string, buscaOS: string) => {
+  const [dataInicio, setDataInicio] = useState(
+    formatarDataIso(getQuintaMaisRecente()),
+  );
+  const [dataFim, setDataFim] = useState(() =>
+    somarDias(formatarDataIso(getQuintaMaisRecente()), 6),
+  );
   const [dadosBrutos, setDadosBrutos] = useState<OrdemServico[]>([]);
-  const [semanalRules, setSemanalRules] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [tecnicosCadastro, setTecnicosCadastro] = useState<TecnicoFechamento[]>(
+    [],
+  );
+  const [semanalRules, setSemanalRules] = useState<FechamentoSemanalRules | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
-  // Carga inicial do Core ConfigService
   useEffect(() => {
-    async function inicializarModulo() {
+    let ativo = true;
+
+    async function carregarFechamento() {
+      setLoading(true);
+      setErro(null);
+
       try {
         const config = await ConfigService.getInstance().loadConfigurations();
+        const response = await ReportsService.buscarInstalacaoTecnica({
+          dataInicio,
+          dataFim,
+        });
+
+        if (!ativo) {
+          return;
+        }
+
         setSemanalRules(config.fechamento_semanal);
-        
-        // Simulação de chamada HTTP GET futuro da API
-        const mockResponse = [
-          { id: '1', codigo_cliente: '10023', numero_ordem_servico: '85960', usuario_fechamento: 'LOBATO_AMZ', usuario_fechamento_limpo: 'LOBATO', usuario_abertura: 'SISTEMA', tipo_ordem_servico: 'INSTALAÇÃO FTTH', data_termino_executado: '2026-07-10', status_auditoria: 'APROVADO' as const, conta: 'amazonet' as const },
-          { id: '2', codigo_cliente: '10023', numero_ordem_servico: '85960', usuario_fechamento: 'LOBATO_AMZ', usuario_fechamento_limpo: 'LOBATO', usuario_abertura: 'SISTEMA', tipo_ordem_servico: 'INSTALAÇÃO FTTH', data_termino_executado: '2026-07-09', status_auditoria: 'REPROVADO' as const, conta: 'amazonet' as const },
-          { id: '3', codigo_cliente: '20455', numero_ordem_servico: '85961', usuario_fechamento: 'GABRIEL_MANIA', usuario_fechamento_limpo: 'GABRIEL', usuario_abertura: 'ATENDIMENTO', tipo_ordem_servico: 'MANUTENÇÃO DE REDE', data_termino_executado: '2026-07-11', status_auditoria: 'NC APROVADO' as const, conta: 'mania' as const },
-        ];
-        setDadosBrutos(mockResponse);
-      } catch (err) {
-        console.error(err);
+        setDadosBrutos(response.data);
+        setTecnicosCadastro(response.tecnicos ?? []);
+      } catch (error) {
+        if (!ativo) {
+          return;
+        }
+
+        const mensagem = isAxiosError(error)
+          ? error.response?.data?.message
+          : undefined;
+        const mensagemTexto = Array.isArray(mensagem)
+          ? mensagem.join(" ")
+          : mensagem;
+        setErro(
+          typeof mensagemTexto === "string" && mensagemTexto.length > 0
+            ? mensagemTexto
+            : "Não foi possível carregar as instalações do Metabase.",
+        );
+        setDadosBrutos([]);
+        setTecnicosCadastro([]);
       } finally {
-        setLoading(false);
+        if (ativo) {
+          setLoading(false);
+        }
       }
     }
-    inicializarModulo();
-  }, []);
+
+    carregarFechamento();
+
+    return () => {
+      ativo = false;
+    };
+  }, [dataInicio, dataFim]);
 
   const dadosDeduplicados = useMemo(() => {
     if (!semanalRules) return [];
@@ -38,47 +108,77 @@ export const useTecnicos = (filtroTecnico: string, buscaOS: string) => {
   }, [dadosBrutos, semanalRules]);
 
   const listaTecnicos = useMemo(() => {
-    return ['TODOS', ...Array.from(new Set(dadosBrutos.map(d => d.usuario_fechamento_limpo)))];
-  }, [dadosBrutos]);
+    return [
+      { id: "TODOS", name: "Todos os técnicos" },
+      ...tecnicosCadastro,
+    ];
+  }, [tecnicosCadastro]);
 
   const dadosFiltrados = useMemo(() => {
-    return dadosDeduplicados.filter(os => {
-      const matchTecnico = filtroTecnico === 'TODOS' || os.usuario_fechamento_limpo === filtroTecnico;
-      const matchBusca = os.numero_ordem_servico.includes(buscaOS) || os.codigo_cliente.includes(buscaOS);
+    return dadosDeduplicados.filter((os) => {
+      const matchTecnico =
+        filtroTecnico === "TODOS" || os.tecnico_id === filtroTecnico;
+      const termo = buscaOS.trim().toLowerCase();
+      const matchBusca =
+        termo.length === 0 ||
+        os.numero_ordem_servico.toLowerCase().includes(termo) ||
+        os.codigo_cliente.toLowerCase().includes(termo) ||
+        os.usuario_fechamento_limpo.toLowerCase().includes(termo);
       return matchTecnico && matchBusca;
     });
   }, [dadosDeduplicados, filtroTecnico, buscaOS]);
 
   const resumo = useMemo<ResumoFechamentoDTO>(() => {
-    return dadosFiltrados.reduce((acc, os) => {
-      acc.totalOS += 1;
-      if (os.status_financeiro === 'PAGO') {
-        acc.aprovadas += 1;
-        acc.totalReceber += os.valor_a_pagar || 0;
-      } else {
-        acc.reprovadas += 1;
-      }
-      return acc;
-    }, { totalReceber: 0, totalOS: 0, aprovadas: 0, reprovadas: 0 });
+    return dadosFiltrados.reduce(
+      (acc, os) => {
+        acc.totalOS += 1;
+        if (os.status_financeiro === "PAGO") {
+          acc.aprovadas += 1;
+          acc.totalReceber += os.valor_a_pagar || 0;
+        } else {
+          acc.reprovadas += 1;
+        }
+        return acc;
+      },
+      { totalReceber: 0, totalOS: 0, aprovadas: 0, reprovadas: 0 },
+    );
   }, [dadosFiltrados]);
 
   const handleExcluir = (id: string) => {
-    setDadosBrutos(prev => prev.filter(item => item.id !== id));
+    setDadosBrutos((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleAlterarStatus = (id: string, novoStatus: StatusAuditoria) => {
-    const registroOriginal = dadosBrutos.find(item => item.id === id);
+    const registroOriginal = dadosBrutos.find((item) => item.id === id);
     if (!registroOriginal) return;
 
-    // Regra de Negócio Crítica: Alteração após aprovação bloqueada na UI
-    const statusBloqueados: StatusAuditoria[] = ['APROVADO', 'NC APROVADO'];
+    const statusBloqueados: StatusAuditoria[] = ["APROVADO", "NC APROVADO"];
     if (statusBloqueados.includes(registroOriginal.status_auditoria)) {
-      alert(`Bloqueio de Segurança: O registro ${registroOriginal.numero_ordem_servico} já possui liquidação financeira pendente/aprovada. Use a Auditoria com validação de Líder.`);
-      return; 
+      alert(
+        `Bloqueio de Segurança: O registro ${registroOriginal.numero_ordem_servico} já possui liquidação financeira pendente/aprovada. Use a Auditoria com validação de Líder.`,
+      );
+      return;
     }
 
-    setDadosBrutos(prev => prev.map(item => item.id === id ? { ...item, status_auditoria: novoStatus } : item));
+    setDadosBrutos((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status_auditoria: novoStatus } : item,
+      ),
+    );
   };
 
-  return { dadosFiltrados, listaTecnicos, resumo, loading, totalSincronizados: Object.keys(semanalRules?.tecnicos_terceirizados || {}).length, handleExcluir, handleAlterarStatus };
+  return {
+    dataInicio,
+    dataFim,
+    setDataInicio,
+    setDataFim,
+    dadosFiltrados,
+    listaTecnicos,
+    resumo,
+    loading,
+    erro,
+    totalSincronizados: Object.keys(semanalRules?.tecnicos_terceirizados || {}).length,
+    handleExcluir,
+    handleAlterarStatus,
+  };
 };

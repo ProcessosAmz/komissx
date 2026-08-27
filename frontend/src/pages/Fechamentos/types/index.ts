@@ -34,6 +34,7 @@ export interface OrdemServico {
   data_termino_executado: string;
   status_auditoria: StatusAuditoria;
   conta: 'amazonet' | 'mania';
+  tecnico_id?: string | null;
 }
 
 export interface TecnicoRowViewModel extends OrdemServico {

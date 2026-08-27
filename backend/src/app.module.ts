@@ -13,6 +13,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CommissionsModule } from "@/module/commissions/index.module";
+import { ReportsModule } from "@/module/reports/index.module";
 import {
   postgresPoolConfig,
   handlePostgresPoolError,
@@ -23,7 +24,12 @@ const skipDatabase = process.env.SKIP_DATABASE === "true";
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: [".env.development.local", ".env.development", ".env"],
+      envFilePath: [
+        ".env.development.local",
+        ".env.development",
+        ".env",
+        ".metabase.query.env",
+      ],
     }),
     ...(skipDatabase
       ? []
@@ -52,6 +58,7 @@ const skipDatabase = process.env.SKIP_DATABASE === "true";
           UsersModule,
           AuthModule,
           CommissionsModule,
+          ReportsModule,
         ]),
     IntegrationsModule,
     LoggerModule,
