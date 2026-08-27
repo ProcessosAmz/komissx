@@ -4,7 +4,6 @@ import {
   HealthCheckService,
 } from "@nestjs/terminus";
 import { Public } from "@/module/auth/decorator/public.decorator";
-import { PostgresHealthIndicator } from "@/module/health/indicator/postgres.health.indicator";
 import { RedisHealthIndicator } from "@/module/health/indicator/redis.health.indicator";
 import { ShutdownHealthIndicator } from "@/module/health/indicator/shutdown.health.indicator";
 
@@ -12,7 +11,6 @@ import { ShutdownHealthIndicator } from "@/module/health/indicator/shutdown.heal
 export class HealthController {
   constructor(
     private readonly healthCheckService: HealthCheckService,
-    private readonly postgresHealthIndicator: PostgresHealthIndicator,
     private readonly redisHealthIndicator: RedisHealthIndicator,
     private readonly shutdownHealthIndicator: ShutdownHealthIndicator,
   ) {}
@@ -29,7 +27,6 @@ export class HealthController {
   check() {
     return this.healthCheckService.check([
       () => this.shutdownHealthIndicator.isAcceptingTraffic("shutdown"),
-      () => this.postgresHealthIndicator.ping("database"),
       () => this.redisHealthIndicator.ping("redis"),
     ]);
   }
