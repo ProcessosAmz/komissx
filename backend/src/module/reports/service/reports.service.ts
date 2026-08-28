@@ -3,7 +3,6 @@ import { MetaService } from "@/integrations/service/metabase.service";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
 import { TecnicoFechamentoResponseDto } from "@/module/reports/dto/ordemServicoInstalacao.response.dto";
 import {
-  empresaParaConta,
   encontrarLiderLobatos,
   filtrarInstalacoesDosTecnicos,
   mapearInstalacoesTecnicas,
@@ -76,7 +75,6 @@ export class ReportService {
       .map((user) => ({
         id: user.id,
         name: user.name,
-        conta: empresaParaConta(user.empresa?.name ?? ""),
       }));
   }
 

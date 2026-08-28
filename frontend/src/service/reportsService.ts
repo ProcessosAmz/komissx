@@ -6,7 +6,6 @@ const RELATORIO_TIMEOUT_MS = 120000;
 export type TecnicoFechamento = {
   id: string;
   name: string;
-  conta?: "amazonet" | "mania";
 };
 
 export type RelatorioTecnicoParams = {

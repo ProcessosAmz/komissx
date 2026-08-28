@@ -12,7 +12,7 @@ export type StatusAuditoriaInstalacao = (typeof STATUS_AUDITORIA)[number];
 export class TecnicoFechamentoResponseDto {
   id: string;
   name: string;
-  conta: Host;
+  conta?: Host;
 }
 
 export class OrdemServicoInstalacaoResponseDto {

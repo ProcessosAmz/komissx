@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { isAxiosError } from "axios";
-import { ConfigService } from "../../../../../config/ConfigService";
+import { ConfigService } from "@/config/ConfigService";
 import { ReportsService, TecnicoFechamento } from "@/service/reportsService";
 import { TecnicoService } from "../services/tecnicoService";
+import {
+  aplicarFiltroNaQuery,
+  isDataIso,
+  lerEmpresaDaQuery,
+  lerTecnicoDaQuery,
+  QUERY_TECNICOS,
+} from "../services/queryTecnicos";
 import {
   FechamentoSemanalRules,
   OrdemServico,
@@ -82,14 +90,9 @@ function ordemCorrespondeABusca(os: OrdemServico, busca: string): boolean {
   return termos.every((termo) => texto.includes(termo));
 }
 
-export const useTecnicos = (
-  filtroTecnico: string,
-  buscaOS: string,
-  filtroEmpresa: string,
-) => {
-  const periodoInicial = getPeriodoFechamentoSemanal();
-  const [dataInicio, setDataInicio] = useState(periodoInicial.dataInicio);
-  const [dataFim, setDataFim] = useState(periodoInicial.dataFim);
+export const useTecnicos = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const periodoPadrao = useMemo(() => getPeriodoFechamentoSemanal(), []);
   const [dadosBrutos, setDadosBrutos] = useState<OrdemServico[]>([]);
   const [tecnicosCadastro, setTecnicosCadastro] = useState<TecnicoFechamento[]>(
     [],
@@ -99,6 +102,55 @@ export const useTecnicos = (
   );
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+
+  const dataInicio = isDataIso(searchParams.get(QUERY_TECNICOS.dataInicio))
+    ? searchParams.get(QUERY_TECNICOS.dataInicio)!
+    : periodoPadrao.dataInicio;
+  const dataFim = isDataIso(searchParams.get(QUERY_TECNICOS.dataFim))
+    ? searchParams.get(QUERY_TECNICOS.dataFim)!
+    : periodoPadrao.dataFim;
+  const filtroEmpresa = lerEmpresaDaQuery(
+    searchParams.get(QUERY_TECNICOS.empresa),
+  );
+  const buscaOS = searchParams.get(QUERY_TECNICOS.busca) ?? "";
+  const filtroTecnico = lerTecnicoDaQuery(
+    searchParams.get(QUERY_TECNICOS.tecnico),
+    tecnicosCadastro.map((tecnico) => tecnico.id),
+  );
+
+  const atualizarQuery = (filtros: {
+    dataInicio?: string;
+    dataFim?: string;
+    empresa?: string;
+    tecnico?: string;
+    busca?: string;
+  }) => {
+    setSearchParams(
+      aplicarFiltroNaQuery(searchParams, {
+        dataInicio: filtros.dataInicio ?? dataInicio,
+        dataFim: filtros.dataFim ?? dataFim,
+        empresa: filtros.empresa ?? filtroEmpresa,
+        tecnico: filtros.tecnico ?? filtroTecnico,
+        busca: filtros.busca ?? buscaOS,
+      }),
+      { replace: true },
+    );
+  };
+
+  useEffect(() => {
+    const jaTemPeriodo =
+      isDataIso(searchParams.get(QUERY_TECNICOS.dataInicio)) &&
+      isDataIso(searchParams.get(QUERY_TECNICOS.dataFim));
+
+    if (jaTemPeriodo) {
+      return;
+    }
+
+    atualizarQuery({
+      dataInicio,
+      dataFim,
+    });
+  }, []);
 
   useEffect(() => {
     let ativo = true;
@@ -118,9 +170,15 @@ export const useTecnicos = (
           return;
         }
 
+        const tecnicosUnicos = Array.from(
+          new Map(
+            (response.tecnicos ?? []).map((tecnico) => [tecnico.id, tecnico]),
+          ).values(),
+        );
+
         setSemanalRules(config.fechamento_semanal);
         setDadosBrutos(response.data);
-        setTecnicosCadastro(response.tecnicos ?? []);
+        setTecnicosCadastro(tecnicosUnicos);
       } catch (error) {
         if (!ativo) {
           return;
@@ -139,6 +197,7 @@ export const useTecnicos = (
         );
         setDadosBrutos([]);
         setTecnicosCadastro([]);
+        setSemanalRules(null);
       } finally {
         if (ativo) {
           setLoading(false);
@@ -154,7 +213,10 @@ export const useTecnicos = (
   }, [dataInicio, dataFim]);
 
   const dadosDeduplicados = useMemo(() => {
-    if (!semanalRules) return [];
+    if (!semanalRules) {
+      return [];
+    }
+
     return TecnicoService.processarEDeduplicar(dadosBrutos, semanalRules);
   }, [dadosBrutos, semanalRules]);
 
@@ -166,13 +228,11 @@ export const useTecnicos = (
     const tecnicoSelecionado = listaTecnicos.find(
       (tecnico) => tecnico.id === filtroTecnico,
     );
+    const nomeTecnico = tecnicoSelecionado?.name ?? "";
     const filtrandoLiderLobatos =
       filtroTecnico !== "TODOS" &&
-      Boolean(tecnicoSelecionado?.name) &&
       /leidinaldo|lobatos|lobato/i.test(
-        tecnicoSelecionado.name
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, ""),
+        nomeTecnico.normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
       );
 
     return dadosDeduplicados.filter((os) => {
@@ -245,8 +305,14 @@ export const useTecnicos = (
   return {
     dataInicio,
     dataFim,
-    setDataInicio,
-    setDataFim,
+    setDataInicio: (value: string) => atualizarQuery({ dataInicio: value }),
+    setDataFim: (value: string) => atualizarQuery({ dataFim: value }),
+    filtroEmpresa,
+    setFiltroEmpresa: (value: string) => atualizarQuery({ empresa: value }),
+    filtroTecnico,
+    setFiltroTecnico: (value: string) => atualizarQuery({ tecnico: value }),
+    buscaOS,
+    setBuscaOS: (value: string) => atualizarQuery({ busca: value }),
     dadosFiltrados,
     listaTecnicos,
     resumo,

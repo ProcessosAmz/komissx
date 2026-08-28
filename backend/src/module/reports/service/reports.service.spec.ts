@@ -177,7 +177,6 @@ describe("ReportService", () => {
           {
             id: TECNICO_ID,
             name: "Edinelson Moura de Lima",
-            conta: Host.AMAZONET,
           },
         ],
         message: "Instalações listadas com sucesso",

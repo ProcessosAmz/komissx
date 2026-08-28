@@ -80,9 +80,7 @@ export function TecnicosFilters({
         >
           {listaTecnicos.map((tecnico) => (
             <option key={tecnico.id} value={tecnico.id}>
-              {tecnico.id === "TODOS" || filtroEmpresa !== "TODAS" || !tecnico.conta
-                ? tecnico.name
-                : `${tecnico.name} (${tecnico.conta === "mania" ? "Mania" : "Amazonet"})`}
+              {tecnico.name}
             </option>
           ))}
         </select>
@@ -95,7 +93,7 @@ export function TecnicosFilters({
           <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
           <input
             type="text"
-            placeholder="mania edinelson, OS ou cliente"
+            placeholder="OS, cliente ou técnico"
             value={buscaOS}
             onChange={(event) => setBuscaOS(event.target.value)}
             className={`${campoClasse} pl-9`}

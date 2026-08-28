@@ -4,12 +4,10 @@ import { TecnicosResumoCards } from "./components/TecnicosResumoCards";
 import { TecnicosFilters } from "./components/TecnicosFilters";
 import { TecnicosTable } from "./components/TecnicosTable";
 import { TecnicosDetalheDialog } from "./components/TecnicosDetalheDialog";
+import { TecnicosDocumentos } from "./components/TecnicosDocumentos";
 import { TecnicoRowViewModel } from "../../types";
 
 export default function FechamentoTecnico() {
-  const [filtroTecnico, setFiltroTecnico] = useState("TODOS");
-  const [filtroEmpresa, setFiltroEmpresa] = useState("TODAS");
-  const [buscaOS, setBuscaOS] = useState("");
   const [ordemSelecionada, setOrdemSelecionada] = useState<TecnicoRowViewModel | null>(
     null,
   );
@@ -19,6 +17,12 @@ export default function FechamentoTecnico() {
     dataFim,
     setDataInicio,
     setDataFim,
+    filtroEmpresa,
+    setFiltroEmpresa,
+    filtroTecnico,
+    setFiltroTecnico,
+    buscaOS,
+    setBuscaOS,
     dadosFiltrados,
     listaTecnicos,
     resumo,
@@ -26,21 +30,23 @@ export default function FechamentoTecnico() {
     erro,
     handleExcluir,
     handleAlterarStatus,
-  } = useTecnicos(filtroTecnico, buscaOS, filtroEmpresa);
+  } = useTecnicos();
 
   const ordemAtual =
     dadosFiltrados.find((item) => item.id === ordemSelecionada?.id) ?? ordemSelecionada;
 
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white">
-          Fechamento de instalação
-        </h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Semana de quinta a quarta, inclusive. Instalação, mudança de endereço e NC
-          entram no fechamento.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Fechamento de instalação
+          </h1>
+        </div>
+        <TecnicosDocumentos
+          dados={dadosFiltrados}
+          desabilitado={loading || dadosFiltrados.length === 0}
+        />
       </div>
 
       <TecnicosFilters
