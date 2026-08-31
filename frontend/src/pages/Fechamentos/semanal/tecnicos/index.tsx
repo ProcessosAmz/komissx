@@ -17,8 +17,7 @@ export default function FechamentoTecnico() {
   const {
     dataInicio,
     dataFim,
-    setDataInicio,
-    setDataFim,
+    setPeriodo,
     filtroEmpresa,
     setFiltroEmpresa,
     filtroTecnico,
@@ -70,8 +69,7 @@ export default function FechamentoTecnico() {
       <TecnicosFilters
         dataInicio={dataInicio}
         dataFim={dataFim}
-        setDataInicio={setDataInicio}
-        setDataFim={setDataFim}
+        setPeriodo={setPeriodo}
         filtroEmpresa={filtroEmpresa}
         setFiltroEmpresa={setFiltroEmpresa}
         filtroTecnico={filtroTecnico}

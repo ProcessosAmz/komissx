@@ -9,8 +9,7 @@ import { TecnicosDatePicker } from "./TecnicosDatePicker";
 interface FiltersProps {
   dataInicio: string;
   dataFim: string;
-  setDataInicio: (value: string) => void;
-  setDataFim: (value: string) => void;
+  setPeriodo: (periodo: { dataInicio: string; dataFim: string }) => void;
   filtroEmpresa: string;
   setFiltroEmpresa: (value: string) => void;
   filtroTecnico: string;
@@ -30,8 +29,7 @@ const campoClasse =
 export function TecnicosFilters({
   dataInicio,
   dataFim,
-  setDataInicio,
-  setDataFim,
+  setPeriodo,
   filtroEmpresa,
   setFiltroEmpresa,
   filtroTecnico,
@@ -51,7 +49,7 @@ export function TecnicosFilters({
       : campoClasse;
 
   return (
-    <div className="grid gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
           Empresa
@@ -65,17 +63,15 @@ export function TecnicosFilters({
           <option value="mania">Mania</option>
         </select>
       </label>
-      <label className="space-y-1.5">
+      <label className="space-y-1.5 md:col-span-2">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-          Início
+          Período
         </span>
-        <TecnicosDatePicker valor={dataInicio} onChange={setDataInicio} />
-      </label>
-      <label className="space-y-1.5">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-          Fim
-        </span>
-        <TecnicosDatePicker valor={dataFim} onChange={setDataFim} />
+        <TecnicosDatePicker
+          dataInicio={dataInicio}
+          dataFim={dataFim}
+          onChange={setPeriodo}
+        />
       </label>
       <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">

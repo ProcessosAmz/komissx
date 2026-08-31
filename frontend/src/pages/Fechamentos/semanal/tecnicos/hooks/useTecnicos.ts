@@ -188,12 +188,32 @@ export const useTecnicos = () => {
   useEffect(() => {
     let ativo = true;
 
-    async function carregarFechamento() {
+    ConfigService.getInstance()
+      .loadConfigurations()
+      .then((config) => {
+        if (ativo) {
+          setSemanalRules(config.fechamento_semanal);
+        }
+      })
+      .catch(() => {
+        if (ativo) {
+          setSemanalRules(null);
+        }
+      });
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let ativo = true;
+
+    const agendar = window.setTimeout(async () => {
       setLoading(true);
       setErro(null);
 
       try {
-        const config = await ConfigService.getInstance().loadConfigurations();
         const response = await ReportsService.buscarInstalacaoTecnica({
           dataInicio,
           dataFim,
@@ -210,7 +230,6 @@ export const useTecnicos = () => {
           ).values(),
         );
 
-        setSemanalRules(config.fechamento_semanal);
         setDadosBrutos(response.data);
         setTecnicosCadastro(tecnicosUnicos);
       } catch (error) {
@@ -231,18 +250,16 @@ export const useTecnicos = () => {
         );
         setDadosBrutos([]);
         setTecnicosCadastro([]);
-        setSemanalRules(null);
       } finally {
         if (ativo) {
           setLoading(false);
         }
       }
-    }
-
-    carregarFechamento();
+    }, 400);
 
     return () => {
       ativo = false;
+      window.clearTimeout(agendar);
     };
   }, [dataInicio, dataFim, filtroEmpresa]);
 
@@ -356,6 +373,8 @@ export const useTecnicos = () => {
     dataFim,
     setDataInicio: (value: string) => atualizarQuery({ dataInicio: value }),
     setDataFim: (value: string) => atualizarQuery({ dataFim: value }),
+    setPeriodo: (periodo: { dataInicio: string; dataFim: string }) =>
+      atualizarQuery(periodo),
     filtroEmpresa,
     setFiltroEmpresa: (value: string) => atualizarQuery({ empresa: value }),
     filtroTecnico,
