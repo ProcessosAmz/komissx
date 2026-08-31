@@ -32,7 +32,7 @@ export class OrdemServicoInstalacaoResponseDto {
   etapa_instalacao: string;
   status_instalacao: string;
   motivo_instalacao: string;
-  status_auditoria: StatusAuditoriaInstalacao;
+  status_auditoria: StatusAuditoriaInstalacao | "";
   conta: Host;
   tecnico_id: string | null;
 }

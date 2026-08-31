@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { isAxiosError } from "axios";
 import { ConfigService } from "@/config/ConfigService";
 import { ReportsService, TecnicoFechamento } from "@/service/reportsService";
 import { TecnicoService } from "../services/tecnicoService";
 import {
   aplicarFiltroNaQuery,
+  FiltroListagemTecnicos,
   isDataIso,
   lerEmpresaDaQuery,
+  lerListagemDaQuery,
   lerTecnicoDaQuery,
+  LISTAGEM_AUTO,
   QUERY_TECNICOS,
 } from "../services/queryTecnicos";
 import {
@@ -91,7 +94,9 @@ function ordemCorrespondeABusca(os: OrdemServico, busca: string): boolean {
 }
 
 export const useTecnicos = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const periodoPadrao = useMemo(() => getPeriodoFechamentoSemanal(), []);
   const [dadosBrutos, setDadosBrutos] = useState<OrdemServico[]>([]);
   const [tecnicosCadastro, setTecnicosCadastro] = useState<TecnicoFechamento[]>(
@@ -109,14 +114,35 @@ export const useTecnicos = () => {
   const dataFim = isDataIso(searchParams.get(QUERY_TECNICOS.dataFim))
     ? searchParams.get(QUERY_TECNICOS.dataFim)!
     : periodoPadrao.dataFim;
-  const filtroEmpresa = lerEmpresaDaQuery(
-    searchParams.get(QUERY_TECNICOS.empresa),
+  const [filtroEmpresa, setFiltroEmpresaState] = useState(() =>
+    lerEmpresaDaQuery(searchParams.get(QUERY_TECNICOS.empresa)),
   );
   const buscaOS = searchParams.get(QUERY_TECNICOS.busca) ?? "";
+  const listagemNaUrl = lerListagemDaQuery(
+    searchParams.get(QUERY_TECNICOS.listagem),
+  );
   const filtroTecnico = lerTecnicoDaQuery(
     searchParams.get(QUERY_TECNICOS.tecnico),
     tecnicosCadastro.map((tecnico) => tecnico.id),
   );
+
+  const persistirNaUrl = (filtros: {
+    dataInicio: string;
+    dataFim: string;
+    empresa: string;
+    tecnico: string;
+    busca: string;
+    listagem: string;
+  }) => {
+    const search = aplicarFiltroNaQuery(new URLSearchParams(), filtros).toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: search.length > 0 ? `?${search}` : "",
+      },
+      { replace: true },
+    );
+  };
 
   const atualizarQuery = (filtros: {
     dataInicio?: string;
@@ -124,17 +150,20 @@ export const useTecnicos = () => {
     empresa?: string;
     tecnico?: string;
     busca?: string;
+    listagem?: string;
   }) => {
-    setSearchParams(
-      aplicarFiltroNaQuery(searchParams, {
-        dataInicio: filtros.dataInicio ?? dataInicio,
-        dataFim: filtros.dataFim ?? dataFim,
-        empresa: filtros.empresa ?? filtroEmpresa,
-        tecnico: filtros.tecnico ?? filtroTecnico,
-        busca: filtros.busca ?? buscaOS,
-      }),
-      { replace: true },
-    );
+    if (filtros.empresa !== undefined) {
+      setFiltroEmpresaState(filtros.empresa);
+    }
+
+    persistirNaUrl({
+      dataInicio: filtros.dataInicio ?? dataInicio,
+      dataFim: filtros.dataFim ?? dataFim,
+      empresa: filtros.empresa ?? filtroEmpresa,
+      tecnico: filtros.tecnico ?? filtroTecnico,
+      busca: filtros.busca ?? buscaOS,
+      listagem: filtros.listagem ?? listagemNaUrl,
+    });
   };
 
   useEffect(() => {
@@ -164,6 +193,10 @@ export const useTecnicos = () => {
         const response = await ReportsService.buscarInstalacaoTecnica({
           dataInicio,
           dataFim,
+          empresa:
+            filtroEmpresa === "amazonet" || filtroEmpresa === "mania"
+              ? filtroEmpresa
+              : undefined,
         });
 
         if (!ativo) {
@@ -210,7 +243,7 @@ export const useTecnicos = () => {
     return () => {
       ativo = false;
     };
-  }, [dataInicio, dataFim]);
+  }, [dataInicio, dataFim, filtroEmpresa]);
 
   const dadosDeduplicados = useMemo(() => {
     if (!semanalRules) {
@@ -224,7 +257,7 @@ export const useTecnicos = () => {
     return [{ id: "TODOS", name: "Todos os técnicos" }, ...tecnicosCadastro];
   }, [tecnicosCadastro]);
 
-  const dadosFiltrados = useMemo(() => {
+  const dadosBase = useMemo(() => {
     const tecnicoSelecionado = listaTecnicos.find(
       (tecnico) => tecnico.id === filtroTecnico,
     );
@@ -242,15 +275,42 @@ export const useTecnicos = () => {
         filtroTecnico === "TODOS" ||
         os.tecnico_id === filtroTecnico ||
         (filtrandoLiderLobatos &&
-          os.usuario_fechamento.toUpperCase().includes("TEC_LOBATOS"));
+          /TEC[_\s]LOBATOS/i.test(os.usuario_fechamento));
       return (
         matchEmpresa && matchTecnico && ordemCorrespondeABusca(os, buscaOS)
       );
     });
   }, [dadosDeduplicados, filtroTecnico, buscaOS, filtroEmpresa, listaTecnicos]);
 
+  const quantidadePorCliente = useMemo(
+    () => TecnicoService.quantidadePorCliente(dadosBase),
+    [dadosBase],
+  );
+
+  const contagemListagem = useMemo(
+    () => TecnicoService.contarListagem(dadosBase, quantidadePorCliente),
+    [dadosBase, quantidadePorCliente],
+  );
+
+  const filtroListagem: FiltroListagemTecnicos =
+    listagemNaUrl === LISTAGEM_AUTO
+      ? contagemListagem.duplicados > 0
+        ? "duplicados"
+        : "TODOS"
+      : listagemNaUrl;
+
+  const dadosFiltrados = useMemo(
+    () =>
+      TecnicoService.filtrarListagem(
+        dadosBase,
+        filtroListagem,
+        quantidadePorCliente,
+      ),
+    [dadosBase, filtroListagem, quantidadePorCliente],
+  );
+
   const resumo = useMemo<ResumoFechamentoDTO>(() => {
-    const totais = dadosFiltrados.reduce(
+    const totais = dadosBase.reduce(
       (acc, os) => {
         acc.totalOS += 1;
         if (os.status_financeiro === "PAGO") {
@@ -277,24 +337,13 @@ export const useTecnicos = () => {
           : tecnicoSelecionado?.name ?? "Técnico",
       periodo: `${formatarDataBr(dataInicio)} a ${formatarDataBr(dataFim)}`,
     };
-  }, [dadosFiltrados, dataInicio, dataFim, filtroTecnico, listaTecnicos]);
+  }, [dadosBase, dataInicio, dataFim, filtroTecnico, listaTecnicos]);
 
   const handleExcluir = (id: string) => {
     setDadosBrutos((prev) => prev.filter((item) => item.id !== id));
   };
 
   const handleAlterarStatus = (id: string, novoStatus: StatusAuditoria) => {
-    const registroOriginal = dadosBrutos.find((item) => item.id === id);
-    if (!registroOriginal) return;
-
-    const statusBloqueados: StatusAuditoria[] = ["APROVADO", "NC APROVADO"];
-    if (statusBloqueados.includes(registroOriginal.status_auditoria)) {
-      alert(
-        `Bloqueio de Segurança: O registro ${registroOriginal.numero_ordem_servico} já possui liquidação financeira pendente/aprovada. Use a Auditoria com validação de Líder.`,
-      );
-      return;
-    }
-
     setDadosBrutos((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, status_auditoria: novoStatus } : item,
@@ -313,6 +362,12 @@ export const useTecnicos = () => {
     setFiltroTecnico: (value: string) => atualizarQuery({ tecnico: value }),
     buscaOS,
     setBuscaOS: (value: string) => atualizarQuery({ busca: value }),
+    filtroListagem,
+    setFiltroListagem: (value: FiltroListagemTecnicos) =>
+      atualizarQuery({ listagem: value }),
+    contagemListagem,
+    quantidadePorCliente,
+    dadosBase,
     dadosFiltrados,
     listaTecnicos,
     resumo,

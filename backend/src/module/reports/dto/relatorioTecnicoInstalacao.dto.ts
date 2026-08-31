@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsDateString, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { Host } from "@/common/enums/host.enum";
 
 function emptyToUndefined(value: unknown): unknown {
   if (value === "") {
@@ -28,6 +29,12 @@ export class RelatorioTecnicoDto {
   @IsString()
   @Transform(({ value }) => emptyToUndefined(value))
   tecnico?: string;
+
+  @ApiPropertyOptional({ enum: Host, example: Host.MANIA })
+  @IsOptional()
+  @IsEnum(Host)
+  @Transform(({ value }) => emptyToUndefined(value))
+  empresa?: Host;
 
   @ApiProperty({ example: "2026-08-20" })
   @IsDateString()

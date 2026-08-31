@@ -25,7 +25,7 @@ export class ReportService {
 
   async buscarInstalacaoTecnica(dto: RelatorioTecnicoDto) {
     this.logger.log(
-      `Buscando fechamento de instalação técnico ${dto.dataInicio} a ${dto.dataFim}`,
+      `Buscando fechamento de instalação técnico ${dto.empresa ?? "todas"} ${dto.dataInicio} a ${dto.dataFim}`,
     );
 
     try {

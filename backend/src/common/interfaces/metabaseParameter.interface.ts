@@ -3,6 +3,7 @@ export type MetabaseParameterTarget =
   | ["dimension", ["template-tag", string]];
 
 export interface MetabaseParameter {
+  id?: string;
   type: string;
   value: unknown;
   target: MetabaseParameterTarget;

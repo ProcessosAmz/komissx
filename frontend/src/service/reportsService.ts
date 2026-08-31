@@ -11,6 +11,7 @@ export type TecnicoFechamento = {
 export type RelatorioTecnicoParams = {
   dataInicio: string;
   dataFim: string;
+  empresa?: "amazonet" | "mania";
   estado?: string;
   cidade?: string;
   tecnico?: string;

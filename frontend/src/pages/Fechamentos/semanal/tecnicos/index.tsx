@@ -3,9 +3,11 @@ import { useTecnicos } from "./hooks/useTecnicos";
 import { TecnicosResumoCards } from "./components/TecnicosResumoCards";
 import { TecnicosFilters } from "./components/TecnicosFilters";
 import { TecnicosTable } from "./components/TecnicosTable";
+import { TecnicosDuplicadosBanner } from "./components/TecnicosDuplicadosBanner";
 import { TecnicosDetalheDialog } from "./components/TecnicosDetalheDialog";
 import { TecnicosDocumentos } from "./components/TecnicosDocumentos";
 import { TecnicoRowViewModel } from "../../types";
+import { TecnicoService } from "./services/tecnicoService";
 
 export default function FechamentoTecnico() {
   const [ordemSelecionada, setOrdemSelecionada] = useState<TecnicoRowViewModel | null>(
@@ -21,8 +23,13 @@ export default function FechamentoTecnico() {
     setFiltroEmpresa,
     filtroTecnico,
     setFiltroTecnico,
+    filtroListagem,
+    setFiltroListagem,
+    contagemListagem,
+    quantidadePorCliente,
     buscaOS,
     setBuscaOS,
+    dadosBase,
     dadosFiltrados,
     listaTecnicos,
     resumo,
@@ -33,7 +40,18 @@ export default function FechamentoTecnico() {
   } = useTecnicos();
 
   const ordemAtual =
-    dadosFiltrados.find((item) => item.id === ordemSelecionada?.id) ?? ordemSelecionada;
+    dadosFiltrados.find((item) => item.id === ordemSelecionada?.id) ??
+    dadosBase.find((item) => item.id === ordemSelecionada?.id) ??
+    ordemSelecionada;
+
+  const clientesDuplicados = new Set(
+    dadosBase
+      .filter(
+        (os) =>
+          (quantidadePorCliente.get(TecnicoService.chaveCliente(os)) ?? 0) > 1,
+      )
+      .map((os) => TecnicoService.chaveCliente(os)),
+  );
 
   return (
     <>
@@ -44,8 +62,8 @@ export default function FechamentoTecnico() {
           </h1>
         </div>
         <TecnicosDocumentos
-          dados={dadosFiltrados}
-          desabilitado={loading || dadosFiltrados.length === 0}
+          dados={dadosBase}
+          desabilitado={loading || dadosBase.length === 0}
         />
       </div>
 
@@ -58,6 +76,9 @@ export default function FechamentoTecnico() {
         setFiltroEmpresa={setFiltroEmpresa}
         filtroTecnico={filtroTecnico}
         setFiltroTecnico={setFiltroTecnico}
+        filtroListagem={filtroListagem}
+        setFiltroListagem={setFiltroListagem}
+        contagemListagem={contagemListagem}
         buscaOS={buscaOS}
         setBuscaOS={setBuscaOS}
         listaTecnicos={listaTecnicos}
@@ -77,8 +98,15 @@ export default function FechamentoTecnico() {
       ) : (
         <>
           <TecnicosResumoCards resumo={resumo} />
+          <TecnicosDuplicadosBanner
+            visivel={contagemListagem.duplicados > 0}
+            quantidadeOs={contagemListagem.duplicados}
+            quantidadeClientes={clientesDuplicados.size}
+            onFiltrarDuplicados={() => setFiltroListagem("duplicados")}
+          />
           <TecnicosTable
             dados={dadosFiltrados}
+            quantidadePorCliente={quantidadePorCliente}
             onAbrirDetalhe={setOrdemSelecionada}
           />
         </>

@@ -63,7 +63,7 @@ export const normalizarTexto = (valor: string): string =>
 
 export const limparNomeTecnico = (usuarioFechamento: string): string => {
   const nome = usuarioFechamento.trim();
-  const indiceSufixo = nome.indexOf("_");
+  const indiceSufixo = nome.search(/_|\s+TEC[_ ]/i);
 
   if (indiceSufixo <= 0) {
     return nome;
@@ -96,40 +96,52 @@ export const toDataFimExclusivaMetabase = (dataFimInclusiva: string): string => 
   return data.toISOString().slice(0, 10);
 };
 
-export const classificarStatusAuditoria = (
-  etapaInstalacao: string,
-  statusInstalacao = "",
-  motivoInstalacao = "",
-): StatusAuditoriaInstalacao => {
-  const combinado = normalizarTexto(
-    `${etapaInstalacao} ${statusInstalacao} ${motivoInstalacao}`,
-  );
-
-  if (combinado.includes("NC APROVADO") || combinado.includes("N.C APROVADO")) {
-    return "NC APROVADO";
+export const toDataFimMetabase = (
+  dataFimInclusiva: string,
+  host: Host,
+): string => {
+  if (host === Host.MANIA) {
+    return dataFimInclusiva.slice(0, 10);
   }
 
-  if (combinado.includes("REPROVADO") || combinado.includes("NAO CONFORMIDADE")) {
-    return "REPROVADO";
+  return toDataFimExclusivaMetabase(dataFimInclusiva);
+};
+
+export const classificarStatusAuditoria = (
+  motivoInstalacao: string,
+  conta?: Host,
+): StatusAuditoriaInstalacao | "" => {
+  const motivo = normalizarTexto(motivoInstalacao);
+
+  if (!motivo) {
+    return "";
+  }
+
+  if (motivo.includes("NC APROVADO") || motivo.includes("N.C APROVADO")) {
+    return conta === Host.MANIA ? "APROVADO" : "REPROVADO";
   }
 
   if (
-    combinado.includes("AGUARDANDO") ||
-    combinado.includes("PENDENTE") ||
-    combinado.includes("EM AUDITORIA")
+    motivo.includes("REPROVAD") ||
+    motivo.includes("NAO APROV") ||
+    motivo.includes("NAO CONFORMIDADE")
+  ) {
+    return "REPROVADO";
+  }
+
+  if (motivo.includes("APROVAD")) {
+    return "APROVADO";
+  }
+
+  if (
+    motivo.includes("AGUARDANDO") ||
+    motivo.includes("PENDENTE") ||
+    motivo.includes("EM AUDITORIA")
   ) {
     return "PENDENTE";
   }
 
-  if (
-    !combinado ||
-    combinado.includes("APROVADO") ||
-    combinado.includes("RESOLVIDO")
-  ) {
-    return "APROVADO";
-  }
-
-  return "PENDENTE";
+  return "";
 };
 
 export const formatarDataTermino = (valor: string): string => {
@@ -263,18 +275,16 @@ export const mapearLinhaInstalacaoTecnica = (
     etapa_instalacao: etapaInstalacao,
     status_instalacao: statusInstalacao,
     motivo_instalacao: motivoInstalacao,
-    status_auditoria: classificarStatusAuditoria(
-      etapaInstalacao,
-      statusInstalacao,
-      motivoInstalacao,
-    ),
+    status_auditoria: classificarStatusAuditoria(motivoInstalacao, conta),
     conta,
     tecnico_id: null,
   };
 };
 
-export const isEquipeLobatos = (usuarioHubsoft: string): boolean =>
-  normalizarTexto(usuarioHubsoft).includes("TEC_LOBATOS");
+export const isEquipeLobatos = (usuarioHubsoft: string): boolean => {
+  const nome = normalizarTexto(usuarioHubsoft);
+  return nome.includes("TEC_LOBATOS") || nome.includes("TEC LOBATOS");
+};
 
 export const isLiderEquipeLobatos = (nomeTecnico: string): boolean => {
   const cadastro = normalizarTexto(nomeTecnico);

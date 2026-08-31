@@ -18,7 +18,12 @@ export interface RuleEngineConfig {
   fechamento_mensal: Record<string, unknown>;
 }
 
-export type StatusAuditoria = "PENDENTE" | "APROVADO" | "NC APROVADO" | "REPROVADO";
+export type StatusAuditoria =
+  | ""
+  | "PENDENTE"
+  | "APROVADO"
+  | "NC APROVADO"
+  | "REPROVADO";
 export type StatusFinanceiro = "PAGO" | "-";
 
 export interface OrdemServico {

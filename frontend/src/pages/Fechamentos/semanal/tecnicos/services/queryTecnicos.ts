@@ -4,10 +4,22 @@ export const QUERY_TECNICOS = {
   empresa: "empresa",
   tecnico: "tecnico",
   busca: "busca",
+  listagem: "listagem",
 } as const;
 
 export const EMPRESA_TODAS = "TODAS";
 export const TECNICO_TODOS = "TODOS";
+export const LISTAGEM_AUTO = "AUTO";
+
+export const FILTRO_LISTAGEM = [
+  "TODOS",
+  "duplicados",
+  "pendente-auditoria",
+  "aprovados",
+  "reprovado",
+] as const;
+
+export type FiltroListagemTecnicos = (typeof FILTRO_LISTAGEM)[number];
 
 const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -21,6 +33,24 @@ export function lerEmpresaDaQuery(valor: string | null): string {
   }
 
   return EMPRESA_TODAS;
+}
+
+export function lerListagemDaQuery(
+  valor: string | null,
+): FiltroListagemTecnicos | typeof LISTAGEM_AUTO {
+  if (!valor) {
+    return LISTAGEM_AUTO;
+  }
+
+  if (valor === "sem-status") {
+    return "pendente-auditoria";
+  }
+
+  if ((FILTRO_LISTAGEM as readonly string[]).includes(valor)) {
+    return valor as FiltroListagemTecnicos;
+  }
+
+  return LISTAGEM_AUTO;
 }
 
 export function lerTecnicoDaQuery(
@@ -46,6 +76,7 @@ export function aplicarFiltroNaQuery(
     empresa: string;
     tecnico: string;
     busca: string;
+    listagem: string;
   },
 ): URLSearchParams {
   const proxima = new URLSearchParams(atual);
@@ -70,6 +101,12 @@ export function aplicarFiltroNaQuery(
     proxima.delete(QUERY_TECNICOS.busca);
   } else {
     proxima.set(QUERY_TECNICOS.busca, busca);
+  }
+
+  if (filtros.listagem === LISTAGEM_AUTO) {
+    proxima.delete(QUERY_TECNICOS.listagem);
+  } else {
+    proxima.set(QUERY_TECNICOS.listagem, filtros.listagem);
   }
 
   return proxima;

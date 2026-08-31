@@ -1,5 +1,9 @@
 import { Search } from "lucide-react";
 import { TecnicoFechamento } from "@/service/reportsService";
+import {
+  FiltroListagemTecnicos,
+} from "../services/queryTecnicos";
+import { ContagemListagemTecnicos } from "../services/tecnicoService";
 
 interface FiltersProps {
   dataInicio: string;
@@ -10,6 +14,9 @@ interface FiltersProps {
   setFiltroEmpresa: (value: string) => void;
   filtroTecnico: string;
   setFiltroTecnico: (value: string) => void;
+  filtroListagem: FiltroListagemTecnicos;
+  setFiltroListagem: (value: FiltroListagemTecnicos) => void;
+  contagemListagem: ContagemListagemTecnicos;
   buscaOS: string;
   setBuscaOS: (value: string) => void;
   listaTecnicos: TecnicoFechamento[];
@@ -27,12 +34,21 @@ export function TecnicosFilters({
   setFiltroEmpresa,
   filtroTecnico,
   setFiltroTecnico,
+  filtroListagem,
+  setFiltroListagem,
+  contagemListagem,
   buscaOS,
   setBuscaOS,
   listaTecnicos,
 }: FiltersProps) {
+  const temDuplicados = contagemListagem.duplicados > 0;
+  const selectListagemClasse =
+    filtroListagem === "duplicados" || temDuplicados
+      ? `${campoClasse} border-amber-500 bg-amber-950/40 text-amber-100 focus:border-amber-400`
+      : campoClasse;
+
   return (
-    <div className="grid gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-3 rounded-2xl border border-slate-800/80 bg-slate-950/30 p-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
           Empresa
@@ -83,6 +99,32 @@ export function TecnicosFilters({
               {tecnico.name}
             </option>
           ))}
+        </select>
+      </label>
+      <label className="space-y-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-amber-400">
+          Listagem
+        </span>
+        <select
+          value={filtroListagem}
+          onChange={(event) =>
+            setFiltroListagem(event.target.value as FiltroListagemTecnicos)
+          }
+          className={selectListagemClasse}
+        >
+          <option value="TODOS">Tudo ({contagemListagem.TODOS})</option>
+          <option value="duplicados">
+            Duplicados ({contagemListagem.duplicados})
+          </option>
+          <option value="pendente-auditoria">
+            Pendentes de auditoria ({contagemListagem["pendente-auditoria"]})
+          </option>
+          <option value="aprovados">
+            Aprovados ({contagemListagem.aprovados})
+          </option>
+          <option value="reprovado">
+            Reprovado ({contagemListagem.reprovado})
+          </option>
         </select>
       </label>
       <label className="space-y-1.5">

@@ -106,9 +106,9 @@ export function TecnicosDetalheDialog({
             }
             className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm text-slate-200 outline-none focus:border-indigo-500"
           >
+            <option value="">—</option>
             <option value="PENDENTE">PENDENTE</option>
             <option value="APROVADO">APROVADO</option>
-            <option value="NC APROVADO">NC APROVADO</option>
             <option value="REPROVADO">REPROVADO</option>
           </select>
         </div>

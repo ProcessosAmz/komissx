@@ -78,6 +78,9 @@ describe("mapearInstalacaoTecnica.helper", () => {
       expect(limparNomeTecnico("Edinelson Moura de Lima_TEC_TERC_MAO")).toBe(
         "Edinelson Moura de Lima",
       );
+      expect(
+        limparNomeTecnico("Willner Manso Da Fonseca TEC_LOBATOS"),
+      ).toBe("Willner Manso Da Fonseca");
     });
   });
 
@@ -99,21 +102,34 @@ describe("mapearInstalacaoTecnica.helper", () => {
   });
 
   describe("classificarStatusAuditoria", () => {
-    it("should classify approved installation audits", () => {
+    it("should classify approved installation from motivo instalacao", () => {
       expect(
-        classificarStatusAuditoria(
-          "APROVADO",
-          "Resolvido",
-          "Auditoria - Instalação aprovada",
-        ),
+        classificarStatusAuditoria("Auditoria - Instalação aprovada"),
       ).toBe("APROVADO");
-    });
-
-    it("should classify resolved or empty audit as approved for weekly payment", () => {
-      expect(classificarStatusAuditoria("", "Resolvido", "Retenção não realizada")).toBe(
+      expect(classificarStatusAuditoria("Reanálise - MDE Aprovada")).toBe(
         "APROVADO",
       );
-      expect(classificarStatusAuditoria("", "", "")).toBe("APROVADO");
+    });
+
+    it("should leave status blank when motivo instalacao does not come from the source", () => {
+      expect(classificarStatusAuditoria("")).toBe("");
+    });
+
+    it("should treat hubsoft nc aprovado as paid only on mania", () => {
+      expect(classificarStatusAuditoria("NC APROVADO", Host.MANIA)).toBe(
+        "APROVADO",
+      );
+      expect(classificarStatusAuditoria("NC APROVADO", Host.AMAZONET)).toBe(
+        "REPROVADO",
+      );
+      expect(classificarStatusAuditoria("NC APROVADO")).toBe("REPROVADO");
+    });
+
+    it("should classify reproved installation from motivo instalacao", () => {
+      expect(
+        classificarStatusAuditoria("Auditoria - Instalação reprovada"),
+      ).toBe("REPROVADO");
+      expect(classificarStatusAuditoria("NÃO CONFORMIDADE")).toBe("REPROVADO");
     });
   });
 
@@ -125,6 +141,21 @@ describe("mapearInstalacaoTecnica.helper", () => {
       );
 
       expect(result).toEqual([ordemEsperadaEdinelson]);
+    });
+
+    it("should classify status from motivo instalacao even when etapa is empty", () => {
+      const result = mapearInstalacoesTecnicas(
+        [
+          makeMetabaseRow({
+            etapa_instalacao: "",
+            motivo_instalacao: "Reanálise - MDE Aprovada",
+          }),
+        ],
+        METABASE_JSON_URL,
+      );
+
+      expect(result[0].status_auditoria).toBe("APROVADO");
+      expect(result[0].motivo_instalacao).toBe("Reanálise - MDE Aprovada");
     });
 
     it("should infer mania account from the OS prefix", () => {
@@ -217,6 +248,8 @@ describe("mapearInstalacaoTecnica.helper", () => {
             ordem.usuario_fechamento_limpo === "Leidinaldo Lobato da Fonseca",
         ),
       ).toBe(true);
+    });
+
     it("should keep TEC_LOBATOS orders even without a registered leader", () => {
       const ordens = mapearInstalacoesTecnicas(
         [
