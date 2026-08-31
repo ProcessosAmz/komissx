@@ -1,17 +1,10 @@
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import type { TecnicoRowViewModel } from "../../../types";
-import { valorPorExtenso } from "./valorPorExtenso";
+import { DADOS_EMPRESA_RECIBO } from "@/pages/Fechamentos/semanal/tecnicos/constants";
+import type { EmpresaFechamento } from "@/pages/Fechamentos/semanal/tecnicos/constants/empresasFechamento";
 
-export type ContaEmpresa = "amazonet" | "mania";
-
-export const EMPRESAS_DOCUMENTO: Record<
-  ContaEmpresa,
-  { nome: string; cor: [number, number, number] }
-> = {
-  amazonet: { nome: "Amazonet", cor: [55, 48, 163] },
-  mania: { nome: "Mania", cor: [190, 24, 93] },
-};
+export type ContaEmpresa = EmpresaFechamento;
 
 export type ReciboPorTecnicoEmpresa = {
   conta: ContaEmpresa;
@@ -23,7 +16,7 @@ export type ReciboPorTecnicoEmpresa = {
 };
 
 export function nomeEmpresa(conta: ContaEmpresa): string {
-  return EMPRESAS_DOCUMENTO[conta].nome;
+  return DADOS_EMPRESA_RECIBO[conta].nome;
 }
 
 export function formatarMoeda(valor: number): string {
@@ -116,7 +109,7 @@ function desenharCabecalho(
   conta: ContaEmpresa,
   tipoDocumento: string,
 ): void {
-  const empresa = EMPRESAS_DOCUMENTO[conta];
+  const empresa = DADOS_EMPRESA_RECIBO[conta];
   const larguraPagina = documento.internal.pageSize.getWidth();
 
   documento.setFont("helvetica", "bold");
@@ -155,7 +148,8 @@ function desenharMetadados(
 }
 
 function linhasTabela(ordens: TecnicoRowViewModel[]): string[][] {
-  return ordens.map((ordem) => [
+  return ordens.map((ordem, indice) => [
+    String(indice + 1),
     ordem.codigo_cliente,
     ordem.numero_ordem_servico,
     ordem.usuario_fechamento_limpo,
@@ -167,7 +161,7 @@ function linhasTabela(ordens: TecnicoRowViewModel[]): string[][] {
   ]);
 }
 
-function desenharTabelaOrdens(
+export function desenharTabelaOrdens(
   documento: jsPDF,
   ordens: TecnicoRowViewModel[],
   conta: ContaEmpresa,
@@ -177,6 +171,7 @@ function desenharTabelaOrdens(
     startY: inicioY,
     head: [
       [
+        "Nº",
         "Cliente",
         "O.S",
         "Técnico",
@@ -190,12 +185,13 @@ function desenharTabelaOrdens(
     body: linhasTabela(ordens),
     styles: { fontSize: 8, cellPadding: 2 },
     headStyles: {
-      fillColor: EMPRESAS_DOCUMENTO[conta].cor,
+      fillColor: DADOS_EMPRESA_RECIBO[conta].cor,
       textColor: 255,
       fontStyle: "bold",
     },
     columnStyles: {
-      7: { halign: "right" },
+      0: { cellWidth: 12, halign: "center" },
+      8: { halign: "right" },
     },
     margin: { left: 14, right: 14 },
   });
@@ -226,7 +222,10 @@ export function gerarRelatorioTecnicos(
     desenharCabecalho(documento, conta, "Relatório");
     const depoisMetadados = desenharMetadados(
       documento,
-      [`Empresa: ${nomeEmpresa(conta)}`],
+      [
+        `Empresa: ${nomeEmpresa(conta)}`,
+        `Quantidade: ${ordens.length} OS`,
+      ],
       36,
     );
     const depoisTabela = desenharTabelaOrdens(
@@ -249,73 +248,4 @@ export function gerarRelatorioTecnicos(
   documento.save(
     `relatorio-instalacao-${nomesEmpresasNoArquivo(contasComDados)}.pdf`,
   );
-}
-
-export function gerarReciboTecnicos(
-  dados: TecnicoRowViewModel[],
-): void {
-  const recibos = montarRecibosPorEmpresa(dados);
-
-  if (recibos.length === 0) {
-    window.alert("Não há instalações pagas para gerar o recibo.");
-    return;
-  }
-
-  const documento = criarPdf();
-  const contas = Array.from(new Set(recibos.map((recibo) => recibo.conta)));
-
-  recibos.forEach((recibo, indice) => {
-    if (indice > 0) {
-      documento.addPage();
-    }
-
-    const larguraPagina = documento.internal.pageSize.getWidth();
-    desenharCabecalho(documento, recibo.conta, "Recibo");
-    const depoisMetadados = desenharMetadados(
-      documento,
-      [
-        `Empresa: ${recibo.nomeEmpresa}`,
-        `Técnico: ${recibo.tecnico}`,
-      ],
-      36,
-    );
-
-    const textoRecibo = `Recebi da empresa ${recibo.nomeEmpresa} a importância de ${formatarMoeda(recibo.total)} (${valorPorExtenso(recibo.total)}), referente a ${recibo.quantidade} instalação(ões) aprovada(s).`;
-    const linhasTexto = documento.splitTextToSize(textoRecibo, larguraPagina - 28);
-    documento.setFont("helvetica", "normal");
-    documento.setFontSize(11);
-    documento.setTextColor(15, 23, 42);
-    documento.text(linhasTexto, 14, depoisMetadados + 10);
-
-    const inicioTabela = depoisMetadados + 10 + linhasTexto.length * 6 + 4;
-    const depoisTabela = desenharTabelaOrdens(
-      documento,
-      recibo.ordens,
-      recibo.conta,
-      inicioTabela,
-    );
-
-    documento.setFont("helvetica", "bold");
-    documento.setFontSize(11);
-    documento.text(
-      `Total do recibo: ${formatarMoeda(recibo.total)}`,
-      larguraPagina - 14,
-      depoisTabela + 10,
-      { align: "right" },
-    );
-
-    const yAssinatura = Math.min(depoisTabela + 40, 250);
-    documento.setDrawColor(15, 23, 42);
-    documento.setLineWidth(0.4);
-    documento.line(20, yAssinatura, 90, yAssinatura);
-    documento.line(120, yAssinatura, 190, yAssinatura);
-    documento.setFont("helvetica", "normal");
-    documento.setFontSize(9);
-    documento.text(recibo.tecnico, 55, yAssinatura + 6, { align: "center" });
-    documento.text("Técnico", 55, yAssinatura + 11, { align: "center" });
-    documento.text(recibo.nomeEmpresa, 155, yAssinatura + 6, { align: "center" });
-    documento.text("Empresa", 155, yAssinatura + 11, { align: "center" });
-  });
-
-  documento.save(`recibo-instalacao-${nomesEmpresasNoArquivo(contas)}.pdf`);
 }

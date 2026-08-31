@@ -7,5 +7,6 @@ export * from "@/pages/Fechamentos/semanal/tecnicos/constants/empresaPadrao";
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/tecnicoTodos";
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/listagemAuto";
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/empresasFechamento";
+export * from "@/pages/Fechamentos/semanal/tecnicos/constants/dadosEmpresaRecibo";
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/filtroListagem";
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/dataIso";

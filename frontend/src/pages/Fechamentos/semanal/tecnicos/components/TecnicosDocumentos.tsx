@@ -1,9 +1,9 @@
 import { Download, FileText } from "lucide-react";
-import type { TecnicoRowViewModel } from "../../../types";
+import type { TecnicoRowViewModel } from "@/pages/Fechamentos/types";
 import {
-  gerarReciboTecnicos,
   gerarRelatorioTecnicos,
 } from "../services/documentosTecnicos";
+import { gerarReciboTecnicos } from "@/pages/Fechamentos/semanal/tecnicos/services/reciboTecnicos.helper";
 
 interface TecnicosDocumentosProps {
   dados: TecnicoRowViewModel[];
