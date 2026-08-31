@@ -25,11 +25,11 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("group/calendar p-3", className)}
+      className={cn("group/calendar p-2", className)}
       style={{
         backgroundColor: "#0b0f19",
         color: "#e2e8f0",
-        ["--cell-size" as string]: "36px",
+        ["--cell-size" as string]: "28px",
       }}
       captionLayout={captionLayout}
       formatters={{
@@ -40,28 +40,28 @@ function Calendar({
       classNames={{
         root: cn("w-fit", defaultClassNames.root),
         months: cn(
-          "relative flex flex-col gap-4 md:flex-row",
+          "relative flex flex-col gap-2 md:flex-row md:gap-3",
           defaultClassNames.months
         ),
-        month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
+        month: cn("flex w-full flex-col gap-2", defaultClassNames.month),
         nav: cn(
           "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
           defaultClassNames.nav
         ),
         button_previous: cn(
-          "flex h-9 w-9 select-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-[#94a3b8] hover:bg-[#1e293b] hover:text-[#f8fafc]",
+          "flex h-7 w-7 select-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-[#94a3b8] hover:bg-[#1e293b] hover:text-[#f8fafc]",
           defaultClassNames.button_previous
         ),
         button_next: cn(
-          "flex h-9 w-9 select-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-[#94a3b8] hover:bg-[#1e293b] hover:text-[#f8fafc]",
+          "flex h-7 w-7 select-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-[#94a3b8] hover:bg-[#1e293b] hover:text-[#f8fafc]",
           defaultClassNames.button_next
         ),
         month_caption: cn(
-          "flex h-9 w-full items-center justify-center px-9 text-[13px] font-semibold text-[#f8fafc]",
+          "flex h-7 w-full items-center justify-center px-7 text-[12px] font-semibold text-[#f8fafc]",
           defaultClassNames.month_caption
         ),
         dropdowns: cn(
-          "flex h-9 w-full items-center justify-center gap-1.5 text-[13px] font-semibold text-[#f8fafc]",
+          "flex h-7 w-full items-center justify-center gap-1 text-[12px] font-semibold text-[#f8fafc]",
           defaultClassNames.dropdowns
         ),
         dropdown_root: cn(
@@ -73,18 +73,18 @@ function Calendar({
           defaultClassNames.dropdown
         ),
         caption_label: cn(
-          "select-none text-[13px] font-semibold text-[#f8fafc]",
+          "select-none text-[12px] font-semibold text-[#f8fafc]",
           defaultClassNames.caption_label
         ),
         month_grid: cn("w-full border-collapse", defaultClassNames.month_grid),
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
-          "flex-1 select-none rounded-md text-[11px] font-medium uppercase text-[#64748b]",
+          "flex-1 select-none rounded-md text-[10px] font-medium uppercase text-[#64748b]",
           defaultClassNames.weekday
         ),
-        week: cn("mt-1 flex w-full", defaultClassNames.week),
+        week: cn("mt-0.5 flex w-full", defaultClassNames.week),
         day: cn(
-          "group/day relative h-9 w-9 select-none p-0 text-center",
+          "group/day relative h-7 w-7 select-none p-0 text-center",
           defaultClassNames.day
         ),
         range_start: cn("rounded-l-md bg-[#4f46e5]", defaultClassNames.range_start),
@@ -109,7 +109,7 @@ function Calendar({
           )
         },
         Chevron: ({ className, orientation, ...chevronProps }) => {
-          const chevronStyle = { color: "#94a3b8", width: 16, height: 16 }
+          const chevronStyle = { color: "#94a3b8", width: 14, height: 14 }
           if (orientation === "left") {
             return (
               <ChevronLeftIcon className={cn(className)} style={chevronStyle} {...chevronProps} />
@@ -157,7 +157,7 @@ function CalendarDayButton({
 
   let backgroundColor = "transparent"
   let color = "#e2e8f0"
-  let borderRadius = "8px"
+  let borderRadius = "6px"
   let border = "1px solid transparent"
 
   if (meio) {
@@ -172,15 +172,15 @@ function CalendarDayButton({
   }
 
   if (inicio && !fim) {
-    borderRadius = "8px 0 0 8px"
+    borderRadius = "6px 0 0 6px"
   }
 
   if (fim && !inicio) {
-    borderRadius = "0 8px 8px 0"
+    borderRadius = "0 6px 6px 0"
   }
 
   if (inicio && fim) {
-    borderRadius = "8px"
+    borderRadius = "6px"
   }
 
   if (hoje && !inicio && !fim && !meio && !unico) {
@@ -209,7 +209,7 @@ function CalendarDayButton({
       type="button"
       data-day={day.date.toLocaleDateString()}
       className={cn(
-        "h-9 w-9 min-w-9 p-0 text-[13px] font-medium leading-none",
+        "h-7 w-7 min-w-7 p-0 text-[12px] font-medium leading-none",
         defaultClassNames.day_button,
         className
       )}
@@ -219,9 +219,9 @@ function CalendarDayButton({
         color,
         borderRadius,
         border,
-        width: 36,
-        height: 36,
-        minWidth: 36,
+        width: 28,
+        height: 28,
+        minWidth: 28,
         cursor: "pointer",
       }}
       onMouseEnter={(evento) => {

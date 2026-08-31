@@ -109,46 +109,46 @@ export function TecnicosDatePicker({
           borderRadius: 12,
         }}
       >
-        <Calendar
-          mode="range"
-          numberOfMonths={2}
-          locale={ptBRDayPicker}
-          captionLayout="dropdown"
-          selected={range}
-          defaultMonth={rangeConfirmado.from}
-          onDayMouseEnter={(data) => {
-            if (esperandoFim) {
-              setHover(data);
-            }
-          }}
-          onSelect={(periodo) => {
-            const inicioAnterior = rascunho?.from;
+          <Calendar
+            mode="range"
+            numberOfMonths={2}
+            locale={ptBRDayPicker}
+            captionLayout="dropdown"
+            selected={range}
+            defaultMonth={rangeConfirmado.from}
+            onDayMouseEnter={(data) => {
+              if (esperandoFim) {
+                setHover(data);
+              }
+            }}
+            onSelect={(periodo) => {
+              const inicioAnterior = rascunho?.from;
 
-            if (!periodo?.from) {
-              setRascunho({});
+              if (!periodo?.from) {
+                setRascunho({});
+                setHover(undefined);
+                return;
+              }
+
+              if (!esperandoFim) {
+                setRascunho({ from: periodo.from, to: undefined });
+                setHover(periodo.from);
+                return;
+              }
+
+              const dataFim = periodo.to ?? periodo.from;
+              const inicio = dataFim < inicioAnterior ? dataFim : inicioAnterior;
+              const fim = dataFim < inicioAnterior ? inicioAnterior : dataFim;
+
+              onChange({
+                dataInicio: dataParaIso(inicio),
+                dataFim: dataParaIso(fim),
+              });
               setHover(undefined);
-              return;
-            }
-
-            if (!esperandoFim) {
-              setRascunho({ from: periodo.from, to: undefined });
-              setHover(periodo.from);
-              return;
-            }
-
-            const dataFim = periodo.to ?? periodo.from;
-            const inicio = dataFim < inicioAnterior ? dataFim : inicioAnterior;
-            const fim = dataFim < inicioAnterior ? inicioAnterior : dataFim;
-
-            onChange({
-              dataInicio: dataParaIso(inicio),
-              dataFim: dataParaIso(fim),
-            });
-            setHover(undefined);
-            setRascunho(undefined);
-            setAberto(false);
-          }}
-        />
+              setRascunho(undefined);
+              setAberto(false);
+            }}
+          />
       </PopoverContent>
     </Popover>
   );
