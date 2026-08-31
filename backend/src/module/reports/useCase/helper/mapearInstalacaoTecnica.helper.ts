@@ -1,28 +1,25 @@
 import { Host } from "@/common/enums/host.enum";
 import {
+  CAMPOS_BAIRRO,
+  CAMPOS_CIDADE,
+  CAMPOS_CODIGO_CLIENTE,
+  CAMPOS_DATA_TERMINO,
+  CAMPOS_ESTADO,
+  CAMPOS_ETAPA_INSTALACAO,
+  CAMPOS_MOTIVO_FECHAMENTO,
+  CAMPOS_MOTIVO_INSTALACAO,
+  CAMPOS_NOME_CLIENTE,
+  CAMPOS_NUMERO_OS,
+  CAMPOS_STATUS_INSTALACAO,
+  CAMPOS_TIPO_OS,
+  CAMPOS_USUARIO_ABERTURA,
+  CAMPOS_USUARIO_FECHAMENTO,
+} from "@/module/reports/constants/camposMetabaseInstalacao.constants";
+import {
   OrdemServicoInstalacaoResponseDto,
-  StatusAuditoriaInstalacao,
   TecnicoFechamentoResponseDto,
 } from "@/module/reports/dto/ordemServicoInstalacao.response.dto";
-
-const CAMPOS_CODIGO_CLIENTE = ["codigo_cliente"];
-const CAMPOS_NOME_CLIENTE = ["nome_razaosocial", "nome_cliente"];
-const CAMPOS_NUMERO_OS = ["numero_ordem_servico", "numero_os"];
-const CAMPOS_USUARIO_FECHAMENTO = [
-  "usuario_fechamento_os",
-  "usuario_fechamento",
-  "usuario_fechamento_limpo",
-];
-const CAMPOS_USUARIO_ABERTURA = ["usuario_abertura_os", "usuario_abertura"];
-const CAMPOS_TIPO_OS = ["tipo_os", "tipo_ordem_servico"];
-const CAMPOS_DATA_TERMINO = ["data_termino_executado", "data_fechamento"];
-const CAMPOS_CIDADE = ["cidade"];
-const CAMPOS_ESTADO = ["estado"];
-const CAMPOS_BAIRRO = ["bairro"];
-const CAMPOS_MOTIVO_FECHAMENTO = ["motivo_fechamento"];
-const CAMPOS_ETAPA_INSTALACAO = ["etapa_instalacao"];
-const CAMPOS_STATUS_INSTALACAO = ["status_instalacao"];
-const CAMPOS_MOTIVO_INSTALACAO = ["motivo_instalacao"];
+import type { StatusAuditoriaResposta } from "@/module/reports/types/statusAuditoriaInstalacao.type";
 
 const toRecord = (row: unknown): Record<string, unknown> => {
   if (row && typeof row === "object" && !Array.isArray(row)) {
@@ -32,7 +29,10 @@ const toRecord = (row: unknown): Record<string, unknown> => {
   return {};
 };
 
-const lerCampo = (row: Record<string, unknown>, aliases: string[]): string => {
+const lerCampo = (
+  row: Record<string, unknown>,
+  aliases: readonly string[],
+): string => {
   const entries = Object.entries(row);
 
   for (const alias of aliases) {
@@ -110,7 +110,7 @@ export const toDataFimMetabase = (
 export const classificarStatusAuditoria = (
   motivoInstalacao: string,
   conta?: Host,
-): StatusAuditoriaInstalacao | "" => {
+): StatusAuditoriaResposta => {
   const motivo = normalizarTexto(motivoInstalacao);
 
   if (!motivo) {
