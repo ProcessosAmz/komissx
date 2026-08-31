@@ -56,11 +56,11 @@ export const montarRangeBotao = (
 
 export const formatarTextoPeriodo = (range: DateRange): string => {
   if (range.from && range.to) {
-    return `${format(range.from, "dd/MM/yyyy", { locale: ptBR })} – ${format(range.to, "dd/MM/yyyy", { locale: ptBR })}`;
+    return `${format(range.from, "dd/MM/yy", { locale: ptBR })} – ${format(range.to, "dd/MM/yy", { locale: ptBR })}`;
   }
 
   if (range.from) {
-    return `${format(range.from, "dd/MM/yyyy", { locale: ptBR })} – …`;
+    return `${format(range.from, "dd/MM/yy", { locale: ptBR })} – …`;
   }
 
   return "Selecione o período";

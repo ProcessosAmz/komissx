@@ -43,7 +43,7 @@ export function TecnicosDatePicker({
           variant="outline"
           id="periodo"
           disabled={desabilitado}
-          className="h-auto w-full justify-between px-3 py-2.5 text-left text-sm font-normal hover:opacity-90"
+          className="h-[42px] w-full justify-between gap-2 px-3 py-0 text-left text-sm font-normal tabular-nums hover:opacity-90"
           style={{
             borderRadius: 12,
             border: "1px solid #1e293b",
@@ -51,9 +51,9 @@ export function TecnicosDatePicker({
             color: rangeBotao.from ? "#e2e8f0" : "#64748b",
           }}
         >
-          {textoPeriodo}
+          <span className="min-w-0 truncate">{textoPeriodo}</span>
           <ChevronDownIcon
-            style={{ width: 16, height: 16, color: "#64748b", flexShrink: 0 }}
+            style={{ width: 14, height: 14, color: "#64748b", flexShrink: 0 }}
           />
         </Button>
       </PopoverTrigger>

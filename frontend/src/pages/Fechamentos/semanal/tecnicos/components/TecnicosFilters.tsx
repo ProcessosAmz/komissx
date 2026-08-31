@@ -74,7 +74,7 @@ export function TecnicosFilters({
           <option value="mania">Mania</option>
         </select>
       </label>
-      <label className="space-y-1.5 md:col-span-2">
+      <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
           Período
         </span>
