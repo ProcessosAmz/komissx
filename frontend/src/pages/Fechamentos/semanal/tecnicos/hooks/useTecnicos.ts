@@ -170,14 +170,18 @@ export const useTecnicos = () => {
     const jaTemPeriodo =
       isDataIso(searchParams.get(QUERY_TECNICOS.dataInicio)) &&
       isDataIso(searchParams.get(QUERY_TECNICOS.dataFim));
+    const jaTemEmpresa =
+      searchParams.get(QUERY_TECNICOS.empresa) === "amazonet" ||
+      searchParams.get(QUERY_TECNICOS.empresa) === "mania";
 
-    if (jaTemPeriodo) {
+    if (jaTemPeriodo && jaTemEmpresa) {
       return;
     }
 
     atualizarQuery({
       dataInicio,
       dataFim,
+      empresa: filtroEmpresa,
     });
   }, []);
 
@@ -193,10 +197,7 @@ export const useTecnicos = () => {
         const response = await ReportsService.buscarInstalacaoTecnica({
           dataInicio,
           dataFim,
-          empresa:
-            filtroEmpresa === "amazonet" || filtroEmpresa === "mania"
-              ? filtroEmpresa
-              : undefined,
+          empresa: filtroEmpresa,
         });
 
         if (!ativo) {
@@ -269,8 +270,7 @@ export const useTecnicos = () => {
       );
 
     return dadosDeduplicados.filter((os) => {
-      const matchEmpresa =
-        filtroEmpresa === "TODAS" || os.conta === filtroEmpresa;
+      const matchEmpresa = os.conta === filtroEmpresa;
       const matchTecnico =
         filtroTecnico === "TODOS" ||
         os.tecnico_id === filtroTecnico ||

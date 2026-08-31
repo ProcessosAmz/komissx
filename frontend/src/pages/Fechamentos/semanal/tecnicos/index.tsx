@@ -82,6 +82,7 @@ export default function FechamentoTecnico() {
         buscaOS={buscaOS}
         setBuscaOS={setBuscaOS}
         listaTecnicos={listaTecnicos}
+        carregando={loading}
       />
 
       {erro ? (

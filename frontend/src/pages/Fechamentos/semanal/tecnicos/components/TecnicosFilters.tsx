@@ -4,6 +4,7 @@ import {
   FiltroListagemTecnicos,
 } from "../services/queryTecnicos";
 import { ContagemListagemTecnicos } from "../services/tecnicoService";
+import { TecnicosDatePicker } from "./TecnicosDatePicker";
 
 interface FiltersProps {
   dataInicio: string;
@@ -20,10 +21,11 @@ interface FiltersProps {
   buscaOS: string;
   setBuscaOS: (value: string) => void;
   listaTecnicos: TecnicoFechamento[];
+  carregando: boolean;
 }
 
 const campoClasse =
-  "w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-500";
+  "w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function TecnicosFilters({
   dataInicio,
@@ -40,6 +42,7 @@ export function TecnicosFilters({
   buscaOS,
   setBuscaOS,
   listaTecnicos,
+  carregando,
 }: FiltersProps) {
   const temDuplicados = contagemListagem.duplicados > 0;
   const selectListagemClasse =
@@ -58,7 +61,6 @@ export function TecnicosFilters({
           onChange={(event) => setFiltroEmpresa(event.target.value)}
           className={campoClasse}
         >
-          <option value="TODAS">Amazonet e Mania</option>
           <option value="amazonet">Amazonet</option>
           <option value="mania">Mania</option>
         </select>
@@ -67,23 +69,13 @@ export function TecnicosFilters({
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
           Início
         </span>
-        <input
-          type="date"
-          value={dataInicio}
-          onChange={(event) => setDataInicio(event.target.value)}
-          className={campoClasse}
-        />
+        <TecnicosDatePicker valor={dataInicio} onChange={setDataInicio} />
       </label>
       <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
           Fim
         </span>
-        <input
-          type="date"
-          value={dataFim}
-          onChange={(event) => setDataFim(event.target.value)}
-          className={campoClasse}
-        />
+        <TecnicosDatePicker valor={dataFim} onChange={setDataFim} />
       </label>
       <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -91,6 +83,7 @@ export function TecnicosFilters({
         </span>
         <select
           value={filtroTecnico}
+          disabled={carregando}
           onChange={(event) => setFiltroTecnico(event.target.value)}
           className={campoClasse}
         >
@@ -107,6 +100,7 @@ export function TecnicosFilters({
         </span>
         <select
           value={filtroListagem}
+          disabled={carregando}
           onChange={(event) =>
             setFiltroListagem(event.target.value as FiltroListagemTecnicos)
           }
@@ -137,6 +131,7 @@ export function TecnicosFilters({
             type="text"
             placeholder="OS, cliente ou técnico"
             value={buscaOS}
+            disabled={carregando}
             onChange={(event) => setBuscaOS(event.target.value)}
             className={`${campoClasse} pl-9`}
           />

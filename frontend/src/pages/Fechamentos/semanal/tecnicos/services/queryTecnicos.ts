@@ -7,7 +7,7 @@ export const QUERY_TECNICOS = {
   listagem: "listagem",
 } as const;
 
-export const EMPRESA_TODAS = "TODAS";
+export const EMPRESA_PADRAO = "amazonet";
 export const TECNICO_TODOS = "TODOS";
 export const LISTAGEM_AUTO = "AUTO";
 
@@ -27,12 +27,12 @@ export function isDataIso(valor: string | null): valor is string {
   return Boolean(valor && DATA_ISO.test(valor));
 }
 
-export function lerEmpresaDaQuery(valor: string | null): string {
-  if (valor === "amazonet" || valor === "mania") {
-    return valor;
+export function lerEmpresaDaQuery(valor: string | null): "amazonet" | "mania" {
+  if (valor === "mania") {
+    return "mania";
   }
 
-  return EMPRESA_TODAS;
+  return EMPRESA_PADRAO;
 }
 
 export function lerListagemDaQuery(
@@ -84,11 +84,7 @@ export function aplicarFiltroNaQuery(
   proxima.set(QUERY_TECNICOS.dataInicio, filtros.dataInicio);
   proxima.set(QUERY_TECNICOS.dataFim, filtros.dataFim);
 
-  if (filtros.empresa === EMPRESA_TODAS) {
-    proxima.delete(QUERY_TECNICOS.empresa);
-  } else {
-    proxima.set(QUERY_TECNICOS.empresa, filtros.empresa);
-  }
+  proxima.set(QUERY_TECNICOS.empresa, filtros.empresa);
 
   if (filtros.tecnico === TECNICO_TODOS) {
     proxima.delete(QUERY_TECNICOS.tecnico);
