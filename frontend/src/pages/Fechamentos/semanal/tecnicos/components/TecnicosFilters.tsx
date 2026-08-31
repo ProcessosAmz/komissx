@@ -1,17 +1,23 @@
 import { Search } from "lucide-react";
-import { TecnicoFechamento } from "@/service/reportsService";
-import {
+import type { TecnicoFechamento } from "@/types/reports";
+import type {
+  EmpresaFechamento,
   FiltroListagemTecnicos,
-} from "../services/queryTecnicos";
-import { ContagemListagemTecnicos } from "../services/tecnicoService";
-import { TecnicosDatePicker } from "./TecnicosDatePicker";
+  PeriodoFechamento,
+} from "@/types/tecnicos";
+import {
+  isEmpresaFechamento,
+  isFiltroListagem,
+} from "@/pages/Fechamentos/semanal/tecnicos/services/queryTecnicos.helper";
+import { TecnicosDatePicker } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosDatePicker";
+import type { ContagemListagemTecnicos } from "@/types/tecnicos/contagemListagemTecnicos";
 
 interface FiltersProps {
   dataInicio: string;
   dataFim: string;
-  setPeriodo: (periodo: { dataInicio: string; dataFim: string }) => void;
-  filtroEmpresa: string;
-  setFiltroEmpresa: (value: string) => void;
+  setPeriodo: (periodo: PeriodoFechamento) => void;
+  filtroEmpresa: EmpresaFechamento;
+  setFiltroEmpresa: (value: EmpresaFechamento) => void;
   filtroTecnico: string;
   setFiltroTecnico: (value: string) => void;
   filtroListagem: FiltroListagemTecnicos;
@@ -56,7 +62,12 @@ export function TecnicosFilters({
         </span>
         <select
           value={filtroEmpresa}
-          onChange={(event) => setFiltroEmpresa(event.target.value)}
+          onChange={(event) => {
+            const valor = event.target.value;
+            if (isEmpresaFechamento(valor)) {
+              setFiltroEmpresa(valor);
+            }
+          }}
           className={campoClasse}
         >
           <option value="amazonet">Amazonet</option>
@@ -97,9 +108,12 @@ export function TecnicosFilters({
         <select
           value={filtroListagem}
           disabled={carregando}
-          onChange={(event) =>
-            setFiltroListagem(event.target.value as FiltroListagemTecnicos)
-          }
+          onChange={(event) => {
+            const valor = event.target.value;
+            if (isFiltroListagem(valor)) {
+              setFiltroListagem(valor);
+            }
+          }}
           className={selectListagemClasse}
         >
           <option value="TODOS">Tudo ({contagemListagem.TODOS})</option>

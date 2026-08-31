@@ -1,0 +1,1 @@
+export const RELATORIO_TIMEOUT_MS = 120000;

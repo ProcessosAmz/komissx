@@ -1,0 +1,1 @@
+export const DEBOUNCE_CONSULTA_MS = 400;

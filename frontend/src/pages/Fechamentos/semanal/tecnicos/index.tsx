@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useTecnicos } from "./hooks/useTecnicos";
-import { TecnicosResumoCards } from "./components/TecnicosResumoCards";
-import { TecnicosFilters } from "./components/TecnicosFilters";
-import { TecnicosTable } from "./components/TecnicosTable";
-import { TecnicosDuplicadosBanner } from "./components/TecnicosDuplicadosBanner";
-import { TecnicosDetalheDialog } from "./components/TecnicosDetalheDialog";
-import { TecnicosDocumentos } from "./components/TecnicosDocumentos";
-import { TecnicoRowViewModel } from "../../types";
-import { TecnicoService } from "./services/tecnicoService";
+import { useTecnicos } from "@/pages/Fechamentos/semanal/tecnicos/hooks/useTecnicos";
+import { TecnicosResumoCards } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosResumoCards";
+import { TecnicosFilters } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosFilters";
+import { TecnicosTable } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosTable";
+import { TecnicosDuplicadosBanner } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosDuplicadosBanner";
+import { TecnicosDetalheDialog } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosDetalheDialog";
+import { TecnicosDocumentos } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosDocumentos";
+import { TecnicoRowViewModel } from "@/pages/Fechamentos/types";
+import { resolverOrdemAtual, listarClientesDuplicados } from "@/pages/Fechamentos/semanal/tecnicos/services/tecnico.helper";
 
 export default function FechamentoTecnico() {
   const [ordemSelecionada, setOrdemSelecionada] = useState<TecnicoRowViewModel | null>(
@@ -38,18 +38,14 @@ export default function FechamentoTecnico() {
     handleAlterarStatus,
   } = useTecnicos();
 
-  const ordemAtual =
-    dadosFiltrados.find((item) => item.id === ordemSelecionada?.id) ??
-    dadosBase.find((item) => item.id === ordemSelecionada?.id) ??
-    ordemSelecionada;
-
-  const clientesDuplicados = new Set(
-    dadosBase
-      .filter(
-        (os) =>
-          (quantidadePorCliente.get(TecnicoService.chaveCliente(os)) ?? 0) > 1,
-      )
-      .map((os) => TecnicoService.chaveCliente(os)),
+  const ordemAtual = resolverOrdemAtual(
+    ordemSelecionada,
+    dadosFiltrados,
+    dadosBase,
+  );
+  const clientesDuplicados = listarClientesDuplicados(
+    dadosBase,
+    quantidadePorCliente,
   );
 
   return (

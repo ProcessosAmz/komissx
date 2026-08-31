@@ -1,103 +1,80 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { isAxiosError } from "axios";
 import { ConfigService } from "@/config/ConfigService";
-import { ReportsService, TecnicoFechamento } from "@/service/reportsService";
-import { TecnicoService } from "../services/tecnicoService";
+import { ReportsService } from "@/service/reportsService";
+import type {
+  RelatorioTecnicoResponse,
+  TecnicoFechamento,
+} from "@/types/reports";
+import {
+  contarListagem,
+  filtrarListagem,
+  processarEDeduplicar,
+  quantidadePorCliente as contarQuantidadePorCliente,
+} from "@/pages/Fechamentos/semanal/tecnicos/services/tecnico.helper";
+import { getPeriodoFechamentoSemanal } from "@/pages/Fechamentos/semanal/tecnicos/services/periodoFechamento.helper";
 import {
   aplicarFiltroNaQuery,
-  FiltroListagemTecnicos,
   isDataIso,
   lerEmpresaDaQuery,
   lerListagemDaQuery,
   lerTecnicoDaQuery,
-  LISTAGEM_AUTO,
-  QUERY_TECNICOS,
-} from "../services/queryTecnicos";
+} from "@/pages/Fechamentos/semanal/tecnicos/services/queryTecnicos.helper";
 import {
-  FechamentoSemanalRules,
-  OrdemServico,
-  ResumoFechamentoDTO,
-  StatusAuditoria,
-} from "../../../types";
+  DEBOUNCE_CONSULTA_MS,
+  QUERY_TECNICOS,
+} from "@/pages/Fechamentos/semanal/tecnicos/constants";
+import type {
+  AtualizarFiltrosTecnicos,
+  ContagemListagemTecnicos,
+  EmpresaFechamento,
+  FiltroListagemTecnicos,
+  FiltrosUrlTecnicos,
+  ListagemNaUrl,
+  PeriodoFechamento,
+} from "@/types/tecnicos";
+import {
+  deduplicarTecnicos,
+  filtrarDadosBase,
+  montarListaTecnicos,
+  montarResumo,
+  obterMensagemErro,
+  resolverFiltroListagem,
+} from "@/pages/Fechamentos/semanal/tecnicos/services/tecnicos.helper";
+import { FechamentoSemanalRules, OrdemServico, ResumoFechamentoDTO, StatusAuditoria, TecnicoRowViewModel } from "@/pages/Fechamentos/types";
 
-function formatarDataIso(data: Date): string {
-  const ano = data.getFullYear();
-  const mes = String(data.getMonth() + 1).padStart(2, "0");
-  const dia = String(data.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
-}
-
-function getQuintaMaisRecente(referencia = new Date()): Date {
-  const data = new Date(referencia);
-  data.setHours(0, 0, 0, 0);
-  const diaSemana = data.getDay();
-  const diasDesdeQuinta = (diaSemana - 4 + 7) % 7;
-  data.setDate(data.getDate() - diasDesdeQuinta);
-  return data;
-}
-
-function somarDias(dataIso: string, dias: number): string {
-  const [ano, mes, dia] = dataIso.split("-").map(Number);
-  const data = new Date(ano, mes - 1, dia + dias);
-  return formatarDataIso(data);
-}
-
-function formatarDataBr(dataIso: string): string {
-  const [ano, mes, dia] = dataIso.split("-");
-  return `${dia}/${mes}/${ano}`;
-}
-
-function getPeriodoFechamentoSemanal(referencia = new Date()): {
+export interface UseTecnicosReturn {
   dataInicio: string;
   dataFim: string;
-  dataPagamento: string;
-} {
-  const quintaPagamento = getQuintaMaisRecente(referencia);
-  const dataPagamento = formatarDataIso(quintaPagamento);
-  return {
-    dataInicio: somarDias(dataPagamento, -7),
-    dataFim: somarDias(dataPagamento, -1),
-    dataPagamento,
-  };
+  setDataInicio: (value: string) => void;
+  setDataFim: (value: string) => void;
+  setPeriodo: (periodo: PeriodoFechamento) => void;
+  filtroEmpresa: EmpresaFechamento;
+  setFiltroEmpresa: (value: EmpresaFechamento) => void;
+  filtroTecnico: string;
+  setFiltroTecnico: (value: string) => void;
+  buscaOS: string;
+  setBuscaOS: (value: string) => void;
+  filtroListagem: FiltroListagemTecnicos;
+  setFiltroListagem: (value: FiltroListagemTecnicos) => void;
+  contagemListagem: ContagemListagemTecnicos;
+  quantidadePorCliente: Map<string, number>;
+  dadosBase: TecnicoRowViewModel[];
+  dadosFiltrados: TecnicoRowViewModel[];
+  listaTecnicos: TecnicoFechamento[];
+  resumo: ResumoFechamentoDTO;
+  loading: boolean;
+  erro: string | null;
+  handleExcluir: (id: string) => void;
+  handleAlterarStatus: (id: string, novoStatus: StatusAuditoria) => void;
 }
 
-function textoBuscaOrdem(os: OrdemServico): string {
-  return [
-    os.numero_ordem_servico,
-    os.codigo_cliente,
-    os.nome_cliente,
-    os.usuario_fechamento_limpo,
-    os.usuario_fechamento,
-    os.conta,
-    os.cidade,
-    os.estado,
-    os.tipo_ordem_servico,
-  ]
-    .join(" ")
-    .toLowerCase();
-}
-
-function ordemCorrespondeABusca(os: OrdemServico, busca: string): boolean {
-  const termos = busca
-    .trim()
-    .toLowerCase()
-    .split(/[\s,;]+/)
-    .filter((termo) => termo.length > 0 && termo !== "e");
-
-  if (termos.length === 0) {
-    return true;
-  }
-
-  const texto = textoBuscaOrdem(os);
-  return termos.every((termo) => texto.includes(termo));
-}
-
-export const useTecnicos = () => {
+export const useTecnicos = (): UseTecnicosReturn => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const periodoPadrao = useMemo(() => getPeriodoFechamentoSemanal(), []);
+  const [periodoPadrao] = useState(() => getPeriodoFechamentoSemanal());
+
   const [dadosBrutos, setDadosBrutos] = useState<OrdemServico[]>([]);
   const [tecnicosCadastro, setTecnicosCadastro] = useState<TecnicoFechamento[]>(
     [],
@@ -105,35 +82,32 @@ export const useTecnicos = () => {
   const [semanalRules, setSemanalRules] = useState<FechamentoSemanalRules | null>(
     null,
   );
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const dataInicio = isDataIso(searchParams.get(QUERY_TECNICOS.dataInicio))
-    ? searchParams.get(QUERY_TECNICOS.dataInicio)!
+  const dataInicioParam = searchParams.get(QUERY_TECNICOS.dataInicio);
+  const dataFimParam = searchParams.get(QUERY_TECNICOS.dataFim);
+  const dataInicio: string = isDataIso(dataInicioParam)
+    ? dataInicioParam
     : periodoPadrao.dataInicio;
-  const dataFim = isDataIso(searchParams.get(QUERY_TECNICOS.dataFim))
-    ? searchParams.get(QUERY_TECNICOS.dataFim)!
+  const dataFim: string = isDataIso(dataFimParam)
+    ? dataFimParam
     : periodoPadrao.dataFim;
-  const [filtroEmpresa, setFiltroEmpresaState] = useState(() =>
-    lerEmpresaDaQuery(searchParams.get(QUERY_TECNICOS.empresa)),
-  );
-  const buscaOS = searchParams.get(QUERY_TECNICOS.busca) ?? "";
-  const listagemNaUrl = lerListagemDaQuery(
-    searchParams.get(QUERY_TECNICOS.listagem),
-  );
-  const filtroTecnico = lerTecnicoDaQuery(
-    searchParams.get(QUERY_TECNICOS.tecnico),
-    tecnicosCadastro.map((tecnico) => tecnico.id),
+  const filtroEmpresa: EmpresaFechamento = lerEmpresaDaQuery(
+    searchParams.get(QUERY_TECNICOS.empresa),
   );
 
-  const persistirNaUrl = (filtros: {
-    dataInicio: string;
-    dataFim: string;
-    empresa: string;
-    tecnico: string;
-    busca: string;
-    listagem: string;
-  }) => {
+  const buscaOS: string = searchParams.get(QUERY_TECNICOS.busca) ?? "";
+  const listagemNaUrl: ListagemNaUrl = lerListagemDaQuery(
+    searchParams.get(QUERY_TECNICOS.listagem),
+  );
+  const idsTecnicos: string[] = tecnicosCadastro.map((tecnico) => tecnico.id);
+  const filtroTecnico: string = lerTecnicoDaQuery(
+    searchParams.get(QUERY_TECNICOS.tecnico),
+    idsTecnicos,
+  );
+
+  const persistirNaUrl = (filtros: FiltrosUrlTecnicos): void => {
     const search = aplicarFiltroNaQuery(new URLSearchParams(), filtros).toString();
     navigate(
       {
@@ -144,18 +118,7 @@ export const useTecnicos = () => {
     );
   };
 
-  const atualizarQuery = (filtros: {
-    dataInicio?: string;
-    dataFim?: string;
-    empresa?: string;
-    tecnico?: string;
-    busca?: string;
-    listagem?: string;
-  }) => {
-    if (filtros.empresa !== undefined) {
-      setFiltroEmpresaState(filtros.empresa);
-    }
-
+  const atualizarQuery = (filtros: AtualizarFiltrosTecnicos): void => {
     persistirNaUrl({
       dataInicio: filtros.dataInicio ?? dataInicio,
       dataFim: filtros.dataFim ?? dataFim,
@@ -166,26 +129,7 @@ export const useTecnicos = () => {
     });
   };
 
-  useEffect(() => {
-    const jaTemPeriodo =
-      isDataIso(searchParams.get(QUERY_TECNICOS.dataInicio)) &&
-      isDataIso(searchParams.get(QUERY_TECNICOS.dataFim));
-    const jaTemEmpresa =
-      searchParams.get(QUERY_TECNICOS.empresa) === "amazonet" ||
-      searchParams.get(QUERY_TECNICOS.empresa) === "mania";
-
-    if (jaTemPeriodo && jaTemEmpresa) {
-      return;
-    }
-
-    atualizarQuery({
-      dataInicio,
-      dataFim,
-      empresa: filtroEmpresa,
-    });
-  }, []);
-
-  useEffect(() => {
+  const carregarRegras = (): (() => void) => {
     let ativo = true;
 
     ConfigService.getInstance()
@@ -204,50 +148,35 @@ export const useTecnicos = () => {
     return () => {
       ativo = false;
     };
-  }, []);
+  };
 
-  useEffect(() => {
+  const carregarInstalacoes = (): (() => void) => {
     let ativo = true;
 
-    const agendar = window.setTimeout(async () => {
+    const consultarRelatorio = async (): Promise<void> => {
       setLoading(true);
       setErro(null);
 
       try {
-        const response = await ReportsService.buscarInstalacaoTecnica({
-          dataInicio,
-          dataFim,
-          empresa: filtroEmpresa,
-        });
+        const response: RelatorioTecnicoResponse =
+          await ReportsService.buscarInstalacaoTecnica({
+            dataInicio,
+            dataFim,
+            empresa: filtroEmpresa,
+          });
 
         if (!ativo) {
           return;
         }
-
-        const tecnicosUnicos = Array.from(
-          new Map(
-            (response.tecnicos ?? []).map((tecnico) => [tecnico.id, tecnico]),
-          ).values(),
-        );
 
         setDadosBrutos(response.data);
-        setTecnicosCadastro(tecnicosUnicos);
-      } catch (error) {
+        setTecnicosCadastro(deduplicarTecnicos(response.tecnicos));
+      } catch (error: unknown) {
         if (!ativo) {
           return;
         }
 
-        const mensagem = isAxiosError(error)
-          ? error.response?.data?.message
-          : undefined;
-        const mensagemTexto = Array.isArray(mensagem)
-          ? mensagem.join(" ")
-          : mensagem;
-        setErro(
-          typeof mensagemTexto === "string" && mensagemTexto.length > 0
-            ? mensagemTexto
-            : "Não foi possível carregar as instalações do Metabase.",
-        );
+        setErro(obterMensagemErro(error));
         setDadosBrutos([]);
         setTecnicosCadastro([]);
       } finally {
@@ -255,112 +184,71 @@ export const useTecnicos = () => {
           setLoading(false);
         }
       }
-    }, 400);
+    };
+
+    const agendar = window.setTimeout(() => {
+      void consultarRelatorio();
+    }, DEBOUNCE_CONSULTA_MS);
 
     return () => {
       ativo = false;
       window.clearTimeout(agendar);
     };
+  };
+
+  useEffect(() => {
+    return carregarRegras();
+  }, []);
+
+  useEffect(() => {
+    return carregarInstalacoes();
   }, [dataInicio, dataFim, filtroEmpresa]);
 
-  const dadosDeduplicados = useMemo(() => {
-    if (!semanalRules) {
-      return [];
-    }
+  const dadosDeduplicados: TecnicoRowViewModel[] = semanalRules
+    ? processarEDeduplicar(dadosBrutos, semanalRules)
+    : [];
 
-    return TecnicoService.processarEDeduplicar(dadosBrutos, semanalRules);
-  }, [dadosBrutos, semanalRules]);
+  const listaTecnicos: TecnicoFechamento[] =
+    montarListaTecnicos(tecnicosCadastro);
 
-  const listaTecnicos = useMemo(() => {
-    return [{ id: "TODOS", name: "Todos os técnicos" }, ...tecnicosCadastro];
-  }, [tecnicosCadastro]);
+  const dadosBase: TecnicoRowViewModel[] = filtrarDadosBase({
+    dados: dadosDeduplicados,
+    listaTecnicos,
+    filtroTecnico,
+    filtroEmpresa,
+    buscaOS,
+  });
 
-  const dadosBase = useMemo(() => {
-    const tecnicoSelecionado = listaTecnicos.find(
-      (tecnico) => tecnico.id === filtroTecnico,
-    );
-    const nomeTecnico = tecnicoSelecionado?.name ?? "";
-    const filtrandoLiderLobatos =
-      filtroTecnico !== "TODOS" &&
-      /leidinaldo|lobatos|lobato/i.test(
-        nomeTecnico.normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
-      );
+  const quantidadePorCliente: Map<string, number> =
+    contarQuantidadePorCliente(dadosBase);
 
-    return dadosDeduplicados.filter((os) => {
-      const matchEmpresa = os.conta === filtroEmpresa;
-      const matchTecnico =
-        filtroTecnico === "TODOS" ||
-        os.tecnico_id === filtroTecnico ||
-        (filtrandoLiderLobatos &&
-          /TEC[_\s]LOBATOS/i.test(os.usuario_fechamento));
-      return (
-        matchEmpresa && matchTecnico && ordemCorrespondeABusca(os, buscaOS)
-      );
-    });
-  }, [dadosDeduplicados, filtroTecnico, buscaOS, filtroEmpresa, listaTecnicos]);
+  const contagemListagem: ContagemListagemTecnicos =
+    contarListagem(dadosBase, quantidadePorCliente);
 
-  const quantidadePorCliente = useMemo(
-    () => TecnicoService.quantidadePorCliente(dadosBase),
-    [dadosBase],
+  const filtroListagem: FiltroListagemTecnicos = resolverFiltroListagem(
+    listagemNaUrl,
+    contagemListagem,
   );
 
-  const contagemListagem = useMemo(
-    () => TecnicoService.contarListagem(dadosBase, quantidadePorCliente),
-    [dadosBase, quantidadePorCliente],
+  const dadosFiltrados: TecnicoRowViewModel[] = filtrarListagem(
+    dadosBase,
+    filtroListagem,
+    quantidadePorCliente,
   );
 
-  const filtroListagem: FiltroListagemTecnicos =
-    listagemNaUrl === LISTAGEM_AUTO
-      ? contagemListagem.duplicados > 0
-        ? "duplicados"
-        : "TODOS"
-      : listagemNaUrl;
+  const resumo: ResumoFechamentoDTO = montarResumo({
+    dadosBase,
+    listaTecnicos,
+    filtroTecnico,
+    dataInicio,
+    dataFim,
+  });
 
-  const dadosFiltrados = useMemo(
-    () =>
-      TecnicoService.filtrarListagem(
-        dadosBase,
-        filtroListagem,
-        quantidadePorCliente,
-      ),
-    [dadosBase, filtroListagem, quantidadePorCliente],
-  );
-
-  const resumo = useMemo<ResumoFechamentoDTO>(() => {
-    const totais = dadosBase.reduce(
-      (acc, os) => {
-        acc.totalOS += 1;
-        if (os.status_financeiro === "PAGO") {
-          acc.aprovadas += 1;
-          acc.totalReceber += os.valor_a_pagar || 0;
-        } else {
-          acc.reprovadas += 1;
-        }
-        return acc;
-      },
-      { totalReceber: 0, totalOS: 0, aprovadas: 0, reprovadas: 0 },
-    );
-
-    const tecnicoSelecionado = listaTecnicos.find(
-      (tecnico) => tecnico.id === filtroTecnico,
-    );
-
-    return {
-      ...totais,
-      dataPagamento: somarDias(dataFim, 1),
-      tecnico:
-        filtroTecnico === "TODOS"
-          ? "Todos os técnicos"
-          : tecnicoSelecionado?.name ?? "Técnico",
-      periodo: `${formatarDataBr(dataInicio)} a ${formatarDataBr(dataFim)}`,
-    };
-  }, [dadosBase, dataInicio, dataFim, filtroTecnico, listaTecnicos]);
-
-  const handleExcluir = (id: string) => {
+  const handleExcluir = (id: string): void => {
     setDadosBrutos((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleAlterarStatus = (id: string, novoStatus: StatusAuditoria) => {
+  const handleAlterarStatus = (id: string, novoStatus: StatusAuditoria): void => {
     setDadosBrutos((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, status_auditoria: novoStatus } : item,
@@ -368,22 +256,48 @@ export const useTecnicos = () => {
     );
   };
 
+  const setDataInicio = (value: string): void => {
+    atualizarQuery({ dataInicio: value });
+  };
+
+  const setDataFim = (value: string): void => {
+    atualizarQuery({ dataFim: value });
+  };
+
+  const setPeriodo = (periodo: PeriodoFechamento): void => {
+    atualizarQuery(periodo);
+  };
+
+  const setFiltroEmpresa = (value: EmpresaFechamento): void => {
+    atualizarQuery({ empresa: value });
+  };
+
+  const setFiltroTecnico = (value: string): void => {
+    atualizarQuery({ tecnico: value });
+  };
+
+  const setBuscaOS = (value: string): void => {
+    atualizarQuery({ busca: value });
+  };
+
+  const setFiltroListagem = (value: FiltroListagemTecnicos): void => {
+    atualizarQuery({ listagem: value });
+  };
+
   return {
     dataInicio,
     dataFim,
-    setDataInicio: (value: string) => atualizarQuery({ dataInicio: value }),
-    setDataFim: (value: string) => atualizarQuery({ dataFim: value }),
-    setPeriodo: (periodo: { dataInicio: string; dataFim: string }) =>
-      atualizarQuery(periodo),
+    setDataInicio,
+    setDataFim,
+    setPeriodo,
     filtroEmpresa,
-    setFiltroEmpresa: (value: string) => atualizarQuery({ empresa: value }),
+    setFiltroEmpresa,
     filtroTecnico,
-    setFiltroTecnico: (value: string) => atualizarQuery({ tecnico: value }),
+    setFiltroTecnico,
     buscaOS,
-    setBuscaOS: (value: string) => atualizarQuery({ busca: value }),
+    setBuscaOS,
     filtroListagem,
-    setFiltroListagem: (value: FiltroListagemTecnicos) =>
-      atualizarQuery({ listagem: value }),
+    setFiltroListagem,
     contagemListagem,
     quantidadePorCliente,
     dadosBase,

@@ -1,43 +1,46 @@
-export const QUERY_TECNICOS = {
-  dataInicio: "dataInicio",
-  dataFim: "dataFim",
-  empresa: "empresa",
-  tecnico: "tecnico",
-  busca: "busca",
-  listagem: "listagem",
-} as const;
+import {
+  DATA_ISO,
+  EMPRESA_PADRAO,
+  EMPRESAS_FECHAMENTO,
+  FILTRO_LISTAGEM,
+  LISTAGEM_AUTO,
+  QUERY_TECNICOS,
+  TECNICO_TODOS,
+} from "@/pages/Fechamentos/semanal/tecnicos/constants";
+import type {
+  EmpresaFechamento,
+  FiltroListagemTecnicos,
+  FiltrosUrlTecnicos,
+  ListagemNaUrl,
+} from "@/types/tecnicos";
 
-export const EMPRESA_PADRAO = "amazonet";
-export const TECNICO_TODOS = "TODOS";
-export const LISTAGEM_AUTO = "AUTO";
-
-export const FILTRO_LISTAGEM = [
-  "TODOS",
-  "duplicados",
-  "pendente-auditoria",
-  "aprovados",
-  "reprovado",
-] as const;
-
-export type FiltroListagemTecnicos = (typeof FILTRO_LISTAGEM)[number];
-
-const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
-
-export function isDataIso(valor: string | null): valor is string {
+export const isDataIso = (valor: string | null): valor is string => {
   return Boolean(valor && DATA_ISO.test(valor));
-}
+};
 
-export function lerEmpresaDaQuery(valor: string | null): "amazonet" | "mania" {
-  if (valor === "mania") {
-    return "mania";
+export const isEmpresaFechamento = (
+  valor: string,
+): valor is EmpresaFechamento => {
+  return EMPRESAS_FECHAMENTO.some((empresa) => empresa === valor);
+};
+
+export const isFiltroListagem = (
+  valor: string,
+): valor is FiltroListagemTecnicos => {
+  return FILTRO_LISTAGEM.some((filtro) => filtro === valor);
+};
+
+export const lerEmpresaDaQuery = (
+  valor: string | null,
+): EmpresaFechamento => {
+  if (valor !== null && isEmpresaFechamento(valor)) {
+    return valor;
   }
 
   return EMPRESA_PADRAO;
-}
+};
 
-export function lerListagemDaQuery(
-  valor: string | null,
-): FiltroListagemTecnicos | typeof LISTAGEM_AUTO {
+export const lerListagemDaQuery = (valor: string | null): ListagemNaUrl => {
   if (!valor) {
     return LISTAGEM_AUTO;
   }
@@ -46,17 +49,17 @@ export function lerListagemDaQuery(
     return "pendente-auditoria";
   }
 
-  if ((FILTRO_LISTAGEM as readonly string[]).includes(valor)) {
-    return valor as FiltroListagemTecnicos;
+  if (isFiltroListagem(valor)) {
+    return valor;
   }
 
   return LISTAGEM_AUTO;
-}
+};
 
-export function lerTecnicoDaQuery(
+export const lerTecnicoDaQuery = (
   valor: string | null,
   idsValidos: string[],
-): string {
+): string => {
   if (!valor || valor === TECNICO_TODOS) {
     return TECNICO_TODOS;
   }
@@ -66,24 +69,16 @@ export function lerTecnicoDaQuery(
   }
 
   return TECNICO_TODOS;
-}
+};
 
-export function aplicarFiltroNaQuery(
+export const aplicarFiltroNaQuery = (
   atual: URLSearchParams,
-  filtros: {
-    dataInicio: string;
-    dataFim: string;
-    empresa: string;
-    tecnico: string;
-    busca: string;
-    listagem: string;
-  },
-): URLSearchParams {
+  filtros: FiltrosUrlTecnicos,
+): URLSearchParams => {
   const proxima = new URLSearchParams(atual);
 
   proxima.set(QUERY_TECNICOS.dataInicio, filtros.dataInicio);
   proxima.set(QUERY_TECNICOS.dataFim, filtros.dataFim);
-
   proxima.set(QUERY_TECNICOS.empresa, filtros.empresa);
 
   if (filtros.tecnico === TECNICO_TODOS) {
@@ -106,4 +101,4 @@ export function aplicarFiltroNaQuery(
   }
 
   return proxima;
-}
+};
