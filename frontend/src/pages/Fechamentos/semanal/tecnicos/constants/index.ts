@@ -10,3 +10,6 @@ export * from "@/pages/Fechamentos/semanal/tecnicos/constants/empresasFechamento
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/dadosEmpresaRecibo";
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/filtroListagem";
 export * from "@/pages/Fechamentos/semanal/tecnicos/constants/dataIso";
+export * from "@/pages/Fechamentos/semanal/tecnicos/constants/osManual";
+export * from "@/pages/Fechamentos/semanal/tecnicos/constants/statusAuditoriaForm";
+export * from "@/pages/Fechamentos/semanal/tecnicos/constants/camposValidacaoNovaOs";

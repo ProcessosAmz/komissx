@@ -5,3 +5,6 @@ export * from "@/types/tecnicos/periodoFechamento";
 export * from "@/types/tecnicos/filtrosUrlTecnicos";
 export * from "@/types/tecnicos/atualizarFiltrosTecnicos";
 export * from "@/types/tecnicos/contagemListagemTecnicos";
+export * from "@/types/tecnicos/dadosNovaOrdemServico";
+export * from "@/types/tecnicos/formularioNovaOs";
+export * from "@/types/tecnicos/campoValidacaoNovaOs";
