@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { useTecnicos } from "@/pages/Fechamentos/semanal/tecnicos/hooks/useTecnicos";
 import { TecnicosResumoCards } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosResumoCards";
 import { TecnicosFilters } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosFilters";
@@ -6,6 +7,7 @@ import { TecnicosTable } from "@/pages/Fechamentos/semanal/tecnicos/components/T
 import { TecnicosDuplicadosBanner } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosDuplicadosBanner";
 import { TecnicosDetalheDialog } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosDetalheDialog";
 import { TecnicosDocumentos } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosDocumentos";
+import { TecnicosAdicionarOsDialog } from "@/pages/Fechamentos/semanal/tecnicos/components/TecnicosAdicionarOsDialog";
 import { TecnicoRowViewModel } from "@/pages/Fechamentos/types";
 import { resolverOrdemAtual, listarClientesDuplicados } from "@/pages/Fechamentos/semanal/tecnicos/services/tecnico.helper";
 
@@ -30,13 +32,17 @@ export default function FechamentoTecnico() {
     setBuscaOS,
     dadosBase,
     dadosFiltrados,
+    dadosBrutos,
     listaTecnicos,
     resumo,
     loading,
     erro,
     handleExcluir,
     handleAlterarStatus,
+    handleAdicionarOs,
   } = useTecnicos();
+
+  const [dialogAdicionarAberto, setDialogAdicionarAberto] = useState(false);
 
   const ordemAtual = resolverOrdemAtual(
     ordemSelecionada,
@@ -56,10 +62,21 @@ export default function FechamentoTecnico() {
             Fechamento de instalação
           </h1>
         </div>
-        <TecnicosDocumentos
-          dados={dadosBase}
-          desabilitado={loading || dadosBase.length === 0}
-        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => setDialogAdicionarAberto(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2.5 text-xs font-semibold text-slate-200 transition hover:border-indigo-500/40 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4 text-emerald-400" />
+            Adicionar O.S.
+          </button>
+          <TecnicosDocumentos
+            dados={dadosBase}
+            desabilitado={loading || dadosBase.length === 0}
+          />
+        </div>
       </div>
 
       <TecnicosFilters
@@ -107,6 +124,16 @@ export default function FechamentoTecnico() {
         </>
       )}
 
+      <TecnicosAdicionarOsDialog
+        aberto={dialogAdicionarAberto}
+        onAbertoChange={setDialogAdicionarAberto}
+        empresa={filtroEmpresa}
+        dataTerminoPadrao={dataFim}
+        filtroTecnico={filtroTecnico}
+        listaTecnicos={listaTecnicos}
+        ordensExistentes={dadosBrutos}
+        onAdicionar={handleAdicionarOs}
+      />
       <TecnicosDetalheDialog
         ordem={ordemAtual}
         aberto={Boolean(ordemSelecionada)}

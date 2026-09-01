@@ -41,6 +41,7 @@ import {
   obterMensagemErro,
   resolverFiltroListagem,
 } from "@/pages/Fechamentos/semanal/tecnicos/services/tecnicos.helper";
+import { mesclarOrdensManuais } from "@/pages/Fechamentos/semanal/tecnicos/services/adicionarOrdemServico.helper";
 import { FechamentoSemanalRules, OrdemServico, ResumoFechamentoDTO, StatusAuditoria, TecnicoRowViewModel } from "@/pages/Fechamentos/types";
 
 export interface UseTecnicosReturn {
@@ -61,12 +62,14 @@ export interface UseTecnicosReturn {
   quantidadePorCliente: Map<string, number>;
   dadosBase: TecnicoRowViewModel[];
   dadosFiltrados: TecnicoRowViewModel[];
+  dadosBrutos: OrdemServico[];
   listaTecnicos: TecnicoFechamento[];
   resumo: ResumoFechamentoDTO;
   loading: boolean;
   erro: string | null;
   handleExcluir: (id: string) => void;
   handleAlterarStatus: (id: string, novoStatus: StatusAuditoria) => void;
+  handleAdicionarOs: (ordem: OrdemServico) => void;
 }
 
 export const useTecnicos = (): UseTecnicosReturn => {
@@ -169,7 +172,7 @@ export const useTecnicos = (): UseTecnicosReturn => {
           return;
         }
 
-        setDadosBrutos(response.data);
+        setDadosBrutos((atuais) => mesclarOrdensManuais(atuais, response.data));
         setTecnicosCadastro(deduplicarTecnicos(response.tecnicos));
       } catch (error: unknown) {
         if (!ativo) {
@@ -244,6 +247,11 @@ export const useTecnicos = (): UseTecnicosReturn => {
     dataFim,
   });
 
+  const handleAdicionarOs = (ordem: OrdemServico): void => {
+    setDadosBrutos((prev) => [ordem, ...prev]);
+    atualizarQuery({ listagem: "TODOS" });
+  };
+
   const handleExcluir = (id: string): void => {
     setDadosBrutos((prev) => prev.filter((item) => item.id !== id));
   };
@@ -302,11 +310,13 @@ export const useTecnicos = (): UseTecnicosReturn => {
     quantidadePorCliente,
     dadosBase,
     dadosFiltrados,
+    dadosBrutos,
     listaTecnicos,
     resumo,
     loading,
     erro,
     handleExcluir,
     handleAlterarStatus,
+    handleAdicionarOs,
   };
 };

@@ -14,16 +14,12 @@ import {
 export default function HubFechamentos() {
   const navigate = useNavigate();
   
-  // Mantendo a dinâmica exata de estados para expansão dos submenus
   const [showSemanalOptions, setShowSemanalOptions] = useState(false);
   const [showMensalOptions, setShowMensalOptions] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#070a13] p-6 lg:p-8 text-slate-100 antialiased">
-      {/* Max-w-7xl para preencher melhor as telas largas sem quebrar o design */}
       <div className="mx-auto max-w-7xl space-y-8">
-
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
             HUB de Fechamentos
@@ -32,11 +28,7 @@ export default function HubFechamentos() {
             Selecione o módulo operacional para fechamento, processamento de regras e extração de relatorios.
           </p>
         </div>
-
-        {/* Grid de Módulos */}
         <div className="grid gap-6 md:grid-cols-2">
-
-          {/* Card: Fechamento Semanal */}
           <div className={`bg-[#0b0f19]/60 border rounded-2xl p-6 transition-all backdrop-blur-sm flex flex-col justify-between min-h-[260px] ${showSemanalOptions ? 'border-indigo-500 ring-1 ring-indigo-500/20' : 'border-slate-800/80 hover:border-slate-700'}`}>
             <div className="space-y-3">
               <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl w-fit">
@@ -50,7 +42,6 @@ export default function HubFechamentos() {
               </div>
             </div>
 
-            {/* Sub-menu expansível interno */}
             {!showSemanalOptions ? (
               <button
                 onClick={() => setShowSemanalOptions(true)}
@@ -85,7 +76,6 @@ export default function HubFechamentos() {
             )}
           </div>
 
-          {/* Card: Fechamento Mensal */}
           <div className={`bg-[#0b0f19]/60 border rounded-2xl p-6 transition-all backdrop-blur-sm flex flex-col justify-between min-h-[260px] ${showMensalOptions ? 'border-emerald-500 ring-1 ring-emerald-500/20' : 'border-slate-800/80 hover:border-slate-700'}`}>
             <div className="space-y-3">
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl w-fit">
@@ -99,7 +89,6 @@ export default function HubFechamentos() {
               </div>
             </div>
 
-            {/* Sub-menu expansível interno */}
             {!showMensalOptions ? (
               <button
                 onClick={() => setShowMensalOptions(true)}
