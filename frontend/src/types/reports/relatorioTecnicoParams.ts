@@ -7,4 +7,5 @@ export type RelatorioTecnicoParams = {
   estado?: string;
   cidade?: string;
   tecnico?: string;
+  cargo?: "TECNICO" | "AUTONOMO";
 };

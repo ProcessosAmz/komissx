@@ -11,7 +11,13 @@ import { TecnicosAdicionarOsDialog } from "@/pages/Fechamentos/semanal/tecnicos/
 import { TecnicoRowViewModel } from "@/pages/Fechamentos/types";
 import { resolverOrdemAtual, listarClientesDuplicados } from "@/pages/Fechamentos/semanal/tecnicos/services/tecnico.helper";
 
-export default function FechamentoTecnico() {
+interface FechamentoTecnicoProps {
+  cargo?: "TECNICO" | "AUTONOMO";
+}
+
+export default function FechamentoTecnico({
+  cargo = "TECNICO",
+}: FechamentoTecnicoProps) {
   const [ordemSelecionada, setOrdemSelecionada] = useState<TecnicoRowViewModel | null>(
     null,
   );
@@ -40,7 +46,7 @@ export default function FechamentoTecnico() {
     handleExcluir,
     handleAlterarStatus,
     handleAdicionarOs,
-  } = useTecnicos();
+  } = useTecnicos(cargo);
 
   const [dialogAdicionarAberto, setDialogAdicionarAberto] = useState(false);
 
@@ -59,7 +65,9 @@ export default function FechamentoTecnico() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Fechamento de instalação
+            {cargo === "AUTONOMO"
+              ? "Fechamento de autônomos"
+              : "Fechamento de instalação"}
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">

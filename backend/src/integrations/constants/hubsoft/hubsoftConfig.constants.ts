@@ -22,7 +22,9 @@ export const getHubsoftConfig = (host: Host): HubsoftConfig => {
       grantType: process.env.AMAZONET_HUB_GRANT_TYPE ?? "",
       botToken: process.env.AMAZONET_BOT_TOKEN ?? "",
       metabaseInstalacaoTecnico:
-        process.env.AMAZONET_METABASE_INSTALACAO_TECNICO ?? "",
+        process.env.AMAZONET_CARD_VENDAS ??
+        process.env.AMAZONET_METABASE_INSTALACAO_TECNICO ??
+        "",
     },
     [Host.MANIA]: {
       url: process.env.MANIA_HUB_URL ?? "",
@@ -33,7 +35,9 @@ export const getHubsoftConfig = (host: Host): HubsoftConfig => {
       grantType: process.env.MANIA_HUB_GRANT_TYPE ?? "",
       botToken: process.env.MANIA_BOT_TOKEN ?? "",
       metabaseInstalacaoTecnico:
-        process.env.MANIA_METABASE_INSTALACAO_TECNICO ?? "",
+        process.env.MANIA_CARD_VENDAS ??
+        process.env.MANIA_METABASE_INSTALACAO_TECNICO ??
+        "",
     },
   };
 

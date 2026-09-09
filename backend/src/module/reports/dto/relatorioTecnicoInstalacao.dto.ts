@@ -1,10 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { Host } from "@/common/enums/host.enum";
 import { emptyToUndefined } from "@/module/reports/dto/helper/emptyToUndefined.helper";
 
 export class RelatorioTecnicoDto {
+  @ApiPropertyOptional({ enum: ["TECNICO", "AUTONOMO"], default: "TECNICO" })
+  @IsOptional()
+  @IsIn(["TECNICO", "AUTONOMO"])
+  @Transform(({ value }) => emptyToUndefined(value))
+  cargo?: "TECNICO" | "AUTONOMO";
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
