@@ -128,7 +128,7 @@ function desenharCabecalho(
   documento.setFont("helvetica", "normal");
   documento.setFontSize(10);
   documento.setTextColor(71, 85, 105);
-  documento.text("Fechamento semanal de instalação", 14, 28);
+  documento.text("Fechamento semanal de vendedores", 14, 28);
 }
 
 function desenharMetadados(
@@ -174,7 +174,7 @@ export function desenharTabelaOrdens(
         "Nº",
         "Cliente",
         "O.S",
-        "Técnico",
+        "Vendedor",
         "Tipo",
         "Cidade",
         "Status",
