@@ -7,10 +7,12 @@ import {
   CAMPOS_ESTADO,
   CAMPOS_ETAPA_INSTALACAO,
   CAMPOS_MOTIVO_FECHAMENTO,
+  CAMPOS_MOTIVO_COMERCIAL,
   CAMPOS_MOTIVO_INSTALACAO,
   CAMPOS_NOME_CLIENTE,
   CAMPOS_NUMERO_OS,
   CAMPOS_STATUS_INSTALACAO,
+  CAMPOS_STATUS_AUDITORIA,
   CAMPOS_TIPO_OS,
   CAMPOS_USUARIO_ABERTURA,
   CAMPOS_USUARIO_FECHAMENTO,
@@ -144,6 +146,17 @@ export const classificarStatusAuditoria = (
   return "";
 };
 
+export const normalizarStatusAuditoria = (
+  status: string,
+): StatusAuditoriaResposta => {
+  const valor = normalizarTexto(status).replace(/\./g, "");
+  if (valor.includes("NC APROVADO")) return "NC APROVADO";
+  if (valor.includes("APROVADO")) return "APROVADO";
+  if (valor.includes("REPROVADO")) return "REPROVADO";
+  if (valor.includes("PENDENTE") || valor.includes("AUDITORIA")) return "PENDENTE";
+  return "";
+};
+
 export const formatarDataTermino = (valor: string): string => {
   if (!valor) {
     return "";
@@ -235,11 +248,12 @@ export const mapearLinhaInstalacaoTecnica = (
   index: number,
   urlMetabase: string,
   contaOrigem?: Host,
+  somenteInstalacao = true,
 ): OrdemServicoInstalacaoResponseDto | null => {
   const registro = toRecord(row);
   const tipoOrdemServico = lerCampo(registro, CAMPOS_TIPO_OS);
 
-  if (!isOsInstalacao(tipoOrdemServico)) {
+  if (somenteInstalacao && !isOsInstalacao(tipoOrdemServico)) {
     return null;
   }
 
@@ -249,6 +263,8 @@ export const mapearLinhaInstalacaoTecnica = (
   const etapaInstalacao = lerCampo(registro, CAMPOS_ETAPA_INSTALACAO);
   const statusInstalacao = lerCampo(registro, CAMPOS_STATUS_INSTALACAO);
   const motivoInstalacao = lerCampo(registro, CAMPOS_MOTIVO_INSTALACAO);
+  const motivoComercial = lerCampo(registro, CAMPOS_MOTIVO_COMERCIAL);
+  const statusAuditoriaInformado = lerCampo(registro, CAMPOS_STATUS_AUDITORIA);
   const conta = inferirConta(
     numeroOs,
     urlMetabase,
@@ -275,7 +291,9 @@ export const mapearLinhaInstalacaoTecnica = (
     etapa_instalacao: etapaInstalacao,
     status_instalacao: statusInstalacao,
     motivo_instalacao: motivoInstalacao,
-    status_auditoria: classificarStatusAuditoria(motivoInstalacao, conta),
+    status_auditoria: statusAuditoriaInformado
+      ? normalizarStatusAuditoria(statusAuditoriaInformado)
+      : classificarStatusAuditoria(motivoInstalacao || motivoComercial, conta),
     conta,
     tecnico_id: null,
   };
@@ -382,6 +400,7 @@ export const mapearInstalacoesTecnicas = (
   rows: unknown,
   urlMetabase: string,
   contaOrigem?: Host,
+  somenteInstalacao = true,
 ): OrdemServicoInstalacaoResponseDto[] => {
   const linhas = extrairLinhasMetabase(rows);
 
@@ -391,6 +410,7 @@ export const mapearInstalacoesTecnicas = (
       index,
       urlMetabase,
       contaOrigem,
+      somenteInstalacao,
     );
     return mapped ? [mapped] : [];
   });

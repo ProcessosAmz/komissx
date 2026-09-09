@@ -15,6 +15,7 @@ import Autonomos from "@/pages/Fechamentos/semanal/autonomos";
 import Retirada from "@/pages/Fechamentos/semanal/retirada";
 import Tecnicos from "@/pages/Fechamentos/semanal/tecnicos";
 import Cobranca from "@/pages/Fechamentos/mensal/cobranca";
+import VendasTecnicos from "@/pages/Fechamentos/mensal/vendas-tecnicos";
 import Comercial from "@/pages/Fechamentos/mensal/comercial";
 import ComercialPJ from "@/pages/Fechamentos/mensal/comercial-pj";
 import Producao from "@/pages/Fechamentos/mensal/producao";
@@ -60,6 +61,7 @@ export default function App() {
                     <Route path="producao" element={<Producao />} />
                     <Route path="comercial-pj" element={<ComercialPJ />} />
                     <Route path="cobranca" element={<Cobranca />} />
+                    <Route path="vendas-tecnicos" element={<VendasTecnicos />} />
                   </Route>
                 </Route>
               </Route>

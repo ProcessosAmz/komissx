@@ -8,6 +8,7 @@ import { gerarReciboTecnicos } from "@/pages/Fechamentos/semanal/tecnicos/servic
 interface TecnicosDocumentosProps {
   dados: TecnicoRowViewModel[];
   desabilitado?: boolean;
+  periodicidade?: "SEMANAL" | "MENSAL";
 }
 
 const botaoClasse =
@@ -16,6 +17,7 @@ const botaoClasse =
 export function TecnicosDocumentos({
   dados,
   desabilitado = false,
+  periodicidade = "SEMANAL",
 }: TecnicosDocumentosProps) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -23,7 +25,7 @@ export function TecnicosDocumentos({
         type="button"
         className={botaoClasse}
         disabled={desabilitado}
-        onClick={() => gerarRelatorioTecnicos(dados)}
+        onClick={() => gerarRelatorioTecnicos(dados, periodicidade)}
       >
         <FileText className="h-4 w-4 text-indigo-400" />
         Gerar relatório

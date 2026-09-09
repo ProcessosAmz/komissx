@@ -108,6 +108,7 @@ function desenharCabecalho(
   documento: jsPDF,
   conta: ContaEmpresa,
   tipoDocumento: string,
+  periodicidade: "SEMANAL" | "MENSAL" = "SEMANAL",
 ): void {
   const empresa = DADOS_EMPRESA_RECIBO[conta];
   const larguraPagina = documento.internal.pageSize.getWidth();
@@ -128,7 +129,11 @@ function desenharCabecalho(
   documento.setFont("helvetica", "normal");
   documento.setFontSize(10);
   documento.setTextColor(71, 85, 105);
-  documento.text("Fechamento semanal de vendedores", 14, 28);
+  documento.text(
+    `Fechamento ${periodicidade === "MENSAL" ? "mensal" : "semanal"} de vendedores`,
+    14,
+    28,
+  );
 }
 
 function desenharMetadados(
@@ -201,9 +206,10 @@ export function desenharTabelaOrdens(
 
 export function gerarRelatorioTecnicos(
   dados: TecnicoRowViewModel[],
+  periodicidade: "SEMANAL" | "MENSAL" = "SEMANAL",
 ): void {
   if (dados.length === 0) {
-    window.alert("Não há instalações para gerar o relatório.");
+    window.alert("Não há registros para gerar o relatório.");
     return;
   }
 
@@ -219,7 +225,7 @@ export function gerarRelatorioTecnicos(
     }
 
     const ordens = porEmpresa[conta];
-    desenharCabecalho(documento, conta, "Relatório");
+    desenharCabecalho(documento, conta, "Relatório", periodicidade);
     const depoisMetadados = desenharMetadados(
       documento,
       [
@@ -246,6 +252,6 @@ export function gerarRelatorioTecnicos(
   });
 
   documento.save(
-    `relatorio-instalacao-${nomesEmpresasNoArquivo(contasComDados)}.pdf`,
+    `relatorio-vendas-${nomesEmpresasNoArquivo(contasComDados)}.pdf`,
   );
 }

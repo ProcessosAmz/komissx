@@ -2,6 +2,8 @@ export const CAMPOS_CODIGO_CLIENTE = ["codigo_cliente"] as const;
 export const CAMPOS_NOME_CLIENTE = ["nome_razaosocial", "nome_cliente"] as const;
 export const CAMPOS_NUMERO_OS = ["numero_ordem_servico", "numero_os"] as const;
 export const CAMPOS_USUARIO_FECHAMENTO = [
+  "vendedor",
+  "usuario_fechamento_vendedor",
   "usuario_fechamento_os",
   "usuario_fechamento",
   "usuario_fechamento_limpo",
@@ -22,3 +24,5 @@ export const CAMPOS_MOTIVO_FECHAMENTO = ["motivo_fechamento"] as const;
 export const CAMPOS_ETAPA_INSTALACAO = ["etapa_instalacao"] as const;
 export const CAMPOS_STATUS_INSTALACAO = ["status_instalacao"] as const;
 export const CAMPOS_MOTIVO_INSTALACAO = ["motivo_instalacao"] as const;
+export const CAMPOS_STATUS_AUDITORIA = ["status_auditoria"] as const;
+export const CAMPOS_MOTIVO_COMERCIAL = ["motivo_comercial", "motivo_fechamento"] as const;
