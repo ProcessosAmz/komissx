@@ -1,9 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { MetaService } from "@/integrations/service/metabase.service";
-import {
-  CARGO_AUTONOMO,
-  CARGO_TECNICO,
-} from "@/module/reports/constants/cargoTecnico.constants";
+import { CARGO_TECNICO } from "@/module/reports/constants/cargoTecnico.constants";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
 import {
   RelatorioTecnicoInstalacaoResponseDto,
@@ -38,7 +35,7 @@ export class BuscarInstalacaoTecnicaUseCase {
     try {
       const [fontes, tecnicos] = await Promise.all([
         this.metaService.vendasTecnico(dto),
-        this.listarTecnicosDoBanco(dto.cargo),
+        this.listarTecnicosDoBanco(),
       ]);
       const instalacoes = fontes.flatMap((fonte) =>
         mapearInstalacoesTecnicas(fonte.rows, fonte.url, fonte.host),
@@ -74,24 +71,18 @@ export class BuscarInstalacaoTecnicaUseCase {
     }
   }
 
-  private async listarTecnicosDoBanco(
-    cargo: RelatorioTecnicoDto["cargo"],
-  ): Promise<TecnicoFechamentoResponseDto[]> {
+  private async listarTecnicosDoBanco(): Promise<TecnicoFechamentoResponseDto[]> {
     const users = await this.usersRepository.findAll();
 
     return users
-      .filter((user) => this.isCargoAtivo(user, cargo))
+      .filter((user) => this.isTecnicoAtivo(user))
       .map((user) => ({
         id: user.id,
         name: user.name,
       }));
   }
 
-  private isCargoAtivo(
-    user: Users,
-    cargo: RelatorioTecnicoDto["cargo"],
-  ): boolean {
-    const cargoEsperado = cargo === "AUTONOMO" ? CARGO_AUTONOMO : CARGO_TECNICO;
-    return user.role?.name?.toUpperCase().trim() === cargoEsperado;
+  private isTecnicoAtivo(user: Users): boolean {
+    return user.role?.name?.toUpperCase().trim() === CARGO_TECNICO;
   }
 }

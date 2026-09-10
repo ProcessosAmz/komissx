@@ -45,10 +45,8 @@ export class MetaService {
       host === Host.MANIA ? METABASE_JSON_MANIA : METABASE_JSON_AMAZONET;
     const bruto =
       host === Host.MANIA
-        ? process.env.MANIA_CARD_VENDAS ||
-          process.env.MANIA_METABASE_INSTALACAO_TECNICO
-        : process.env.AMAZONET_CARD_VENDAS ||
-          process.env.AMAZONET_METABASE_INSTALACAO_TECNICO ||
+        ? process.env.MANIA_METABASE_INSTALACAO_TECNICO
+        : process.env.AMAZONET_METABASE_INSTALACAO_TECNICO ||
           process.env.METABASE_INSTALACAO_TECNICO;
     const url = toMetabaseJsonUrl(bruto || padrao);
     const hostEsperado =

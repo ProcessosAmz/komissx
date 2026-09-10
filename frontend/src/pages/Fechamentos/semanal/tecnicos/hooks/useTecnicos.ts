@@ -72,9 +72,7 @@ export interface UseTecnicosReturn {
   handleAdicionarOs: (ordem: OrdemServico) => void;
 }
 
-export const useTecnicos = (
-  cargo: "TECNICO" | "AUTONOMO" = "TECNICO",
-): UseTecnicosReturn => {
+export const useTecnicos = (): UseTecnicosReturn => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -168,7 +166,6 @@ export const useTecnicos = (
             dataInicio,
             dataFim,
             empresa: filtroEmpresa,
-            cargo,
           });
 
         if (!ativo) {
@@ -208,7 +205,7 @@ export const useTecnicos = (
 
   useEffect(() => {
     return carregarInstalacoes();
-  }, [dataInicio, dataFim, filtroEmpresa, cargo]);
+  }, [dataInicio, dataFim, filtroEmpresa]);
 
   const dadosDeduplicados: TecnicoRowViewModel[] = semanalRules
     ? processarEDeduplicar(dadosBrutos, semanalRules)
