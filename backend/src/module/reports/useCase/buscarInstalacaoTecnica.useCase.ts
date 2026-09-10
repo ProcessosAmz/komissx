@@ -30,7 +30,6 @@ export class BuscarInstalacaoTecnicaUseCase {
 
   async execute(
     dto: RelatorioTecnicoDto,
-    somenteInstalacao = true,
   ): Promise<RelatorioTecnicoInstalacaoResponseDto> {
     this.logger.log(
       `Buscando fechamento de instalação técnico ${dto.empresa ?? "todas"} ${dto.dataInicio} a ${dto.dataFim}`,
@@ -42,12 +41,7 @@ export class BuscarInstalacaoTecnicaUseCase {
         this.listarTecnicosDoBanco(dto.cargo),
       ]);
       const instalacoes = fontes.flatMap((fonte) =>
-        mapearInstalacoesTecnicas(
-          fonte.rows,
-          fonte.url,
-          fonte.host,
-          somenteInstalacao,
-        ),
+        mapearInstalacoesTecnicas(fonte.rows, fonte.url, fonte.host),
       );
       const data = filtrarInstalacoesDosTecnicos(instalacoes, tecnicos);
       const usouSinteticoLobatos = data.some(

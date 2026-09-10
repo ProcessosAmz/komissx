@@ -29,21 +29,4 @@ export class ReportsController {
   ): Promise<RelatorioTecnicoInstalacaoResponseDto> {
     return this.buscarInstalacaoTecnicaUseCase.execute(dto);
   }
-
-  @Get("vendas-vendedores")
-  @ApiOperation({
-    summary: "Listar vendas do fechamento de vendedores",
-    description:
-      "Consulta AMAZONET_CARD_VENDAS e MANIA_CARD_VENDAS e restringe o resultado aos vendedores cadastrados com cargo TECNICO ou AUTONOMO.",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Vendas listadas com sucesso",
-    type: RelatorioTecnicoInstalacaoResponseDto,
-  })
-  buscarVendasVendedores(
-    @Query() dto: RelatorioTecnicoDto,
-  ): Promise<RelatorioTecnicoInstalacaoResponseDto> {
-    return this.buscarInstalacaoTecnicaUseCase.execute(dto, false);
-  }
 }

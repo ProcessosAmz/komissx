@@ -13,12 +13,10 @@ import { resolverOrdemAtual, listarClientesDuplicados } from "@/pages/Fechamento
 
 interface FechamentoTecnicoProps {
   cargo?: "TECNICO" | "AUTONOMO";
-  origem?: "INSTALACAO" | "VENDAS";
 }
 
 export default function FechamentoTecnico({
   cargo = "TECNICO",
-  origem = "INSTALACAO",
 }: FechamentoTecnicoProps) {
   const [ordemSelecionada, setOrdemSelecionada] = useState<TecnicoRowViewModel | null>(
     null,
@@ -48,7 +46,7 @@ export default function FechamentoTecnico({
     handleExcluir,
     handleAlterarStatus,
     handleAdicionarOs,
-  } = useTecnicos(cargo, origem);
+  } = useTecnicos(cargo);
 
   const [dialogAdicionarAberto, setDialogAdicionarAberto] = useState(false);
 
@@ -67,13 +65,9 @@ export default function FechamentoTecnico({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            {origem === "VENDAS"
-              ? cargo === "AUTONOMO"
-                ? "Fechamento semanal de vendas — autônomos"
-                : "Fechamento mensal de vendas — técnicos"
-              : cargo === "AUTONOMO"
-                ? "Fechamento de autônomos"
-                : "Fechamento de instalação"}
+            {cargo === "AUTONOMO"
+              ? "Fechamento de autônomos"
+              : "Fechamento de instalação"}
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -89,7 +83,6 @@ export default function FechamentoTecnico({
           <TecnicosDocumentos
             dados={dadosBase}
             desabilitado={loading || dadosBase.length === 0}
-            periodicidade={origem === "VENDAS" && cargo === "TECNICO" ? "MENSAL" : "SEMANAL"}
           />
         </div>
       </div>
@@ -120,9 +113,7 @@ export default function FechamentoTecnico({
       {loading ? (
         <div className="flex items-center justify-center p-12 text-sm font-medium text-slate-400">
           <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-            {origem === "VENDAS"
-              ? "Carregando vendas..."
-              : "Carregando instalações..."}
+          Carregando instalações...
         </div>
       ) : (
         <>

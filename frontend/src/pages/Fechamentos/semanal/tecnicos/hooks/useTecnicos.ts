@@ -12,10 +12,7 @@ import {
   processarEDeduplicar,
   quantidadePorCliente as contarQuantidadePorCliente,
 } from "@/pages/Fechamentos/semanal/tecnicos/services/tecnico.helper";
-import {
-  getPeriodoFechamentoMensal,
-  getPeriodoFechamentoSemanal,
-} from "@/pages/Fechamentos/semanal/tecnicos/services/periodoFechamento.helper";
+import { getPeriodoFechamentoSemanal } from "@/pages/Fechamentos/semanal/tecnicos/services/periodoFechamento.helper";
 import {
   aplicarFiltroNaQuery,
   isDataIso,
@@ -77,16 +74,11 @@ export interface UseTecnicosReturn {
 
 export const useTecnicos = (
   cargo: "TECNICO" | "AUTONOMO" = "TECNICO",
-  origem: "INSTALACAO" | "VENDAS" = "INSTALACAO",
 ): UseTecnicosReturn => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [periodoPadrao] = useState(() =>
-    origem === "VENDAS" && cargo === "TECNICO"
-      ? getPeriodoFechamentoMensal()
-      : getPeriodoFechamentoSemanal(),
-  );
+  const [periodoPadrao] = useState(() => getPeriodoFechamentoSemanal());
 
   const [dadosBrutos, setDadosBrutos] = useState<OrdemServico[]>([]);
   const [tecnicosCadastro, setTecnicosCadastro] = useState<TecnicoFechamento[]>(
@@ -171,11 +163,8 @@ export const useTecnicos = (
       setErro(null);
 
       try {
-        const consultar = (params: Parameters<typeof ReportsService.buscarInstalacaoTecnica>[0]) =>
-          origem === "VENDAS"
-            ? ReportsService.buscarVendasVendedores(params)
-            : ReportsService.buscarInstalacaoTecnica(params);
-        const response: RelatorioTecnicoResponse = await consultar({
+        const response: RelatorioTecnicoResponse =
+          await ReportsService.buscarInstalacaoTecnica({
             dataInicio,
             dataFim,
             empresa: filtroEmpresa,
@@ -219,7 +208,7 @@ export const useTecnicos = (
 
   useEffect(() => {
     return carregarInstalacoes();
-  }, [dataInicio, dataFim, filtroEmpresa, cargo, origem]);
+  }, [dataInicio, dataFim, filtroEmpresa, cargo]);
 
   const dadosDeduplicados: TecnicoRowViewModel[] = semanalRules
     ? processarEDeduplicar(dadosBrutos, semanalRules, cargo)

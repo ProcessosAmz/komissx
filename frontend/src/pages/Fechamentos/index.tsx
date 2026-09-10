@@ -99,13 +99,6 @@ export default function HubFechamentos() {
             ) : (
               <div className="mt-6 grid grid-cols-2 gap-2 animate-fadeIn">
                 <button
-                  onClick={() => navigate('/admin/fechamentos/mensal/vendas-tecnicos')}
-                  className="flex flex-col items-center justify-center gap-1.5 p-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/10 text-center"
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  Vendas Técnicos
-                </button>
-                <button
                   onClick={() => navigate('/admin/fechamentos/mensal/comercial')}
                   className="flex flex-col items-center justify-center gap-1.5 p-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/10 text-center"
                 >

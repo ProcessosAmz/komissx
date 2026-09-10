@@ -55,29 +55,3 @@ export const getPeriodoFechamentoSemanal = (
     dataPagamento,
   };
 };
-
-export const getPeriodoFechamentoMensal = (
-  referencia: Date = new Date(),
-): PeriodoFechamentoSemanal => {
-  const primeiroDiaMesAtual = new Date(
-    referencia.getFullYear(),
-    referencia.getMonth(),
-    1,
-  );
-  const dataInicio = new Date(
-    primeiroDiaMesAtual.getFullYear(),
-    primeiroDiaMesAtual.getMonth() - 1,
-    1,
-  );
-  const dataFim = new Date(
-    primeiroDiaMesAtual.getFullYear(),
-    primeiroDiaMesAtual.getMonth(),
-    0,
-  );
-
-  return {
-    dataInicio: formatarDataIso(dataInicio),
-    dataFim: formatarDataIso(dataFim),
-    dataPagamento: formatarDataIso(primeiroDiaMesAtual),
-  };
-};
