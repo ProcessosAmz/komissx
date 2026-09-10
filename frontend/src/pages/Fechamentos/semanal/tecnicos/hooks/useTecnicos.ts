@@ -222,7 +222,7 @@ export const useTecnicos = (
   }, [dataInicio, dataFim, filtroEmpresa, cargo, origem]);
 
   const dadosDeduplicados: TecnicoRowViewModel[] = semanalRules
-    ? processarEDeduplicar(dadosBrutos, semanalRules)
+    ? processarEDeduplicar(dadosBrutos, semanalRules, cargo)
     : [];
 
   const listaTecnicos: TecnicoFechamento[] =

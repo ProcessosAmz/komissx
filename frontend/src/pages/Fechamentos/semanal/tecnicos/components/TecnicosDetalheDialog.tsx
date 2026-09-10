@@ -72,7 +72,7 @@ export function TecnicosDetalheDialog({
         </DialogHeader>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <ItemDetalhe label="Técnico" value={valorOuTraco(ordem.usuario_fechamento_limpo)} />
+          <ItemDetalhe label="Vendedor" value={valorOuTraco(ordem.usuario_fechamento_limpo)} />
           <ItemDetalhe label="Usuário Hubsoft" value={valorOuTraco(ordem.usuario_fechamento)} />
           <ItemDetalhe label="Tipo" value={valorOuTraco(ordem.tipo_ordem_servico)} />
           <ItemDetalhe label="Conclusão" value={formatarData(ordem.data_termino_executado)} />
@@ -109,6 +109,7 @@ export function TecnicosDetalheDialog({
             <option value="">—</option>
             <option value="PENDENTE">PENDENTE</option>
             <option value="APROVADO">APROVADO</option>
+            <option value="NC APROVADO">NC APROVADO</option>
             <option value="REPROVADO">REPROVADO</option>
           </select>
         </div>

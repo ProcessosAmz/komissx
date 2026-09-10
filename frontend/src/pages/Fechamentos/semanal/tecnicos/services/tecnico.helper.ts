@@ -33,13 +33,21 @@ export const quantidadePorCliente = (
 export const calcularValorRepasse = (
   nome: string,
   rules: FechamentoSemanalRules,
+  cargo: "TECNICO" | "AUTONOMO" = "TECNICO",
 ): number => {
-  const terceirizados = rules.tecnicos_terceirizados;
-  if (!terceirizados) {
-    return 0;
+  const nomeUpper = nome.toUpperCase().trim();
+  if (cargo === "AUTONOMO") {
+    const excecoes = rules.autonomos?.excecoes ?? {};
+    const excecao = Object.entries(excecoes).find(
+      ([chave]) => {
+        const chaveUpper = chave.toUpperCase().trim();
+        return nomeUpper === chaveUpper || nomeUpper.startsWith(`${chaveUpper}_`);
+      },
+    );
+    return excecao?.[1] ?? rules.autonomos?.valor_padrao ?? 0;
   }
 
-  const nomeUpper = nome.toUpperCase().trim();
+  const terceirizados = rules.tecnicos_terceirizados ?? {};
   for (const [chave, valor] of Object.entries(terceirizados)) {
     if (nomeUpper.includes(chave.toUpperCase())) {
       return valor;
@@ -50,20 +58,26 @@ export const calcularValorRepasse = (
 };
 
 const isOsPagaNoFechamento = (os: OrdemServico): boolean => {
-  return os.status_auditoria.toUpperCase().trim() === "APROVADO";
+  return ["APROVADO", "NC APROVADO", "N.C APROVADO"].includes(
+    os.status_auditoria.toUpperCase().trim(),
+  );
 };
 
 export const processar = (
   dados: OrdemServico[],
   rules: FechamentoSemanalRules,
+  cargo: "TECNICO" | "AUTONOMO" = "TECNICO",
 ): TecnicoRowViewModel[] => {
-  return dados.map((os) => {
+  const marcador = cargo === "AUTONOMO" ? /(?:^|[ _-])AUTO(?:NOMO)?(?:$|[ _-])/i : /(?:^|[ _-])TEC(?:NICO)?(?:$|[ _-])/i;
+
+  return dados.filter((os) => marcador.test(os.usuario_fechamento)).map((os) => {
     const isAprovada = isOsPagaNoFechamento(os);
     const statusFin = isAprovada ? "PAGO" : "-";
     const vBase = isAprovada
       ? calcularValorRepasse(
           `${os.usuario_fechamento_limpo} ${os.usuario_fechamento}`,
           rules,
+          cargo,
         )
       : 0;
 
@@ -79,8 +93,9 @@ export const processar = (
 export const processarEDeduplicar = (
   dados: OrdemServico[],
   rules: FechamentoSemanalRules,
+  cargo: "TECNICO" | "AUTONOMO" = "TECNICO",
 ): TecnicoRowViewModel[] => {
-  return processar(dados, rules);
+  return processar(dados, rules, cargo);
 };
 
 export const classificarListagem = (

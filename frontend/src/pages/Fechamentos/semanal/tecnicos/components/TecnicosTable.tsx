@@ -21,7 +21,7 @@ export function TecnicosTable({
   if (dados.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-800 px-6 py-16 text-center text-sm text-slate-500">
-        Nenhuma instalação encontrada para este filtro.
+        Nenhum registro encontrado para este filtro.
       </div>
     );
   }
@@ -35,7 +35,7 @@ export function TecnicosTable({
             <th className="px-4 py-3">Empresa</th>
             <th className="px-4 py-3">Cliente</th>
             <th className="px-4 py-3">Cód O.S</th>
-            <th className="px-4 py-3">Técnico</th>
+            <th className="px-4 py-3">Vendedor</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Financeiro</th>
             <th className="px-4 py-3 text-right">Valor</th>
