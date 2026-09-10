@@ -86,7 +86,7 @@ export function TecnicosFilters({
       </label>
       <label className="space-y-1.5">
         <span className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-          Vendedor
+          Técnico
         </span>
         <select
           value={filtroTecnico}
@@ -139,7 +139,7 @@ export function TecnicosFilters({
           <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
           <input
             type="text"
-            placeholder="OS, cliente ou vendedor"
+            placeholder="OS, cliente ou técnico"
             value={buscaOS}
             disabled={carregando}
             onChange={(event) => setBuscaOS(event.target.value)}
