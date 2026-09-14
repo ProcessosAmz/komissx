@@ -56,11 +56,19 @@ echo "==> Trocando Traefik frontend para $NEW_COLOR..."
 cat > "$DYNAMIC_CONFIG" <<EOF
 http:
   routers:
+    frontend-api:
+      rule: "PathPrefix(\`/api\`)"
+      entryPoints:
+        - frontend
+      service: backend
+      priority: 100
+
     frontend:
       rule: "PathPrefix(\`/\`)"
       entryPoints:
         - frontend
       service: frontend
+      priority: 1
 
   services:
     frontend:
@@ -71,7 +79,17 @@ http:
           timeout: "3s"
         servers:
           - url: "http://komissx_frontend_${NEW_COLOR}:80"
+
+    backend:
+      loadBalancer:
+        healthCheck:
+          path: /api/health/live
+          interval: "5s"
+          timeout: "3s"
+        servers:
+          - url: "http://komissx_backend_${NEW_COLOR}:3000"
 EOF
+
 
 sleep "$DRAIN_SECONDS"
 
