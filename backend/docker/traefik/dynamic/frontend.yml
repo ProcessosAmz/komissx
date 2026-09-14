@@ -20,4 +20,12 @@ http:
           interval: "5s"
           timeout: "3s"
         servers:
-          - url: "http://komissx_frontend_green:80"
+          - url: "http://komissx_frontend_blue:80"
+    backend:
+      loadBalancer:
+        healthCheck:
+          path: /api/health/live
+          interval: "5s"
+          timeout: "3s"
+        servers:
+          - url: "http://komissx_backend_blue:3000"
