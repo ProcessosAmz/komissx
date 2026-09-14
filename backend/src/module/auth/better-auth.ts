@@ -49,6 +49,8 @@ export const auth =
 
               return result;
             },
+          },
+        },
 
         session: {
           expiresIn: 60 * 60 * 8,
