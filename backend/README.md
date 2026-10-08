@@ -1,6 +1,6 @@
 # KomissX — Backend
 
-API do KomissX, construída com [NestJS](https://nestjs.com/) e TypeScript. Responsável por autenticação de contexto, regras de comissão, relatórios, permissões e integrações externas (Hubsoft e Metabase).
+API do KomissX, construída com [NestJS](https://nestjs.com/) e TypeScript. Responsável por autenticação de contexto, regras de comissão, relatórios, permissões e consultas externas ao Metabase.
 
 ## Requisitos
 
@@ -23,12 +23,6 @@ Crie um arquivo `.env` na raiz do `backend` com as variáveis necessárias. O `C
 | Variável                      | Uso                                                 |
 | ----------------------------- | --------------------------------------------------- |
 | `PORT`                        | Porta da API (padrão: `3000`)                       |
-| `HUB_URL`                     | URL base da API Hubsoft                             |
-| `HUB_CLIENT_ID`               | OAuth Hubsoft                                       |
-| `HUB_CLIENT_SECRET`           | OAuth Hubsoft                                       |
-| `HUB_GRANT_TYPE`              | Tipo de grant OAuth                                 |
-| `HUB_USERNAME`                | Usuário Hubsoft                                     |
-| `HUB_PASSWORD`                | Senha Hubsoft                                       |
 | `METABASE_INSTALACAO_TECNICO` | Endpoint público Metabase (relatório de instalação) |
 
 
@@ -80,7 +74,7 @@ backend/src
 ├── main.ts                 # Bootstrap da aplicação
 ├── app.module.ts           # Módulo raiz (registra todos os módulos)
 ├── common/                 # Enums, interfaces e utilitários compartilhados
-├── integrations/           # Integrações externas (Hubsoft, Metabase)
+├── integrations/           # Infraestrutura compartilhada (Redis)
 ├── module/
 │   └── configuracoes/      # Módulo de configurações (equipe, hierarquia, etc.)
 ├── users/
@@ -108,7 +102,7 @@ Controller → Service → Repository
 | -------------- | -------------------------------------------------------------------------- |
 | **Controller** | Recebe a requisição HTTP, valida entrada e devolve a resposta              |
 | **Service**    | Contém a regra de negócio e o mapeamento para DTOs de resposta             |
-| **Repository** | Isola o acesso a dados (banco ou API externa, como Hubsoft)                |
+| **Repository** | Isola o acesso a dados (banco ou serviço externo)                           |
 | **DTO**        | Define o contrato de entrada (`Create` / `Update`) e de saída (`Response`) |
 
 
@@ -143,11 +137,11 @@ user/
 
 ### Regras importantes
 
-- O **Controller** não fala com Hubsoft/banco diretamente — só chama o Service.
+- O **Controller** não fala com serviços externos ou banco diretamente — só chama o Service.
 - O **Service** não monta chamada HTTP crua — usa o Repository.
 - O **Repository** não aplica regra de negócio — só busca, cria, atualiza ou remove.
 - Módulos novos devem ser registrados no `AppModule`.
-- Integrações compartilhadas (ex.: `HubsoftService`) ficam em `integrations/` e são exportadas pelo `IntegrationsModule` para outros módulos importarem.
+- Infraestrutura compartilhada, como o Redis, fica em `integrations/` e é registrada pelo `AppModule`.
 
 
 
@@ -169,9 +163,8 @@ export * from './index.update.user.dto.ts
 
 
 
-### Integrações
+### Serviços externos
 
-- **Hubsoft**: autenticação OAuth + chamadas à API (vendedores, tickets, supervisores, etc.).
 - **Metabase**: consulta de cards públicos para relatórios (ex.: instalação técnica).
 
 

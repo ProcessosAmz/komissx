@@ -6,7 +6,7 @@ import { MetabaseParameter } from "@/common/interfaces/metabaseParameter.interfa
 import {
   METABASE_INSTALLATION_FILTERS,
   METABASE_INSTALLATION_FILTERS_MANIA,
-} from "@/integrations/constants/metabase/metabase.constants";
+} from "@/module/reports/constants/metabase/metabase.constants";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
 import {
   extrairLinhasMetabase,

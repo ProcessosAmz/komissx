@@ -281,8 +281,8 @@ export const mapearLinhaInstalacaoTecnica = (
   };
 };
 
-export const isEquipeLobatos = (usuarioHubsoft: string): boolean => {
-  const nome = normalizarTexto(usuarioHubsoft);
+export const isEquipeLobatos = (usuarioOrigem: string): boolean => {
+  const nome = normalizarTexto(usuarioOrigem);
   return nome.includes("TEC_LOBATOS") || nome.includes("TEC LOBATOS");
 };
 
@@ -302,28 +302,28 @@ export const TECNICO_SINTETICO_LOBATOS: TecnicoFechamentoResponseDto = {
 };
 
 export const osPertenceAoTecnico = (
-  usuarioHubsoft: string,
+  usuarioOrigem: string,
   nomeTecnico: string,
 ): boolean => {
-  const hubsoft = normalizarTexto(limparNomeTecnico(usuarioHubsoft));
+  const usuarioNormalizado = normalizarTexto(limparNomeTecnico(usuarioOrigem));
   const cadastro = normalizarTexto(nomeTecnico);
 
   if (!cadastro) {
     return false;
   }
 
-  if (isEquipeLobatos(usuarioHubsoft) && isLiderEquipeLobatos(nomeTecnico)) {
+  if (isEquipeLobatos(usuarioOrigem) && isLiderEquipeLobatos(nomeTecnico)) {
     return true;
   }
 
-  if (!hubsoft) {
+  if (!usuarioNormalizado) {
     return false;
   }
 
   return (
-    hubsoft === cadastro ||
-    hubsoft.includes(cadastro) ||
-    cadastro.includes(hubsoft)
+    usuarioNormalizado === cadastro ||
+    usuarioNormalizado.includes(cadastro) ||
+    cadastro.includes(usuarioNormalizado)
   );
 };
 

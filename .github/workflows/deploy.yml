@@ -82,22 +82,8 @@ jobs:
         working-directory: ./backend
         run: |
           $envContent = @"
-          AMAZONET_HUB_URL=${{ secrets.AMAZONET_HUB_URL }}
-          AMAZONET_HUB_CLIENT_ID=${{ secrets.AMAZONET_HUB_CLIENT_ID }}
-          AMAZONET_HUB_CLIENT_SECRET=${{ secrets.AMAZONET_HUB_CLIENT_SECRET }}
-          AMAZONET_HUB_USERNAME=${{ secrets.AMAZONET_HUB_USERNAME }}
-          AMAZONET_HUB_PASSWORD=${{ secrets.AMAZONET_HUB_PASSWORD }}
-          AMAZONET_HUB_GRANT_TYPE=${{ secrets.AMAZONET_HUB_GRANT_TYPE }}
           AMAZONET_METABASE_INSTALACAO_TECNICO=${{ secrets.AMAZONET_METABASE_INSTALACAO_TECNICO }}
-          AMAZONET_BOT_TOKEN=${{ secrets.AMAZONET_BOT_TOKEN }}
-          MANIA_HUB_URL=${{ secrets.MANIA_HUB_URL }}
-          MANIA_HUB_CLIENT_ID=${{ secrets.MANIA_HUB_CLIENT_ID }}
-          MANIA_HUB_CLIENT_SECRET=${{ secrets.MANIA_HUB_CLIENT_SECRET }}
-          MANIA_HUB_USERNAME=${{ secrets.MANIA_HUB_USERNAME }}
-          MANIA_HUB_PASSWORD=${{ secrets.MANIA_HUB_PASSWORD }}
-          MANIA_HUB_GRANT_TYPE=${{ secrets.MANIA_HUB_GRANT_TYPE }}
           MANIA_METABASE_INSTALACAO_TECNICO=${{ secrets.MANIA_METABASE_INSTALACAO_TECNICO }}
-          MANIA_BOT_TOKEN=${{ secrets.MANIA_BOT_TOKEN }}
           METABASE_INSTALACAO_TECNICO=${{ secrets.METABASE_INSTALACAO_TECNICO }}
           HOST_NAME=${{ vars.HOST_NAME }}
           PORT_NEST=${{ secrets.PORT_NEST }}

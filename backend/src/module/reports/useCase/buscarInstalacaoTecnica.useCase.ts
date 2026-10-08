@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { MetaService } from "@/integrations/service/metabase.service";
+import { MetaService } from "@/module/reports/service/metabase.service";
 import { CARGO_TECNICO } from "@/module/reports/constants/cargoTecnico.constants";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
 import {

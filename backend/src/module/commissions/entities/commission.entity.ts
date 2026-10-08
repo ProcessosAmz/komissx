@@ -9,7 +9,7 @@ export class Commission {
   userId: number;
 
   @Column()
-  referenceId: string; // ID da venda ou ordem de serviço do Hubsoft
+  referenceId: string; // ID da venda ou ordem de serviço de origem
 
   @Column('decimal', { precision: 10, scale: 2 })
   commissionValue: number;

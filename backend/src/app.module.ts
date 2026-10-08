@@ -1,4 +1,3 @@
-import { IntegrationsModule } from "@/integrations/index.module";
 import { RedisModule } from "@/integrations/redis/index.module";
 import { AuthModule } from "@/module/auth/index.module";
 import { EmpresasModule } from "@/module/empresas/index.module";
@@ -60,7 +59,6 @@ const skipDatabase = process.env.SKIP_DATABASE === "true";
           CommissionsModule,
           ReportsModule,
         ]),
-    IntegrationsModule,
     LoggerModule,
     RedisModule,
     HealthModule,
