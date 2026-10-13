@@ -3,13 +3,29 @@ import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
 import { RelatorioTecnicoInstalacaoResponseDto } from "@/module/reports/dto/ordemServicoInstalacao.response.dto";
 import { BuscarInstalacaoTecnicaUseCase } from "@/module/reports/useCase";
+import { RetiradaService } from "@/module/reports/service/retirada.service";
+import { VendasAutonomosService } from "@/module/reports/service/vendas-autonomos.service";
 
 @ApiTags("reports")
 @Controller("reports")
 export class ReportsController {
   constructor(
     private readonly buscarInstalacaoTecnicaUseCase: BuscarInstalacaoTecnicaUseCase,
+    private readonly retiradaService: RetiradaService,
+    private readonly vendasAutonomosService: VendasAutonomosService,
   ) {}
+
+  @Get("vendas-autonomos")
+  @ApiOperation({ summary: "Listar vendas realizadas por autônomos" })
+  buscarVendasAutonomos(@Query() dto: RelatorioTecnicoDto) {
+    return this.vendasAutonomosService.buscar(dto);
+  }
+
+  @Get("retiradas")
+  @ApiOperation({ summary: "Listar retiradas entregues e conciliadas" })
+  buscarRetiradas(@Query() dto: RelatorioTecnicoDto) {
+    return this.retiradaService.buscar(dto);
+  }
 
   @Get("tecnicos-instalacao")
   @ApiOperation({

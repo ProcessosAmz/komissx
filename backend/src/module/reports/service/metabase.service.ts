@@ -23,6 +23,10 @@ const METABASE_JSON_AMAZONET =
   "https://amazonet.hubsoft.com.br:8443/api/public/card/3794d645-c188-449b-bc8d-ee7863714238/query/json";
 const METABASE_JSON_MANIA =
   "https://mania.hubsoft.com.br:8443/api/public/card/33487c34-da5a-4934-9b45-7b5051e7f382/query/json";
+const METABASE_JSON_RETIRADA_AMAZONET =
+  "https://amazonet.hubsoft.com.br:8443/public/question/cc843ce8-7a68-49b5-a4c6-6f3552ec4468";
+const METABASE_JSON_RETIRADA_MANIA =
+  "https://mania.hubsoft.com.br:8443/public/question/233e51bb-c082-42e5-b48e-586aa0047c46";
 
 const metabaseClient = axios.create({
   timeout: METABASE_TIMEOUT_MS,
@@ -112,6 +116,49 @@ export class MetaService {
     }
 
     return parametros;
+  }
+
+  async retiradas(dto: RelatorioTecnicoDto): Promise<FonteMetabaseInstalacao[]> {
+    const fontes = [
+      { host: Host.AMAZONET, bruto: process.env.METABASE_AMZ_RETIRADA || METABASE_JSON_RETIRADA_AMAZONET },
+      { host: Host.MANIA, bruto: process.env.METABASE_MANIA_RETIRADA || METABASE_JSON_RETIRADA_MANIA },
+    ].filter((fonte) => !dto.empresa || fonte.host === dto.empresa);
+    const resultados = await Promise.all(fontes.map(async ({ host, bruto }) => {
+      const url = toMetabaseJsonUrl(bruto);
+      try {
+        const response = await metabaseClient.get<unknown>(url, {
+          params: { parameters: JSON.stringify(this.montarParametros(dto, host)) },
+        });
+        return { host, url, rows: extrairLinhasMetabase(response.data), falhou: false };
+      } catch (error) {
+        this.logger.error(`Erro ao consultar retirada no Metabase (${host}): ${getErrorMessage(error)}`);
+        return { host, url, rows: [] as unknown[], falhou: true };
+      }
+    }));
+    if (resultados.length && resultados.every((fonte) => fonte.falhou)) {
+      throw new InternalServerErrorException("Erro ao buscar retiradas no Metabase");
+    }
+    return resultados.map(({ host, url, rows }) => ({ host, url, rows }));
+  }
+
+  async vendasAutonomos(dto: RelatorioTecnicoDto): Promise<FonteMetabaseInstalacao[]> {
+    const fontes = [
+      { host: Host.AMAZONET, url: process.env.AMAZONET_CARD_VENDAS },
+      { host: Host.MANIA, url: process.env.MANIA_CARD_VENDAS },
+    ].filter((fonte) => fonte.url && (!dto.empresa || fonte.host === dto.empresa)) as { host: Host; url: string }[];
+    if (!fontes.length) throw new InternalServerErrorException("Consultas Metabase de vendas não configuradas");
+    const resultados = await Promise.all(fontes.map(async ({ host, url: bruto }) => {
+      const url = toMetabaseJsonUrl(bruto);
+      try {
+        const response = await metabaseClient.get<unknown>(url, { params: { parameters: JSON.stringify(this.montarParametros(dto, host)) } });
+        return { host, url, rows: extrairLinhasMetabase(response.data), falhou: false };
+      } catch (error) {
+        this.logger.error(`Erro ao consultar vendas no Metabase (${host}): ${getErrorMessage(error)}`);
+        return { host, url, rows: [] as unknown[], falhou: true };
+      }
+    }));
+    if (resultados.every((fonte) => fonte.falhou)) throw new InternalServerErrorException("Erro ao buscar vendas no Metabase");
+    return resultados.map(({ host, url, rows }) => ({ host, url, rows }));
   }
 
   async vendasTecnico(dto: RelatorioTecnicoDto): Promise<FonteMetabaseInstalacao[]> {
