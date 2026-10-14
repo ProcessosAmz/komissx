@@ -241,6 +241,82 @@ export class FinancialClosesService {
     );
   }
 
+  async testSourceConnection(closeId: string, sourceName: string, user: AuthenticatedUser) {
+    const rows = await this.dataSource.query(
+      `SELECT c.id,m.key AS modality FROM financial_closes c
+       JOIN financial_modalities m ON m.id=c.modality_id WHERE c.id=$1`,
+      [closeId],
+    );
+    if (!rows.length) throw new NotFoundException("Fechamento não encontrado");
+    const modality = rows[0].modality as FinancialModality;
+    if (!allowedModalities.includes(modality)) throw new BadRequestException("Modalidade fora do escopo autorizado");
+    const source = sourceName.trim().toUpperCase();
+    const envMap: Record<string, { modality: FinancialModality; env: string }> = {
+      METABASE_AMZ_RETIRADA: { modality: "RETIRADA", env: "METABASE_AMZ_RETIRADA" },
+      METABASE_MANIA_RETIRADA: { modality: "RETIRADA", env: "METABASE_MANIA_RETIRADA" },
+      METABASE_AMZ_AUTONOMO: { modality: "VENDAS_AUTONOMOS", env: "METABASE_AMZ_AUTONOMO" },
+      METABASE_MANIA_AUTONOMO: { modality: "VENDAS_AUTONOMOS", env: "METABASE_MANIA_AUTONOMO" },
+    };
+    const config = envMap[source];
+    if (!config || config.modality !== modality) {
+      throw new BadRequestException("Fonte não permitida para esta modalidade");
+    }
+    const url = process.env[config.env]?.trim();
+    if (!url) throw new BadRequestException(`Fonte não configurada: ${config.env}`);
+    let result: { status: number; rowCount: number | null; responseType: string; durationMs: number };
+    const started = Date.now();
+    try {
+      const axios = (await import("axios")).default;
+      const response = await axios.get(url, {
+        timeout: 20000,
+        validateStatus: (status) => status >= 200 && status < 300,
+        headers: { Accept: "application/json" },
+        maxContentLength: 20 * 1024 * 1024,
+      });
+      const body = response.data;
+      const rowsData = Array.isArray(body) ? body
+        : Array.isArray(body?.data) ? body.data
+        : Array.isArray(body?.rows) ? body.rows
+        : Array.isArray(body?.data?.rows) ? body.data.rows
+        : null;
+      result = {
+        status: response.status,
+        rowCount: rowsData?.length ?? null,
+        responseType: Array.isArray(body) ? "array" : typeof body,
+        durationMs: Date.now() - started,
+      };
+      await this.dataSource.query(
+        `INSERT INTO financial_audit_events(modality_id,close_id,event_type,reason,actor_id,after_state)
+         VALUES ((SELECT id FROM financial_modalities WHERE key=$1),$2,'SOURCE_CONNECTION_TESTED',$3,$4,$5::jsonb)`,
+        [modality,closeId,`Teste de conexão da fonte ${source}`,user.id,JSON.stringify({ source, ...result, timestamp: new Date().toISOString() })],
+      );
+      return {
+        source,
+        reachable: true,
+        ...result,
+        sampleKeys: rowsData?.[0] && typeof rowsData[0] === "object" ? Object.keys(rowsData[0]).slice(0, 80) : [],
+        sample: rowsData?.[0] ?? null,
+        imported: false,
+        note: "Teste somente de leitura: nenhum registro foi importado nem liberado para cálculo.",
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Falha desconhecida";
+      await this.dataSource.query(
+        `INSERT INTO financial_audit_events(modality_id,close_id,event_type,reason,actor_id,after_state)
+         VALUES ((SELECT id FROM financial_modalities WHERE key=$1),$2,'SOURCE_CONNECTION_FAILED',$3,$4,$5::jsonb)`,
+        [modality,closeId,`Falha no teste de conexão da fonte ${source}`,user.id,JSON.stringify({ source, message, durationMs: Date.now() - started, timestamp: new Date().toISOString() })],
+      );
+      return {
+        source,
+        reachable: false,
+        durationMs: Date.now() - started,
+        error: message,
+        imported: false,
+        note: "A conexão falhou; nenhum registro foi importado.",
+      };
+    }
+  }
+
   async sourceReadiness(closeId: string) {
     const rows = await this.dataSource.query(
       `SELECT c.id, m.key AS modality, c.company
