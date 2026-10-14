@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
 import { Host } from "@/common/enums/host.enum";
 import { MetaService } from "@/module/reports/service/metabase.service";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
@@ -43,6 +43,9 @@ const status = (motivo: string, auditoria: string) => {
 export class VendasAutonomosService {
   constructor(private readonly metaService: MetaService) {}
   async buscar(dto: RelatorioTecnicoDto): Promise<{ data: VendaAutonomo[]; message: string }> {
+    if (dto.dataInicio > dto.dataFim) {
+      throw new BadRequestException("A data inicial deve ser anterior ou igual à data final");
+    }
     const fontes = await this.metaService.vendasAutonomos(dto);
     const data = fontes.flatMap((fonte) => extrairLinhasMetabase(fonte.rows).flatMap((raw, index) => {
       const row = (raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}) as Registro;

@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import axios from "axios";
 import { createSign } from "crypto";
 import { Host } from "@/common/enums/host.enum";
@@ -44,6 +44,9 @@ export class RetiradaService {
   constructor(private readonly metaService: MetaService) {}
 
   async buscar(dto: RelatorioTecnicoDto): Promise<RetiradaResponse> {
+    if (dto.dataInicio > dto.dataFim) {
+      throw new BadRequestException("A data inicial deve ser anterior ou igual à data final");
+    }
     const fontes = await this.metaService.retiradas(dto);
     const entregas = await this.lerPlanilhas();
     const index = new Map<string, Registro>();
