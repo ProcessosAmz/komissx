@@ -34,6 +34,12 @@ export class FinancialClosesController {
     return this.service.sourceRuns(closeId);
   }
 
+  @Get(":closeId/sources/readiness")
+  @ApiOperation({ summary: "Verificar configuração das fontes necessárias para o fechamento" })
+  sourceReadiness(@Param("closeId", ParseUUIDPipe) closeId: string) {
+    return this.service.sourceReadiness(closeId);
+  }
+
   @Post(":closeId/sources/import")
   @ApiOperation({ summary: "Importar registros normalizados de uma fonte, mantendo novos itens bloqueados para validação" })
   importSource(@Param("closeId", ParseUUIDPipe) closeId: string, @Body() dto: ImportFinancialSourceDto, @Req() req: { user: AuthenticatedUser }) {
