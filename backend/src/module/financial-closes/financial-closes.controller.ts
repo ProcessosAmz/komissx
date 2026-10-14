@@ -34,6 +34,12 @@ export class FinancialClosesController {
     return this.service.sourceRuns(closeId);
   }
 
+  @Post(":closeId/sources/:sourceName/test")
+  @ApiOperation({ summary: "Testar conexão de leitura com uma fonte, sem importar registros" })
+  testSourceConnection(@Param("closeId", ParseUUIDPipe) closeId: string, @Param("sourceName") sourceName: string, @Req() req: { user: AuthenticatedUser }) {
+    return this.service.testSourceConnection(closeId, sourceName, req.user);
+  }
+
   @Get(":closeId/sources/readiness")
   @ApiOperation({ summary: "Verificar configuração das fontes necessárias para o fechamento" })
   sourceReadiness(@Param("closeId", ParseUUIDPipe) closeId: string) {
