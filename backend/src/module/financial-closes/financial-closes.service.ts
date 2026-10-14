@@ -175,13 +175,23 @@ export class FinancialClosesService {
       let changedItems = 0;
       const conflicts: Array<{ recordKey: string; reason: string }> = [];
       for (const record of dto.records) {
-        const existingRecord = await manager.query(
-          "SELECT id,payload_hash FROM financial_source_records WHERE source_run_id=$1 AND source_record_key=$2",
-          [run.id,record.recordKey],
-        );
         const payloadJson = JSON.stringify(record.payload);
         const payloadHash = payloadJson;
+        const existingRecord = await manager.query(
+          `SELECT sr.id, sr.payload_hash, sr.payload
+           FROM financial_source_records sr
+           JOIN financial_source_runs old_run ON old_run.id=sr.source_run_id
+           WHERE old_run.close_id=$1 AND old_run.source=$2 AND sr.source_record_key=$3
+           ORDER BY old_run.started_at DESC LIMIT 1`,
+          [closeId,source,record.recordKey],
+        );
         if (!existingRecord.length) {
+          await manager.query(
+            "INSERT INTO financial_source_records(source_run_id,source_record_key,payload,payload_hash) VALUES ($1,$2,$3::jsonb,$4)",
+            [run.id,record.recordKey,payloadJson,payloadHash],
+          );
+          insertedRecords++;
+        } else if (JSON.stringify(existingRecord[0].payload) !== payloadJson) {
           await manager.query(
             "INSERT INTO financial_source_records(source_run_id,source_record_key,payload,payload_hash) VALUES ($1,$2,$3::jsonb,$4)",
             [run.id,record.recordKey,payloadJson,payloadHash],
