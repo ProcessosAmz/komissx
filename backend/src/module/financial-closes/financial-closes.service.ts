@@ -129,7 +129,7 @@ export class FinancialClosesService {
     });
   }
   async importSource(closeId: string, dto: import("@/module/financial-closes/dto/import-financial-source.dto").ImportFinancialSourceDto, user: AuthenticatedUser) {
-    if (!["RETIRADA", "VENDAS_AUTONOMOS"].includes(dto.source.toUpperCase()) && dto.source.trim().length < 3) {
+    if (!dto.source?.trim() || dto.source.trim().length < 3) {
       throw new BadRequestException("Identificador da fonte inválido");
     }
     return this.dataSource.transaction(async (manager) => {
@@ -143,11 +143,24 @@ export class FinancialClosesService {
       if (!allowedModalities.includes(close.modality)) throw new BadRequestException("Modalidade fora do escopo autorizado");
       if (["FINALIZADO", "CANCELADO"].includes(close.status)) throw new ConflictException("Fechamento finalizado/cancelado não aceita importação");
       if (!Array.isArray(dto.records)) throw new BadRequestException("Informe a lista de registros da fonte");
+      const source = dto.source.trim().toUpperCase();
+      const allowedSources = close.modality === "RETIRADA"
+        ? ["METABASE_AMZ_RETIRADA", "METABASE_MANIA_RETIRADA", "PLANILHA_RETIRADA", "PLANILHA_ENTREGA", "PLANILHA_ESTOQUE"]
+        : ["METABASE_AMZ_AUTONOMO", "METABASE_MANIA_AUTONOMO"];
+      if (!allowedSources.includes(source)) {
+        throw new BadRequestException("Fonte não permitida para esta modalidade; verifique o mapeamento de origem");
+      }
       const status = dto.status ?? "SUCESSO";
+      if (["FALHA", "INVALIDO"].includes(status) && dto.records.length > 0) {
+        throw new BadRequestException("Fontes com falha/invalidade não podem importar registros para processamento");
+      }
+      if (status === "SUCESSO" && dto.errorMessage?.trim()) {
+        throw new BadRequestException("Uma importação com mensagem de erro deve ser marcada como PARCIAL, FALHA ou INVALIDO");
+      }
       const runRows = await manager.query(
         `INSERT INTO financial_source_runs(close_id,source,status,source_updated_at,row_count,error_message,metadata,requested_by,finished_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,now()) RETURNING *`,
-        [closeId,dto.source.trim(),status,dto.sourceUpdatedAt ?? null,dto.records.length,dto.errorMessage ?? null,JSON.stringify(dto.metadata ?? {}),user.id],
+        [closeId,source,status,dto.sourceUpdatedAt ?? null,dto.records.length,dto.errorMessage ?? null,JSON.stringify(dto.metadata ?? {}),user.id],
       );
       const run = runRows[0];
       let insertedRecords = 0;
@@ -184,7 +197,7 @@ export class FinancialClosesService {
           await manager.query(
             `INSERT INTO financial_audit_events(modality_id,close_id,event_type,reason,actor_id,after_state)
              VALUES ($1,$2,'SOURCE_ITEM_IMPORTED','Registro importado; permanece bloqueado até validação de elegibilidade e cálculo',$3,$4::jsonb)`,
-            [close.modality_id,closeId,user.id,JSON.stringify({ source: dto.source, recordKey: record.recordKey, obligationKey: record.obligationKey })],
+            [close.modality_id,closeId,user.id,JSON.stringify({ source, recordKey: record.recordKey, obligationKey: record.obligationKey })],
           );
         } else {
           const existing = existingItems[0];
@@ -198,7 +211,7 @@ export class FinancialClosesService {
             await manager.query(
               `INSERT INTO financial_reviews(close_item_id,decision,reason,previous_value,new_value,reviewed_by,metadata)
                VALUES ($1,'DIVERGENCIA_FONTE','A fonte apresentou alteração; valores originais preservados',$2,$3,$4,$5::jsonb)`,
-              [existing.id,null,null,user.id,JSON.stringify({ source:dto.source, recordKey:record.recordKey, incomingPayload:record.payload })],
+              [existing.id,null,null,user.id,JSON.stringify({ source, recordKey:record.recordKey, incomingPayload:record.payload })],
             );
             await manager.query(
               `INSERT INTO financial_audit_events(modality_id,close_id,close_item_id,event_type,reason,actor_id,before_state,after_state)
