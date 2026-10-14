@@ -75,6 +75,13 @@ export class FinancialClosesService {
       const close = closes[0];
       if (!allowedModalities.includes(close.modality)) throw new BadRequestException("Modalidade fora do escopo autorizado");
       if (["FINALIZADO", "CANCELADO"].includes(close.status)) throw new ConflictException("Fechamento finalizado/cancelado não aceita inclusão");
+      const duplicate = await manager.query(
+        "SELECT id, financial_status FROM financial_close_items WHERE close_id=$1 AND obligation_key=$2 FOR UPDATE",
+        [close.id, dto.obligationKey.trim()],
+      );
+      if (duplicate.length) {
+        throw new ConflictException("Já existe um item para esta obrigação neste fechamento; consulte o histórico antes de incluir novamente");
+      }
       const rows = await manager.query(
         `INSERT INTO financial_close_items
          (close_id,modality_id,company,obligation_key,os_number,customer_code,customer_name,
@@ -109,6 +116,9 @@ export class FinancialClosesService {
       if (["PAGO","ESTORNADO"].includes(item.financial_status)) throw new ConflictException("Item pago ou estornado não pode ser alterado");
       if (["FINALIZADO","CANCELADO"].includes(item.close_status)) throw new ConflictException("Fechamento finalizado/cancelado não aceita revisão");
       const amount = dto.amount === undefined ? item.calculated_amount : dto.amount;
+      if (dto.decision === "LIBERAR" && (amount === null || amount === undefined)) {
+        throw new ConflictException("Não é possível liberar um item sem valor calculado; conclua a validação e o cálculo primeiro");
+      }
       const operational = dto.decision === "LIBERAR" ? "LIBERADO" : dto.decision === "REJEITAR" ? "REJEITADO" : "BLOQUEADO";
       const financial = dto.decision === "LIBERAR" ? "APROVADO" : dto.decision === "REJEITAR" ? "ENCERRADO_SEM_APLICACAO" : "BLOQUEADO";
       const updated = await manager.query(
