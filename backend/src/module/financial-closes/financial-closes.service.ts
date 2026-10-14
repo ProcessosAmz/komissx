@@ -128,4 +128,104 @@ export class FinancialClosesService {
       return updated[0];
     });
   }
+  async importSource(closeId: string, dto: import("@/module/financial-closes/dto/import-financial-source.dto").ImportFinancialSourceDto, user: AuthenticatedUser) {
+    if (!["RETIRADA", "VENDAS_AUTONOMOS"].includes(dto.source.toUpperCase()) && dto.source.trim().length < 3) {
+      throw new BadRequestException("Identificador da fonte inválido");
+    }
+    return this.dataSource.transaction(async (manager) => {
+      const closes = await manager.query(
+        `SELECT c.*,m.key AS modality FROM financial_closes c
+         JOIN financial_modalities m ON m.id=c.modality_id WHERE c.id=$1 FOR UPDATE`,
+        [closeId],
+      );
+      if (!closes.length) throw new NotFoundException("Fechamento não encontrado");
+      const close = closes[0];
+      if (!allowedModalities.includes(close.modality)) throw new BadRequestException("Modalidade fora do escopo autorizado");
+      if (["FINALIZADO", "CANCELADO"].includes(close.status)) throw new ConflictException("Fechamento finalizado/cancelado não aceita importação");
+      if (!Array.isArray(dto.records)) throw new BadRequestException("Informe a lista de registros da fonte");
+      const status = dto.status ?? "SUCESSO";
+      const runRows = await manager.query(
+        `INSERT INTO financial_source_runs(close_id,source,status,source_updated_at,row_count,error_message,metadata,requested_by,finished_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,now()) RETURNING *`,
+        [closeId,dto.source.trim(),status,dto.sourceUpdatedAt ?? null,dto.records.length,dto.errorMessage ?? null,JSON.stringify(dto.metadata ?? {}),user.id],
+      );
+      const run = runRows[0];
+      let insertedRecords = 0;
+      let createdItems = 0;
+      let changedItems = 0;
+      const conflicts: Array<{ recordKey: string; reason: string }> = [];
+      for (const record of dto.records) {
+        const existingRecord = await manager.query(
+          "SELECT id,payload_hash FROM financial_source_records WHERE source_run_id=$1 AND source_record_key=$2",
+          [run.id,record.recordKey],
+        );
+        const payloadJson = JSON.stringify(record.payload);
+        const payloadHash = payloadJson;
+        if (!existingRecord.length) {
+          await manager.query(
+            "INSERT INTO financial_source_records(source_run_id,source_record_key,payload,payload_hash) VALUES ($1,$2,$3::jsonb,$4)",
+            [run.id,record.recordKey,payloadJson,payloadHash],
+          );
+          insertedRecords++;
+        }
+        const existingItems = await manager.query(
+          `SELECT * FROM financial_close_items WHERE close_id=$1 AND obligation_key=$2 FOR UPDATE`,
+          [closeId,record.obligationKey],
+        );
+        if (!existingItems.length) {
+          await manager.query(
+            `INSERT INTO financial_close_items(close_id,modality_id,company,obligation_key,os_number,customer_code,customer_name,
+             source_payload,source_status,operational_status,financial_status,block_reason,created_by)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,'PENDENTE','BLOQUEADO','Aguardando validação de elegibilidade e cálculo',$10)`,
+            [closeId,close.modality_id,close.company,record.obligationKey,record.osNumber ?? null,record.customerCode ?? null,
+             record.customerName ?? null,payloadJson,record.sourceStatus ?? null,user.id],
+          );
+          createdItems++;
+          await manager.query(
+            `INSERT INTO financial_audit_events(modality_id,close_id,event_type,reason,actor_id,after_state)
+             VALUES ($1,$2,'SOURCE_ITEM_IMPORTED','Registro importado; permanece bloqueado até validação de elegibilidade e cálculo',$3,$4::jsonb)`,
+            [close.modality_id,closeId,user.id,JSON.stringify({ source: dto.source, recordKey: record.recordKey, obligationKey: record.obligationKey })],
+          );
+        } else {
+          const existing = existingItems[0];
+          const oldPayload = JSON.stringify(existing.source_payload ?? {});
+          if (oldPayload !== payloadJson) {
+            await manager.query(
+              `UPDATE financial_close_items SET operational_status='DIVERGENTE',financial_status='BLOQUEADO',
+               block_reason='A fonte apresentou alteração; requer conferência manual',updated_at=now() WHERE id=$1`,
+              [existing.id],
+            );
+            await manager.query(
+              `INSERT INTO financial_reviews(close_item_id,decision,reason,previous_value,new_value,reviewed_by,metadata)
+               VALUES ($1,'DIVERGENCIA_FONTE','A fonte apresentou alteração; valores originais preservados',$2,$3,$4,$5::jsonb)`,
+              [existing.id,null,null,user.id,JSON.stringify({ source:dto.source, recordKey:record.recordKey, incomingPayload:record.payload })],
+            );
+            await manager.query(
+              `INSERT INTO financial_audit_events(modality_id,close_id,close_item_id,event_type,reason,actor_id,before_state,after_state)
+               VALUES ($1,$2,$3,'SOURCE_DIVERGENCE','Importação identificou alteração e bloqueou o item',$4,$5::jsonb,$6::jsonb)`,
+              [close.modality_id,closeId,existing.id,user.id,JSON.stringify(existing),JSON.stringify({ incomingPayload:record.payload })],
+            );
+            conflicts.push({ recordKey: record.recordKey, reason: "Alteração de fonte exige revisão manual" });
+            changedItems++;
+          }
+        }
+      }
+      return { sourceRunId: run.id, status, received: dto.records.length, insertedRecords, createdItems, changedItems, conflicts };
+    });
+  }
+
+  async sourceRuns(closeId: string) {
+    const close = await this.dataSource.query(
+      `SELECT c.id,m.key AS modality FROM financial_closes c
+       JOIN financial_modalities m ON m.id=c.modality_id WHERE c.id=$1`,
+      [closeId],
+    );
+    if (!close.length) throw new NotFoundException("Fechamento não encontrado");
+    if (!allowedModalities.includes(close[0].modality)) throw new BadRequestException("Modalidade fora do escopo autorizado");
+    return this.dataSource.query(
+      "SELECT * FROM financial_source_runs WHERE close_id=$1 ORDER BY started_at DESC",
+      [closeId],
+    );
+  }
+
 }
