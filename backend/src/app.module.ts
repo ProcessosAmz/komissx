@@ -13,6 +13,7 @@ import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { CommissionsModule } from "@/module/commissions/index.module";
 import { ReportsModule } from "@/module/reports/index.module";
+import { FinancialClosesModule } from "@/module/financial-closes/index.module";
 import {
   postgresPoolConfig,
   handlePostgresPoolError,
@@ -58,6 +59,7 @@ const skipDatabase = process.env.SKIP_DATABASE === "true";
           AuthModule,
           CommissionsModule,
           ReportsModule,
+          FinancialClosesModule,
         ]),
     LoggerModule,
     RedisModule,
