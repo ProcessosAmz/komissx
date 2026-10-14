@@ -241,4 +241,42 @@ export class FinancialClosesService {
     );
   }
 
+  async sourceReadiness(closeId: string) {
+    const rows = await this.dataSource.query(
+      `SELECT c.id, m.key AS modality, c.company
+       FROM financial_closes c JOIN financial_modalities m ON m.id=c.modality_id
+       WHERE c.id=$1`,
+      [closeId],
+    );
+    if (!rows.length) throw new NotFoundException("Fechamento não encontrado");
+    const close = rows[0];
+    if (!allowedModalities.includes(close.modality)) throw new BadRequestException("Modalidade fora do escopo autorizado");
+    const check = (label: string, names: string[], required = true) => {
+      const present = names.some((name) => Boolean(process.env[name]?.trim()));
+      return { label, configured: present, required, variables: names };
+    };
+    const checks = close.modality === "RETIRADA"
+      ? [
+          check("Metabase Amazonet Retirada", ["METABASE_AMZ_RETIRADA"], false),
+          check("Metabase Mania Retirada", ["METABASE_MANIA_RETIRADA"], false),
+          check("Planilha de retirada MAO", ["GOOGLE_SHEET_ID_MAO_RET", "GOOGLE_SHEET_NAME_MAO_RET"].filter((_, i) => i === 0)),
+          check("Planilha de retirada regionais", ["GOOGLE_SHEET_ID_REGIONAIS_RET", "GOOGLE_SHEET_NAME_REGIONAIS_RET"].filter((_, i) => i === 0), false),
+          check("Credenciais Google Sheets", ["GOOGLE_CLIENT_EMAIL", "GOOGLE_PRIVATE_KEY"].filter((_, i) => i === 0)),
+        ]
+      : [
+          check("Metabase Amazonet Vendas Autônomos", ["AMAZONET_CARD_VENDAS"]),
+          check("Metabase Mania Vendas Autônomos", ["MANIA_CARD_VENDAS"]),
+        ];
+    const missing = checks.filter((item) => item.required && !item.configured);
+    return {
+      closeId: close.id,
+      modality: close.modality,
+      ready: missing.length === 0,
+      checkedAt: new Date().toISOString(),
+      checks,
+      missingRequired: missing.map((item) => item.label),
+      note: "Esta verificação confirma apenas a presença de variáveis de configuração; não comprova acesso, atualização ou integridade das fontes.",
+    };
+  }
+
 }
