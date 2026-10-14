@@ -8,6 +8,7 @@ import {
   ReviewFinancialItemDto,
 } from "@/module/financial-closes/dto/financial-close.dto";
 import { FinancialClosesService } from "@/module/financial-closes/financial-closes.service";
+import { ImportFinancialSourceDto } from "@/module/financial-closes/dto/import-financial-source.dto";
 
 @ApiTags("financial-closes")
 @Roles("ADMIN")
@@ -25,6 +26,18 @@ export class FinancialClosesController {
   @ApiOperation({ summary: "Criar fechamento financeiro" })
   create(@Body() dto: CreateFinancialCloseDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.create(dto, req.user);
+  }
+
+  @Get(":closeId/sources")
+  @ApiOperation({ summary: "Consultar histórico de importações de fontes" })
+  sourceRuns(@Param("closeId", ParseUUIDPipe) closeId: string) {
+    return this.service.sourceRuns(closeId);
+  }
+
+  @Post(":closeId/sources/import")
+  @ApiOperation({ summary: "Importar registros normalizados de uma fonte, mantendo novos itens bloqueados para validação" })
+  importSource(@Param("closeId", ParseUUIDPipe) closeId: string, @Body() dto: ImportFinancialSourceDto, @Req() req: { user: AuthenticatedUser }) {
+    return this.service.importSource(closeId, dto, req.user);
   }
 
   @Post(":closeId/items/manual")
