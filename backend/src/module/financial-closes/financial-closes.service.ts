@@ -295,12 +295,15 @@ export class FinancialClosesService {
         reachable: true,
         ...result,
         sampleKeys: rowsData?.[0] && typeof rowsData[0] === "object" ? Object.keys(rowsData[0]).slice(0, 80) : [],
-        sample: rowsData?.[0] ?? null,
         imported: false,
         note: "Teste somente de leitura: nenhum registro foi importado nem liberado para cálculo.",
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Falha desconhecida";
+      const axiosError = error as { code?: string; response?: { status?: number } };
+      const message = axiosError?.response?.status
+        ? `A fonte respondeu com HTTP ${axiosError.response.status}`
+        : axiosError?.code === "ECONNABORTED" ? "Tempo limite excedido ao consultar a fonte"
+        : axiosError?.code ? `Falha de conexão (${axiosError.code})` : "Falha ao consultar a fonte";
       await this.dataSource.query(
         `INSERT INTO financial_audit_events(modality_id,close_id,event_type,reason,actor_id,after_state)
          VALUES ((SELECT id FROM financial_modalities WHERE key=$1),$2,'SOURCE_CONNECTION_FAILED',$3,$4,$5::jsonb)`,
