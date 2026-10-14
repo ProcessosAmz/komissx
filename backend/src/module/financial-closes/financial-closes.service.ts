@@ -281,8 +281,8 @@ export class FinancialClosesService {
     const envMap: Record<string, { modality: FinancialModality; env: string }> = {
       METABASE_AMZ_RETIRADA: { modality: "RETIRADA", env: "METABASE_AMZ_RETIRADA" },
       METABASE_MANIA_RETIRADA: { modality: "RETIRADA", env: "METABASE_MANIA_RETIRADA" },
-      METABASE_AMZ_AUTONOMO: { modality: "VENDAS_AUTONOMOS", env: "METABASE_AMZ_AUTONOMO" },
-      METABASE_MANIA_AUTONOMO: { modality: "VENDAS_AUTONOMOS", env: "METABASE_MANIA_AUTONOMO" },
+      METABASE_AMZ_AUTONOMO: { modality: "VENDAS_AUTONOMOS", env: "AMAZONET_CARD_VENDAS" },
+      METABASE_MANIA_AUTONOMO: { modality: "VENDAS_AUTONOMOS", env: "MANIA_CARD_VENDAS" },
     };
     const config = envMap[source];
     if (!config || config.modality !== modality) {
@@ -370,8 +370,8 @@ export class FinancialClosesService {
           check("Credenciais Google Sheets", ["GOOGLE_CLIENT_EMAIL", "GOOGLE_PRIVATE_KEY"]),
         ]
       : [
-          check("Metabase Amazonet Vendas Autônomos", ["METABASE_AMZ_AUTONOMO"]),
-          check("Metabase Mania Vendas Autônomos", ["METABASE_MANIA_AUTONOMO"]),
+          check("Metabase Amazonet Vendas Autônomos", ["AMAZONET_CARD_VENDAS"]),
+          check("Metabase Mania Vendas Autônomos", ["MANIA_CARD_VENDAS"]),
         ];
     const missing = checks.filter((item) => item.required && !item.configured);
     return {
