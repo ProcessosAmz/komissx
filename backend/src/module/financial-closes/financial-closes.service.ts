@@ -143,6 +143,13 @@ export class FinancialClosesService {
       if (!allowedModalities.includes(close.modality)) throw new BadRequestException("Modalidade fora do escopo autorizado");
       if (["FINALIZADO", "CANCELADO"].includes(close.status)) throw new ConflictException("Fechamento finalizado/cancelado não aceita importação");
       if (!Array.isArray(dto.records)) throw new BadRequestException("Informe a lista de registros da fonte");
+      const recordKeys = dto.records.map((record) => record.recordKey);
+      if (new Set(recordKeys).size !== recordKeys.length) {
+        throw new BadRequestException("A importação contém recordKey duplicado; corrija a origem antes de importar");
+      }
+      if (dto.records.some((record) => !record.recordKey?.trim() || !record.obligationKey?.trim() || !record.payload || typeof record.payload !== "object" || Array.isArray(record.payload))) {
+        throw new BadRequestException("Cada registro precisa de recordKey, obligationKey e payload válido");
+      }
       const source = dto.source.trim().toUpperCase();
       const allowedSources = close.modality === "RETIRADA"
         ? ["METABASE_AMZ_RETIRADA", "METABASE_MANIA_RETIRADA", "PLANILHA_RETIRADA", "PLANILHA_ENTREGA", "PLANILHA_ESTOQUE"]
@@ -343,8 +350,8 @@ export class FinancialClosesService {
           check("Credenciais Google Sheets", ["GOOGLE_CLIENT_EMAIL", "GOOGLE_PRIVATE_KEY"]),
         ]
       : [
-          check("Metabase Amazonet Vendas Autônomos", ["AMAZONET_CARD_VENDAS"]),
-          check("Metabase Mania Vendas Autônomos", ["MANIA_CARD_VENDAS"]),
+          check("Metabase Amazonet Vendas Autônomos", ["METABASE_AMZ_AUTONOMO"]),
+          check("Metabase Mania Vendas Autônomos", ["METABASE_MANIA_AUTONOMO"]),
         ];
     const missing = checks.filter((item) => item.required && !item.configured);
     return {
