@@ -8,10 +8,20 @@ config({ path: ".env" });
 
 const skipDatabase = process.env.SKIP_DATABASE === "true";
 
-const trustedOrigins = (process.env.CORS_ORIGINS ?? "")
+// Carrega as origens do .env e define fallbacks padrão para ambiente local
+const envOrigins = (process.env.CORS_ORIGINS ?? "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+const defaultOrigins = [
+  "http://localhost:5173",
+  "http://10.1.125.20:8080",
+  "http://172.20.80.1:5173",
+];
+
+// Remove duplicados combinando as origens do .env com os padrões
+const trustedOrigins = Array.from(new Set([...envOrigins, ...defaultOrigins]));
 
 export const authPool = skipDatabase
   ? null
