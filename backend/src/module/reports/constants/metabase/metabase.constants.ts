@@ -26,6 +26,29 @@ export const METABASE_INSTALLATION_FILTERS = {
   },
 } as const;
 
+export const METABASE_VENDAS_COMERCIAL_FILTERS = {
+  estado: {
+    tag: "estado",
+    type: "string/=",
+    target: "dimension",
+  },
+  cidade: {
+    tag: "cidade",
+    type: "string/=",
+    target: "dimension",
+  },
+  dataInicio: {
+    tag: "datainicio",
+    type: "date/single",
+    target: "variable",
+  },
+  dataFim: {
+    tag: "datafim",
+    type: "date/single",
+    target: "variable",
+  },
+} as const;
+
 export const METABASE_INSTALLATION_FILTERS_MANIA = {
   estado: {
     id: "7ec1444e-11b8-3a67-f2f7-cf25c5e24884",
