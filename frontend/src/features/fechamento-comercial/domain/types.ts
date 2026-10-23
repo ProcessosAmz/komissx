@@ -78,11 +78,14 @@ export type ResumoVendasComercial = {
 export type LinhaRelatorioComercial = {
   vendedor: string;
   conta: EmpresaComercial;
+  unidade: string;
+  categoriaComissao: string | null;
   quantidadeTotal: number;
   aprovados: number;
   aprovadosReanalise: number;
   quantidadeElegivel: number;
   valorElegivel: number;
+  valorUnitarioComissao: number | null;
   comissao: number | null;
 };
 
@@ -97,4 +100,6 @@ export type ModeloRelatorioComercial = {
   linhas: LinhaRelatorioComercial[];
   totalElegivel: number;
   valorElegivel: number;
+  totalComissao: number;
+  comissaoPendente: boolean;
 };

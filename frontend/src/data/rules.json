@@ -23,26 +23,37 @@
   "fechamento_mensal": {
     "AMAZONET": {
       "MANAUS": {
-        "ordem_categorias": ["COMERCIAL_INTERNO", "COMERCIAL_EXTERNO", "BACKOFFICE", "RECEPCAO", "REGIONAIS INTERNO"],
-        "rotulos_categorias": {
-          "COMERCIAL_INTERNO": "INTERNO",
-          "COMERCIAL_EXTERNO": "EXTERNO",
-          "BACKOFFICE": "BACKOFFICE",
-          "RECEPCAO": "RECEPCAO UNIDADES",
-          "REGIONAIS INTERNO": "REGIONAIS INTERNO"
-          
-        },
+        "ordem_categorias": ["COMERCIAL_INTERNO", "COMERCIAL_EXTERNO", "BACKOFFICE", "RECEPCAO"],
+        "rotulos_categorias": {"COMERCIAL_INTERNO": "COMERCIAL INTERNO", "COMERCIAL_EXTERNO": "COMERCIAL EXTERNO", "BACKOFFICE": "BACKOFFICE", "RECEPCAO": "RECEPÇÃO"},
         "metas": {
           "COMERCIAL_INTERNO": [[100, 129, 5.0], [130, 159, 6.0], [160, 189, 7.5], [190, null, 8.0]],
           "COMERCIAL_EXTERNO": [[25, 35, 7.5], [36, 50, 12.0], [51, null, 15.0]],
           "RECEPCAO": [[60, 99, 5.0], [100, 130, 6.0], [131, null, 7.5]]
         },
-        "faixas_lideranca": [
-          {"percentual_meta": 106.50, "inicio": 0, "fim": 600, "valor": 1000.0}
-        ],
-        "faixas_supervisao": [
-          {"percentual_meta": 106.50, "inicio": 0, "fim": 600, "valor": 1000.0}
-        ]
+        "faixas_lideranca": [{"percentual_meta": 106.5, "inicio": 0, "fim": 600, "valor": 1000.0}, {"percentual_meta": 79.88, "inicio": 601, "fim": 800, "valor": 1700.0}, {"percentual_meta": 67.26, "inicio": 801, "fim": 950, "valor": 2200.0}],
+        "faixas_supervisao": [{"percentual_meta": 106.5, "inicio": 0, "fim": 600, "valor": 1000.0}, {"percentual_meta": 79.88, "inicio": 601, "fim": 800, "valor": 1700.0}, {"percentual_meta": 67.26, "inicio": 801, "fim": 950, "valor": 2200.0}]
+      },
+      "PARA": {
+        "ordem_categorias": ["COMERCIAL_INTERNO", "COMERCIAL_EXTERNO", "BACKOFFICE", "RECEPCAO", "REGIONAL_EXTERNO_PA"],
+        "rotulos_categorias": {"COMERCIAL_INTERNO": "COMERCIAL INTERNO", "COMERCIAL_EXTERNO": "COMERCIAL EXTERNO", "BACKOFFICE": "BACKOFFICE", "RECEPCAO": "RECEPÇÃO", "REGIONAL_EXTERNO_PA": "REGIONAL EXTERNO PA"},
+        "metas": {"COMERCIAL_INTERNO": [[70, 89, 5.0], [90, 109, 6.0], [110, 129, 7.5], [130, null, 8.0]], "COMERCIAL_EXTERNO": [[25, 35, 7.5], [36, 50, 12.0], [51, null, 15.0]], "RECEPCAO": [[1, 99, 5.0], [100, 130, 6.0], [131, null, 7.5]], "REGIONAL_EXTERNO": [[25, 35, 7.5], [36, 50, 12.0], [51, null, 15.0]]},
+        "faixas_lideranca": [{"percentual_meta": 106.5, "inicio": 0, "fim": 600, "valor": 1000.0}, {"percentual_meta": 79.88, "inicio": 601, "fim": 800, "valor": 1700.0}, {"percentual_meta": 67.26, "inicio": 801, "fim": 950, "valor": 2200.0}],
+        "faixas_supervisao": [{"percentual_meta": 54.4, "inicio": 1200, "fim": 1500, "valor": 1700.0}, {"percentual_meta": 48.0, "inicio": 1501, "fim": 1700, "valor": 2500.0}]
+      },
+      "AMAZONAS": {
+        "ordem_categorias": ["REGIONAL_INTERNO", "REGIONAL_EXTERNO", "BACKOFFICE"],
+        "rotulos_categorias": {"REGIONAL_INTERNO": "REGIONAL INTERNO", "REGIONAL_EXTERNO": "REGIONAL EXTERNO", "BACKOFFICE": "BACKOFFICE"},
+        "metas": {"REGIONAL_INTERNO": [[60, 99, 5.0], [100, 130, 6.0], [131, null, 7.5]], "REGIONAL_EXTERNO": [[25, 35, 7.5], [36, 50, 12.0], [51, null, 15.0]], "COMERCIAL_EXTERNO": [[25, 35, 7.5], [36, 50, 12.0], [51, null, 15.0]]},
+        "faixas_supervisao": [{"percentual_meta": 58.67, "inicio": 1200, "fim": 1500, "valor": 1700.0}, {"percentual_meta": 51.76, "inicio": 1501, "fim": 1700, "valor": 2500.0}]
+      }
+    },
+    "MANIA": {
+      "MANAUS": {
+        "ordem_categorias": ["COMERCIAL_INTERNO", "COMERCIAL_EXTERNO", "RECEPCAO", "REGIONAL_INTERNO", "REGIONAL_EXTERNO", "BACKOFFICE"],
+        "rotulos_categorias": {"COMERCIAL_INTERNO": "COMERCIAL INTERNO", "COMERCIAL_EXTERNO": "COMERCIAL EXTERNO", "RECEPCAO": "RECEPÇÃO", "REGIONAL_INTERNO": "REGIONAL INTERNO", "REGIONAL_EXTERNO": "REGIONAL EXTERNO", "BACKOFFICE": "BACKOFFICE"},
+        "metas": {"COMERCIAL_INTERNO": [[40, 59, 5.0], [60, 79, 6.0], [80, 109, 7.5], [110, null, 8.0]], "COMERCIAL_EXTERNO": [[20, 40, 7.5], [51, null, 15.0]], "RECEPCAO": [[20, 40, 5.0], [41, 60, 6.0], [61, 70, 7.0]], "REGIONAL_INTERNO": [[40, 59, 5.0], [60, 79, 6.0], [80, 109, 7.5], [110, null, 8.0]], "REGIONAL_EXTERNO": [[20, 30, 7.5], [31, 40, 12.0], [41, null, 15.0]]},
+        "faixas_lideranca": [{"percentual_meta": 117.82, "inicio": 450, "fim": 550, "valor": 1700.0}, {"percentual_meta": 99.69, "inicio": 551, "fim": 650, "valor": 2500.0}],
+        "faixas_supervisao": [{"percentual_meta": 117.82, "inicio": 450, "fim": 550, "valor": 1700.0}, {"percentual_meta": 99.69, "inicio": 551, "fim": 650, "valor": 2500.0}]
       }
     }
   }
