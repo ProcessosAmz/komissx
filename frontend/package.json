@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test:fechamento-comercial": "node scripts/test-fechamento-comercial.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

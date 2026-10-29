@@ -6,8 +6,10 @@ import { MetabaseParameter } from "@/common/interfaces/metabaseParameter.interfa
 import {
   METABASE_INSTALLATION_FILTERS,
   METABASE_INSTALLATION_FILTERS_MANIA,
+  METABASE_VENDAS_COMERCIAL_FILTERS,
 } from "@/module/reports/constants/metabase/metabase.constants";
 import { RelatorioTecnicoDto } from "@/module/reports/dto/relatorioTecnicoInstalacao.dto";
+import { RelatorioVendasLider } from "@/module/reports/dto/vendasLiderComercial.dto";
 import {
   extrairLinhasMetabase,
   toDataFimMetabase,
@@ -27,6 +29,10 @@ const METABASE_JSON_RETIRADA_AMAZONET =
   "https://amazonet.hubsoft.com.br:8443/public/question/cc843ce8-7a68-49b5-a4c6-6f3552ec4468";
 const METABASE_JSON_RETIRADA_MANIA =
   "https://mania.hubsoft.com.br:8443/public/question/233e51bb-c082-42e5-b48e-586aa0047c46";
+const METABASE_JSON_VENDAS_AMAZONET =
+  "https://amazonet.hubsoft.com.br:8443/api/public/card/c062be07-d95b-436c-b2fd-f2a55ba8c8ca/query/json";
+const METABASE_JSON_VENDAS_MANIA =
+  "https://mania.hubsoft.com.br:8443/api/public/card/116a8d43-8171-4c86-8fc6-d5544dcc0e36/query/json";
 
 const metabaseClient = axios.create({
   timeout: METABASE_TIMEOUT_MS,
@@ -38,6 +44,37 @@ export type FonteMetabaseInstalacao = {
   host: Host;
   url: string;
   rows: unknown[];
+};
+
+export const montarParametrosVendasComercial = (
+  dto: RelatorioVendasLider,
+  _host: Host,
+): MetabaseParameter[] => {
+  const parametros: MetabaseParameter[] = [];
+
+  for (const [key, value] of Object.entries({
+    estado: dto.estado,
+    cidade: dto.cidade,
+    dataInicio: dto.dataInicio,
+    dataFim: dto.dataFim,
+  })) {
+    if (!value) {
+      continue;
+    }
+
+    const config =
+      METABASE_VENDAS_COMERCIAL_FILTERS[
+        key as keyof typeof METABASE_VENDAS_COMERCIAL_FILTERS
+      ];
+
+    parametros.push({
+      type: config.type,
+      value,
+      target: [config.target, ["template-tag", config.tag]],
+    });
+  }
+
+  return parametros;
 };
 
 @Injectable()
@@ -212,6 +249,139 @@ export class MetaService {
     if (resultados.length > 0 && resultados.every((fonte) => fonte.falhou)) {
       throw new InternalServerErrorException(
         "Erro ao buscar instalações no Metabase",
+      );
+    }
+
+    return resultados.map(({ host, url, rows }) => ({ host, url, rows }));
+  }
+
+  private urlVendasComercial(host: Host): string {
+    const padrao =
+      host === Host.MANIA
+        ? METABASE_JSON_VENDAS_MANIA
+        : METABASE_JSON_VENDAS_AMAZONET;
+    const bruto =
+      host === Host.MANIA
+        ? process.env.METABASE_VENDAS_COMERCIAL_MANIA ||
+          process.env.MANIA_CARD_VENDAS
+        : process.env.METABASE_VENDAS_COMERCIAL_AMZ ||
+          process.env.AMAZONET_CARD_VENDAS;
+    const url = this.resolverUrlCard(host, bruto || padrao, padrao);
+    const hostEsperado =
+      host === Host.MANIA ? "mania.hubsoft.com.br" : "amazonet.hubsoft.com.br";
+
+    if (!url.toLowerCase().includes(hostEsperado)) {
+      this.logger.warn(
+        `URL Metabase de vendas comercial inválida para ${host} (${url}). Usando ${padrao}`,
+      );
+      return padrao;
+    }
+
+    return url;
+  }
+
+  private resolverUrlCard(host: Host, bruto: string, padrao: string): string {
+    const valor = bruto.trim();
+
+    if (/^[0-9a-f-]{36}$/i.test(valor)) {
+      const dominio =
+        host === Host.MANIA
+          ? "mania.hubsoft.com.br"
+          : "amazonet.hubsoft.com.br";
+      return `https://${dominio}:8443/api/public/card/${valor}/query/json`;
+    }
+
+    try {
+      return toMetabaseJsonUrl(valor);
+    } catch {
+      this.logger.warn(`URL Metabase inválida (${valor}). Usando ${padrao}`);
+      return padrao;
+    }
+  }
+
+  private listarFontesVendasComercial(
+    empresa?: Host,
+  ): { host: Host; url: string }[] {
+    const amazonet = {
+      host: Host.AMAZONET,
+      url: this.urlVendasComercial(Host.AMAZONET),
+    };
+    const mania = {
+      host: Host.MANIA,
+      url: this.urlVendasComercial(Host.MANIA),
+    };
+
+    if (empresa === Host.MANIA) {
+      return [mania];
+    }
+
+    if (empresa === Host.AMAZONET) {
+      return [amazonet];
+    }
+
+    return [amazonet, mania];
+  }
+
+  private montarParametrosVendasComercial(
+    dto: RelatorioVendasLider,
+    host: Host,
+  ): MetabaseParameter[] {
+    return montarParametrosVendasComercial(dto, host);
+  }
+
+  async vendasLiderComercial(
+    dto: RelatorioVendasLider,
+  ): Promise<FonteMetabaseInstalacao[]> {
+    const fontes = this.listarFontesVendasComercial(dto.empresa);
+    this.logger.log(
+      `Consultando Metabase vendas comercial ${dto.empresa ?? "todas"}: ${fontes
+        .map((fonte) => fonte.url)
+        .join(", ")}`,
+    );
+
+    const resultados = await Promise.all(
+      fontes.map(async (fonte) => {
+        const parameters = this.montarParametrosVendasComercial(dto, fonte.host);
+        this.logger.log(
+          `Metabase vendas ${fonte.host} parameters=${JSON.stringify(parameters)}`,
+        );
+
+        try {
+          const response = await metabaseClient.get<unknown>(fonte.url, {
+            params: {
+              parameters: JSON.stringify(parameters),
+            },
+          });
+
+          this.logger.log(
+            `Metabase vendas ${fonte.host} retornou ${extrairLinhasMetabase(response.data).length} linhas`,
+          );
+
+          return {
+            host: fonte.host,
+            url: fonte.url,
+            rows: extrairLinhasMetabase(response.data),
+            falhou: false,
+          };
+        } catch (error) {
+          this.logger.error(
+            `Erro ao consultar vendas comercial no Metabase (${fonte.host}): ${getErrorMessage(error)}`,
+            (error as Error)?.stack,
+          );
+
+          return {
+            host: fonte.host,
+            url: fonte.url,
+            rows: [] as unknown[],
+            falhou: true,
+          };
+        }
+      }),
+    );
+
+    if (resultados.length > 0 && resultados.every((fonte) => fonte.falhou)) {
+      throw new InternalServerErrorException(
+        "Erro ao buscar vendas comercial no Metabase",
       );
     }
 

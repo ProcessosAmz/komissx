@@ -23,6 +23,7 @@ import { PermissionRoute } from "@/guards/permissionRoute.tsx";
 import { PrivateRoute } from "@/guards/privateRoute.tsx";
 import { RootRedirect } from "@/guards/rootRedirect.tsx";
 import RelatorioSemanal from "@/pages/Fechamentos/relatorioSemana.tsx";
+import ConfiguracaoMensal from "@/pages/painel-configuracoes/mensal";
 
 export default function App() {
   return (
@@ -69,6 +70,7 @@ export default function App() {
               <Route index element={<Equipes />} />
               <Route path="equipes" element={<Equipes />} />
               <Route path="semanal" element={<RelatorioSemanal />} />
+              <Route path="mensal" element={<ConfiguracaoMensal />} />
             </Route>
           </Route>
         </Route>

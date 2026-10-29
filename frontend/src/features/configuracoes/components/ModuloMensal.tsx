@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Edit2, Check, X, Plus } from 'lucide-react';
+import { validarConfiguracaoMensal, validarFaixasMensais } from '@/features/configuracoes/domain/regrasMensais';
 
 // Tipagem baseada na estrutura de tuplas do seu JSON: [inicio, fim, valor]
 type FaixaMetasTuple = [number, number | null, number];
@@ -42,6 +43,7 @@ export function ModuloMensal({ jsonOriginal, onSalvar }: ModuloMensalProps) {
   // 4. Estados para controle de Inserção de Nova Linha
   const [inserindoNaCategoria, setInserindoNaCategoria] = useState<string | null>(null);
   const [camposNovaFaixa, setCamposNovaFaixa] = useState({ inicio: '', fim: '', valor: '' });
+  const [mensagemValidacao, setMensagemValidacao] = useState('');
 
   // Listas dinâmicas baseadas nas chaves do JSON
   const empresasDisponiveis = Object.keys(estadoMetas || {});
@@ -66,6 +68,8 @@ export function ModuloMensal({ jsonOriginal, onSalvar }: ModuloMensalProps) {
   const categoriasAtivas = metasUnidade.metas || {};
   const ordemCategorias = metasUnidade.ordem_categorias || Object.keys(categoriasAtivas);
   const rotulosCategorias = metasUnidade.rotulos_categorias || {};
+  const problemasConfiguracao = validarConfiguracaoMensal(estadoMetas);
+  const alertaConfiguracao = problemasConfiguracao.find((problema) => problema.severidade === 'alerta');
 
   // --- FUNÇÃO DE PERSISTÊNCIA CENTRALIZADA ---
   const persistirMudancaNoGlobal = (novoEstadoMetas: any) => {
@@ -110,7 +114,18 @@ export function ModuloMensal({ jsonOriginal, onSalvar }: ModuloMensalProps) {
       Number(camposEdicao.valor)
     ];
 
+    const problemas = validarFaixasMensais(
+      clone[empresa][unidade].metas[categoria],
+      `${empresa}/${unidade}/${categoria}`,
+    );
+    const erro = problemas.find((problema) => problema.severidade === 'erro');
+    if (erro) {
+      setMensagemValidacao(erro.mensagem);
+      return;
+    }
+
     persistirMudancaNoGlobal(clone);
+    setMensagemValidacao(problemas.find((problema) => problema.severidade === 'alerta')?.mensagem || '');
     setEditandoLinha(null);
   };
 
@@ -130,7 +145,18 @@ export function ModuloMensal({ jsonOriginal, onSalvar }: ModuloMensalProps) {
       Number(camposNovaFaixa.valor)
     ]);
 
+    const problemas = validarFaixasMensais(
+      clone[empresa][unidade].metas[categoria],
+      `${empresa}/${unidade}/${categoria}`,
+    );
+    const erro = problemas.find((problema) => problema.severidade === 'erro');
+    if (erro) {
+      setMensagemValidacao(erro.mensagem);
+      return;
+    }
+
     persistirMudancaNoGlobal(clone);
+    setMensagemValidacao(problemas.find((problema) => problema.severidade === 'alerta')?.mensagem || '');
     setInserindoNaCategoria(null);
     setCamposNovaFaixa({ inicio: '', fim: '', valor: '' });
   };
@@ -189,6 +215,13 @@ export function ModuloMensal({ jsonOriginal, onSalvar }: ModuloMensalProps) {
       </div>
 
       <hr className="border-slate-800" />
+
+      <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 px-4 py-3 text-xs text-amber-200">
+        Alterações mensais são rascunhos locais nesta etapa e não são persistidas no backend.
+        Faixas inválidas ou sobrepostas não podem ser salvas.
+        {alertaConfiguracao ? <span className="mt-1 block text-amber-300">{alertaConfiguracao.mensagem}</span> : null}
+        {mensagemValidacao ? <span className="mt-1 block text-rose-300">{mensagemValidacao}</span> : null}
+      </div>
 
       {/* QUADRO DE CATEGORIAS */}
       <div className="space-y-6">
