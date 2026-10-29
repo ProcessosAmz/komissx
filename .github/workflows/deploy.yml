@@ -49,7 +49,8 @@ jobs:
           file: ./backend/docker/Dockerfile
           push: true
           tags: |
-            ${{ steps.meta.outputs.backend_image }}${{ steps.meta.outputs.backend_version }}
+            ${{ steps.meta.outputs.backend_image }}
+            ${{ steps.meta.outputs.backend_version }}
 
       - name: Build and push frontend
         uses: docker/build-push-action@v6
@@ -60,7 +61,8 @@ jobs:
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
           tags: |
-            ${{ steps.meta.outputs.frontend_image }}${{ steps.meta.outputs.frontend_version }}
+            ${{ steps.meta.outputs.frontend_image }}
+            ${{ steps.meta.outputs.frontend_version }}
 
   deploy:
     needs: build
