@@ -1,9 +1,6 @@
-import { Test } from "@nestjs/testing";
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from "@nestjs/common";
+jest.mock("@/module/auth/repository/betterAuth.repository", () => ({
+  BetterAuthRepository: class BetterAuthRepository {},
+}));
 import { BetterAuthRepository } from "@/module/auth/repository/betterAuth.repository";
 import { Empresas } from "@/module/empresas/entities/empresas.entity";
 import { Role } from "@/module/roles/entities/role.entity";
@@ -12,6 +9,12 @@ import { Unidades } from "@/module/unidades/entities/unidades.entity";
 import { Users } from "@/module/users/entities/users.entity";
 import { UsersRepository } from "@/module/users/repository/index.repository";
 import { UpdateUserUseCase } from "@/module/users/useCase/updateUser.useCase";
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
+import { Test } from "@nestjs/testing";
 
 const USER_ID = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 const LIDER_ID = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
@@ -218,9 +221,9 @@ describe("UpdateUserUseCase", () => {
     it("should throw when user does not exist", async () => {
       mockUsersRepository.findById.mockResolvedValueOnce(null);
 
-      await expect(sut.execute(USER_ID, { name: "Carlos Mendes" })).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        sut.execute(USER_ID, { name: "Carlos Mendes" }),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 
